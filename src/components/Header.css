@@ -1,0 +1,86 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  height: var(--header-altura);
+  padding: 0 16px;
+  background: var(--preto);
+  color: var(--branco);
+}
+
+/* Ícone de menu (hambúrguer) */
+.header__menu-btn {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 40px;
+  height: 40px;
+  padding: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.header__menu-btn span {
+  display: block;
+  height: 2px;
+  width: 100%;
+  background: var(--branco);
+  border-radius: 2px;
+}
+
+/* Opções do header */
+.header__nav {
+  display: flex;
+  gap: 24px;
+}
+
+.header__link {
+  color: var(--branco);
+  text-decoration: none;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 14px;
+}
+
+.header__link:hover {
+  text-decoration: underline;
+}
+
+/* Menu lateral */
+.header__overlay {
+  position: fixed;
+  inset: var(--header-altura) 0 0 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.header__drawer {
+  position: fixed;
+  top: var(--header-altura);
+  left: 0;
+  bottom: 0;
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+  background: var(--preto);
+  border-top: 1px solid var(--cinza);
+}
+
+.header__drawer-link {
+  padding: 16px 24px;
+  color: var(--branco);
+  text-decoration: none;
+  font-weight: 700;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--cinza);
+}
+
+.header__drawer-link:hover {
+  background: var(--branco);
+  color: var(--preto);
+}
