@@ -75,6 +75,44 @@ export function AutenticacaoProvider({ children }) {
     [sessao, sair]
   )
 
+  // Atalho para APIs JSON: devolve { ok, status, dados }
+  const api = useCallback(
+    async (url, { metodo = 'GET', corpo } = {}) => {
+      try {
+        const resposta = await fetchAutenticado(url, {
+          method: metodo,
+          headers: corpo === undefined ? undefined : { 'Content-Type': 'application/json' },
+          body: corpo === undefined ? undefined : JSON.stringify(corpo),
+        })
+        const texto = await resposta.text()
+        let dados = null
+        try {
+          dados = texto ? JSON.parse(texto) : null
+        } catch {
+          dados = null
+        }
+        return { ok: resposta.ok, status: resposta.status, dados }
+      } catch {
+        return { ok: false, status: 0, dados: { erro: 'Sem conexão com o servidor.' } }
+      }
+    },
+    [fetchAutenticado]
+  )
+
+  // Atualiza os dados do vendedor guardados na sessão (ex.: depois de editar o perfil)
+  const atualizarVendedorSessao = useCallback((parcial) => {
+    setSessao((atual) => {
+      if (!atual) return atual
+      const nova = { ...atual, vendedor: { ...atual.vendedor, ...parcial } }
+      try {
+        localStorage.setItem(CHAVE, JSON.stringify(nova))
+      } catch {
+        /* ignora */
+      }
+      return nova
+    })
+  }, [])
+
   const valor = useMemo(
     () => ({
       carregado,
@@ -84,8 +122,10 @@ export function AutenticacaoProvider({ children }) {
       entrar,
       sair,
       fetchAutenticado,
+      api,
+      atualizarVendedorSessao,
     }),
-    [carregado, sessao, entrar, sair, fetchAutenticado]
+    [carregado, sessao, entrar, sair, fetchAutenticado, api, atualizarVendedorSessao]
   )
 
   return <AutenticacaoContext.Provider value={valor}>{children}</AutenticacaoContext.Provider>

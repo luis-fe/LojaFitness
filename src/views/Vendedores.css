@@ -1,0 +1,237 @@
+/* Filtros */
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 16px;
+  margin-bottom: 20px;
+}
+
+.filtros__busca {
+  flex: 1 1 280px;
+}
+
+.filtros__busca input {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.filtros__situacao {
+  display: flex;
+  border: 1px solid var(--preto);
+}
+
+.filtros__situacao button {
+  min-height: 46px;
+  padding: 0 16px;
+  background: var(--branco);
+  border: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.filtros__situacao button + button {
+  border-left: 1px solid var(--preto);
+}
+
+.filtros__situacao button[aria-pressed='true'] {
+  background: var(--preto);
+  color: var(--branco);
+}
+
+.filtros__situacao button:focus-visible {
+  outline: 2px solid var(--preto);
+  outline-offset: 2px;
+}
+
+.lista-total {
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--cinza-neutro);
+}
+
+.lista-carregando {
+  height: 240px;
+  background: var(--cinza-claro);
+}
+
+.lista-vazia {
+  padding: 40px 16px;
+  border: 1px dashed var(--borda);
+  text-align: center;
+  color: var(--cinza-texto);
+}
+
+/* Lista */
+.lista-vendedores {
+  list-style: none;
+  border-top: 1px solid var(--borda);
+}
+
+.linha-vendedor {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.2fr) minmax(0, 2.6fr) auto;
+  align-items: center;
+  gap: 12px 24px;
+  padding: 16px 4px;
+  border-bottom: 1px solid var(--borda);
+}
+
+.linha-vendedor.is-inativo {
+  color: var(--cinza-texto);
+}
+
+.linha-vendedor.is-inativo .linha-vendedor__nome strong {
+  color: var(--cinza-texto);
+}
+
+.linha-vendedor__nome {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.linha-vendedor__nome strong {
+  font-size: 15px;
+}
+
+.linha-vendedor__fantasia {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--cinza-neutro);
+}
+
+.selo {
+  padding: 2px 6px;
+  border: 1px solid var(--preto);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  line-height: 1.4;
+}
+
+.selo--voce {
+  background: var(--preto);
+  color: var(--branco);
+}
+
+.selo--inativo {
+  border-color: #b00020;
+  color: #b00020;
+}
+
+.linha-vendedor__dados {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px 16px;
+}
+
+.linha-vendedor__dados dt {
+  font-size: 11px;
+  color: var(--cinza-neutro);
+}
+
+.linha-vendedor__dados dd {
+  margin-top: 2px;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.linha-vendedor__dados a {
+  color: inherit;
+  text-underline-offset: 3px;
+}
+
+.linha-vendedor__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px 14px;
+}
+
+.linha-vendedor__acoes button {
+  min-height: 36px;
+  padding: 0;
+  background: none;
+  border: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--preto);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.linha-vendedor__acoes button.is-perigo {
+  color: #b00020;
+}
+
+.linha-vendedor__acoes button:focus-visible {
+  outline: 2px solid var(--preto);
+  outline-offset: 2px;
+}
+
+/* Paginação */
+.paginacao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 24px;
+  font-size: 14px;
+}
+
+.paginacao .botao {
+  min-height: 40px;
+  padding: 0 16px;
+}
+
+.modal__texto {
+  margin-bottom: 16px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--cinza-texto);
+}
+
+.modal__texto strong {
+  color: var(--preto);
+}
+
+/* Tablet e celular: cada vendedor vira um cartão */
+@media (max-width: 860px) {
+  .linha-vendedor {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 16px 0;
+  }
+
+  .linha-vendedor__dados {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .linha-vendedor__acoes {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .filtros__situacao {
+    width: 100%;
+  }
+
+  .filtros__situacao button {
+    flex: 1;
+  }
+
+  .pagina-vendedor__acoes,
+  .pagina-vendedor__acoes .botao {
+    width: 100%;
+  }
+}

@@ -46,10 +46,12 @@ src/
     produto/[slug]/page.jsx          /produto/conjunto-calca
     carrinho/page.jsx                /carrinho
     area-do-vendedor/login/          /area-do-vendedor/login
-    area-do-vendedor/(protegida)/    páginas que exigem login
+    area-do-vendedor/(protegida)/    páginas que exigem login:
+      perfil/                        /area-do-vendedor/perfil      (meus dados e senha)
+      vendedores/                    /area-do-vendedor/vendedores  (gestão, só admin)
     api/                             backend (ver abaixo)
-  components/           Header, Hero, Carrossel...
-  views/                telas (Produto, Carrinho, Login, AreaVendedor)
+  components/           Header, Hero, Carrossel, Campo, Modal, PaginaVendedor...
+  views/                telas (Produto, Carrinho, Login, AreaVendedor, Perfil, Vendedores)
   context/              Carrinho e Autenticacao (estado no navegador)
   lib/                  db, auth (JWT), vendedores, validacao, senha, pedidos, produtos, whatsapp
 ```
@@ -76,6 +78,13 @@ Rotas marcadas com 🔒 exigem o cabeçalho `Authorization: Bearer <token>`.
 | PATCH | `/api/vendedores/:id` 🔒 | admin ou o próprio | Editar (o próprio não altera login, papel nem ativo) |
 | DELETE | `/api/vendedores/:id` 🔒 | admin | Desativar (não apaga) e derrubar as sessões dele |
 | PUT | `/api/vendedores/:id/senha` 🔒 | admin ou o próprio | Admin redefine sem a senha atual |
+
+### Telas da Área do Vendedor
+
+| Tela | Quem vê | O que faz |
+|---|---|---|
+| **Meu perfil** | todos | Editar nome, telefone, CPF/CNPJ e nome fantasia; trocar a senha (continua conectado, outras sessões caem) |
+| **Vendedores** | só admin | Lista com busca e filtro (todos/ativos/inativos), cadastrar, editar, redefinir senha, desativar e reativar |
 
 ### Vendedores — campos e regras
 

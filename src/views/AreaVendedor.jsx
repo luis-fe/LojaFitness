@@ -23,6 +23,22 @@ const IconeCampanha = () => (
   </svg>
 )
 
+const IconePerfil = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="8" r="4" />
+    <path d="M4 21a8 8 0 0 1 16 0" />
+  </svg>
+)
+
+const IconeEquipe = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="9" cy="8" r="3.5" />
+    <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
+    <path d="M16 4.6a3.5 3.5 0 0 1 0 6.8" />
+    <path d="M18 13.5a6.5 6.5 0 0 1 3.5 6.5" />
+  </svg>
+)
+
 const Seta = () => (
   <svg className="topico__seta" viewBox="0 0 24 24" aria-hidden="true">
     <path d="M9 6l6 6-6 6" />
@@ -41,6 +57,19 @@ const topicos = [
     descricao: 'Crie promoções, defina descontos e período de validade.',
     href: '/area-do-vendedor/cadastrar-campanhas',
     Icone: IconeCampanha,
+  },
+  {
+    titulo: 'Meu perfil',
+    descricao: 'Atualize seus dados de contato e troque sua senha.',
+    href: '/area-do-vendedor/perfil',
+    Icone: IconePerfil,
+  },
+  {
+    titulo: 'Vendedores',
+    descricao: 'Cadastre, edite e desative quem acessa a Área do Vendedor.',
+    href: '/area-do-vendedor/vendedores',
+    Icone: IconeEquipe,
+    somenteAdmin: true,
   },
 ]
 
@@ -64,7 +93,12 @@ function Resumo() {
     }
   }, [fetchAutenticado])
 
-  if (erro) return <p className="resumo-loja__erro" role="alert">{erro}</p>
+  if (erro)
+    return (
+      <p className="resumo-loja__erro" role="alert">
+        {erro}
+      </p>
+    )
   if (!dados) return <div className="resumo-loja resumo-loja--carregando" aria-busy="true" />
 
   return (
@@ -86,7 +120,8 @@ function Resumo() {
       {dados.estoqueBaixo.length > 0 && (
         <details className="estoque-baixo">
           <summary>
-            {dados.estoqueBaixo.length} variaç{dados.estoqueBaixo.length === 1 ? 'ão' : 'ões'} com estoque baixo ou esgotado
+            {dados.estoqueBaixo.length} variaç{dados.estoqueBaixo.length === 1 ? 'ão' : 'ões'} com estoque baixo ou
+            esgotado
           </summary>
           <ul>
             {dados.estoqueBaixo.map((v) => (
@@ -132,20 +167,22 @@ export default function AreaVendedor() {
       <Resumo />
 
       <ul className="topicos">
-        {topicos.map(({ titulo, descricao, href, Icone }) => (
-          <li key={titulo}>
-            <Link href={href} className="topico">
-              <span className="topico__icone">
-                <Icone />
-              </span>
-              <span className="topico__texto">
-                <span className="topico__titulo">{titulo}</span>
-                <span className="topico__descricao">{descricao}</span>
-              </span>
-              <Seta />
-            </Link>
-          </li>
-        ))}
+        {topicos
+          .filter((t) => !t.somenteAdmin || vendedor?.papel === 'admin')
+          .map(({ titulo, descricao, href, Icone }) => (
+            <li key={titulo}>
+              <Link href={href} className="topico">
+                <span className="topico__icone">
+                  <Icone />
+                </span>
+                <span className="topico__texto">
+                  <span className="topico__titulo">{titulo}</span>
+                  <span className="topico__descricao">{descricao}</span>
+                </span>
+                <Seta />
+              </Link>
+            </li>
+          ))}
       </ul>
     </section>
   )
