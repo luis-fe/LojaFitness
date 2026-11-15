@@ -79,12 +79,17 @@ Rotas marcadas com 🔒 exigem o cabeçalho `Authorization: Bearer <token>`.
 | PATCH | `/api/vendedores/:id` 🔒 | admin ou o próprio | Editar (o próprio não altera login, papel nem ativo) |
 | DELETE | `/api/vendedores/:id` 🔒 | admin | Desativar (não apaga) e derrubar as sessões dele |
 | PUT | `/api/vendedores/:id/senha` 🔒 | admin ou o próprio | Admin redefine sem a senha atual |
+| GET | `/api/imagens` 🔒 | logado | Listar imagens (`?busca=&pagina=&porPagina=`) |
+| POST | `/api/imagens` 🔒 | logado | Enviar imagem (multipart: `arquivo`, `codigo`, `descricao`) |
+| GET/PATCH/DELETE | `/api/imagens/:id` 🔒 | quem enviou ou admin | Ver, editar código/descrição, excluir (apaga o arquivo) |
+| GET | `/arquivos/:nome` | público | Entrega a imagem guardada no volume |
 
 ### Telas da Área do Vendedor
 
 | Tela | Quem vê | O que faz |
 |---|---|---|
 | **Meu perfil** | todos | Editar nome, telefone, CPF/CNPJ e nome fantasia; trocar a senha (continua conectado, outras sessões caem) |
+| **Carregar imagens** | todos | Arrastar/escolher várias fotos, dar código e descrição a cada uma, ver o progresso; galeria com busca, copiar link, editar e excluir |
 | **Vendedores** | só admin | Lista com busca e filtro (todos/ativos/inativos), cadastrar, editar, redefinir senha, desativar e reativar |
 
 ### Vendedores — campos e regras
@@ -152,6 +157,14 @@ No **Railway**:
    `NEXT_PUBLIC_WHATSAPP_NUMERO` e, para o primeiro acesso, `ADMIN_LOGIN` / `ADMIN_TELEFONE` / `ADMIN_SENHA_INICIAL`.
 3. Comando de pré-deploy: `node scripts/db.mjs deploy` (prepara o banco antes de cada publicação).
 4. Healthcheck: `/api/saude`.
+5. Imagens enviadas: volume montado em `/data`, com `UPLOADS_DIR=/data/imagens` e `RAILWAY_RUN_UID=0`
+   (o volume pertence ao root; sem isso o servidor não consegue gravar).
+
+### Imagens
+
+- Aceita **JPG, PNG e WEBP** até `IMAGEM_TAMANHO_MAX_MB` (padrão 5 MB). O tipo é conferido pelo conteúdo do arquivo.
+- Cada imagem tem **código único** (normalizado: `conj calça azul` → `CONJ-CALCA-AZUL`) e **descrição**.
+- O arquivo é salvo com nome aleatório em `UPLOADS_DIR` (local: `./uploads`) e registrado na tabela `imagens`.
 
 ## Observações
 

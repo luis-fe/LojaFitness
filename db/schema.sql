@@ -283,6 +283,38 @@ CREATE TRIGGER vendedores_atualizado_em
 
 
 -- ---------------------------------------------------------------------
+-- IMAGENS (tela "Carregar imagens" da Área do Vendedor)
+--
+--   • O arquivo fica no volume do servidor (pasta UPLOADS_DIR); aqui fica o registro.
+--   • Cada imagem tem um CÓDIGO único (ex.: CONJ-CALCA-AZUL) e uma DESCRIÇÃO.
+--   • O nome do arquivo no disco é aleatório, para ninguém adivinhar endereços.
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS imagens (
+  id             bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  codigo         text        NOT NULL UNIQUE
+                 CHECK (codigo ~ '^[A-Z0-9][A-Z0-9._-]{1,59}$'),      -- maiúsculas, números, . _ -
+  descricao      text        NOT NULL
+                 CHECK (length(trim(descricao)) BETWEEN 2 AND 200),
+  arquivo        text        NOT NULL UNIQUE,                          -- nome do arquivo no volume
+  tipo_mime      text        NOT NULL
+                 CHECK (tipo_mime IN ('image/jpeg', 'image/png', 'image/webp')),
+  tamanho_bytes  integer     NOT NULL CHECK (tamanho_bytes > 0),
+  largura        integer     CHECK (largura > 0),
+  altura         integer     CHECK (altura > 0),
+  vendedor_id    bigint      REFERENCES vendedores (id) ON DELETE SET NULL,  -- quem enviou
+  criado_em      timestamptz NOT NULL DEFAULT now(),
+  atualizado_em  timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS imagens_criado_idx ON imagens (criado_em DESC);
+
+DROP TRIGGER IF EXISTS imagens_atualizado_em ON imagens;
+CREATE TRIGGER imagens_atualizado_em
+  BEFORE UPDATE ON imagens
+  FOR EACH ROW EXECUTE FUNCTION definir_atualizado_em();
+
+
+-- ---------------------------------------------------------------------
 -- VIEW: preço final de cada produto, já com a melhor campanha ativa
 -- ---------------------------------------------------------------------
 CREATE OR REPLACE VIEW produtos_com_preco AS
