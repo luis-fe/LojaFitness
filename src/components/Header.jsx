@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import './Header.css'
+import logo from '../assets/logo-jlk.png'
 
 const opcoes = [{ label: 'Black Friday', href: '#black-friday' }]
 
@@ -58,6 +59,10 @@ export default function Header({ hashAtual = '' }) {
         <span />
         <span />
       </button>
+
+      <a href="#" className="header__logo" aria-label="JLK Fitness e Casual — página inicial">
+        <img src={logo} alt="JLK" width="440" height="106" />
+      </a>
 
       <nav className="header__nav" aria-label="Principal">
         {opcoes.map((op) => (

@@ -32,7 +32,7 @@ export default function App() {
           <AreaVendedor />
         ) : (
           <div style={{ padding: '32px 16px' }}>
-            <h1>Loja Fitness</h1>
+            <h1>JLK Fitness e Casual</h1>
           </div>
         )}
       </main>

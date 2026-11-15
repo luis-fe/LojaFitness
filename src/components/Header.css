@@ -53,6 +53,22 @@
   transform: translateY(-7px) rotate(-45deg);
 }
 
+/* Logo centralizada */
+.header__logo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  padding: 4px;
+}
+
+.header__logo img {
+  display: block;
+  height: 26px;
+  width: auto;
+}
+
 /* Opções do header */
 .header__nav {
   display: flex;
@@ -74,6 +90,13 @@
 .header__link:hover,
 .header__link[aria-current='page'] {
   border-bottom-color: var(--branco);
+}
+
+/* No celular, as opções ficam só no menu lateral para não brigar com a logo */
+@media (max-width: 640px) {
+  .header__nav {
+    display: none;
+  }
 }
 
 /* Menu lateral (desliza da esquerda) */
