@@ -44,20 +44,64 @@ $$;
 
 
 -- ---------------------------------------------------------------------
--- TAMANHOS — lista de tamanhos e a ordem em que aparecem na grade
+-- TAMANHOS — código, nome e sequência de exibição na grade do produto
 -- ---------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS tamanhos (
-  codigo  text     PRIMARY KEY,                 -- 'P', 'M', 'G', 'GG'...
-  ordem   smallint NOT NULL UNIQUE
+  codigo     text     PRIMARY KEY CHECK (codigo ~ '^[A-Z0-9]{1,6}$'),  -- 'P', 'M', 'G', 'GG', '38'...
+  nome       text     NOT NULL CHECK (length(trim(nome)) BETWEEN 1 AND 40),
+  sequencia  smallint NOT NULL UNIQUE CHECK (sequencia > 0)             -- ordem de exibição (1 = primeiro)
 );
 
-INSERT INTO tamanhos (codigo, ordem) VALUES
-  ('PP', 1), ('P', 2), ('M', 3), ('G', 4), ('GG', 5), ('XG', 6)
+-- Bancos antigos: "ordem" vira "sequencia" e ganha a coluna "nome"
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'tamanhos' AND column_name = 'ordem') THEN
+    ALTER TABLE tamanhos RENAME COLUMN ordem TO sequencia;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'tamanhos' AND column_name = 'nome') THEN
+    ALTER TABLE tamanhos ADD COLUMN nome text;
+    UPDATE tamanhos t SET nome = n.nome
+    FROM (VALUES ('PP', 'Extra pequeno'), ('P', 'Pequeno'), ('M', 'Médio'), ('G', 'Grande'),
+                 ('GG', 'Extra grande'), ('XG', 'Extra extra grande')) AS n (codigo, nome)
+    WHERE t.codigo = n.codigo;
+    UPDATE tamanhos SET nome = codigo WHERE nome IS NULL;
+    ALTER TABLE tamanhos ALTER COLUMN nome SET NOT NULL;
+    ALTER TABLE tamanhos ADD CONSTRAINT tamanhos_nome_check CHECK (length(trim(nome)) BETWEEN 1 AND 40);
+  END IF;
+END $$;
+
+INSERT INTO tamanhos (codigo, nome, sequencia) VALUES
+  ('PP', 'Extra pequeno', 1), ('P', 'Pequeno', 2), ('M', 'Médio', 3),
+  ('G', 'Grande', 4), ('GG', 'Extra grande', 5), ('XG', 'Extra extra grande', 6)
 ON CONFLICT (codigo) DO NOTHING;
 
 
 -- ---------------------------------------------------------------------
+-- CORES — código, nome e a cor RGB (formato #RRGGBB, ex.: #4A7FD8)
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS cores (
+  codigo         text        PRIMARY KEY CHECK (codigo ~ '^[A-Z0-9][A-Z0-9_-]{0,29}$'),  -- ex.: AZUL, VERDE-MILITAR
+  nome           text        NOT NULL UNIQUE CHECK (length(trim(nome)) BETWEEN 1 AND 40),
+  rgb            text        NOT NULL CHECK (rgb ~ '^#[0-9A-F]{6}$'),                      -- sempre maiúsculas
+  criado_em      timestamptz NOT NULL DEFAULT now(),
+  atualizado_em  timestamptz NOT NULL DEFAULT now()
+);
+
+DROP TRIGGER IF EXISTS cores_atualizado_em ON cores;
+CREATE TRIGGER cores_atualizado_em
+  BEFORE UPDATE ON cores
+  FOR EACH ROW EXECUTE FUNCTION definir_atualizado_em();
+
+INSERT INTO cores (codigo, nome, rgb) VALUES
+  ('PRETO', 'Preto', '#111111'), ('BRANCO', 'Branco', '#FFFFFF'), ('AZUL', 'Azul', '#4A7FD8'),
+  ('VERDE', 'Verde', '#9DB88F'), ('ROSA', 'Rosa', '#E8A5B8'), ('CINZA', 'Cinza', '#9E9E9E')
+ON CONFLICT DO NOTHING;
+
+
+-- ---------------------------------------------------------------------
 -- PRODUTOS
+--   (os campos codigo, campanha_id, criado_por e caminho são adicionados mais
+--    abaixo, em "PRODUTOS — cadastro", porque dependem de campanhas e vendedores)
 -- ---------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS produtos (
   id             bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -65,12 +109,22 @@ CREATE TABLE IF NOT EXISTS produtos (
                  CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),       -- usado na URL: /produto/conjunto-calca
   nome           text          NOT NULL CHECK (length(trim(nome)) > 0),
   descricao      text          NOT NULL DEFAULT '',
-  preco          numeric(10,2) NOT NULL CHECK (preco >= 0),
+  preco_atual    numeric(10,2) NOT NULL CHECK (preco_atual >= 0),  -- preço atual (decimal exato, 2 casas)
   ativo          boolean       NOT NULL DEFAULT true,            -- false = não aparece na loja
   destaque       boolean       NOT NULL DEFAULT false,           -- aparece no carrossel de novidades
   criado_em      timestamptz   NOT NULL DEFAULT now(),
   atualizado_em  timestamptz   NOT NULL DEFAULT now()
 );
+
+-- Bancos criados antes: a coluna "preco" passa a se chamar "preco_atual" (valores mantidos)
+DROP VIEW IF EXISTS produtos_com_preco;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'produtos' AND column_name = 'preco')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'produtos' AND column_name = 'preco_atual') THEN
+    ALTER TABLE produtos RENAME COLUMN preco TO preco_atual;
+  END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS produtos_ativos_idx ON produtos (ativo, destaque);
 
@@ -96,30 +150,8 @@ CREATE TABLE IF NOT EXISTS produto_imagens (
 CREATE INDEX IF NOT EXISTS produto_imagens_produto_idx ON produto_imagens (produto_id, ordem);
 
 
--- ---------------------------------------------------------------------
--- VARIANTES = combinação cor x tamanho, com o estoque disponível
--- (é a grade "cores nas linhas, tamanhos nas colunas" da página do produto)
--- ---------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS produto_variantes (
-  id             bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  produto_id     bigint      NOT NULL REFERENCES produtos (id) ON DELETE CASCADE,
-  cor            text        NOT NULL CHECK (length(trim(cor)) > 0),
-  cor_hex        text        NOT NULL DEFAULT '#000000'
-                 CHECK (cor_hex ~ '^#[0-9a-fA-F]{6}$'),
-  tamanho        text        NOT NULL REFERENCES tamanhos (codigo),
-  estoque        integer     NOT NULL DEFAULT 0 CHECK (estoque >= 0),   -- nunca fica negativo
-  sku            text        UNIQUE,                                     -- código interno (opcional)
-  criado_em      timestamptz NOT NULL DEFAULT now(),
-  atualizado_em  timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (produto_id, cor, tamanho)
-);
-
-CREATE INDEX IF NOT EXISTS produto_variantes_produto_idx ON produto_variantes (produto_id);
-
-DROP TRIGGER IF EXISTS produto_variantes_atualizado_em ON produto_variantes;
-CREATE TRIGGER produto_variantes_atualizado_em
-  BEFORE UPDATE ON produto_variantes
-  FOR EACH ROW EXECUTE FUNCTION definir_atualizado_em();
+-- (As variações cor x tamanho ficam na tabela "produtos_filho", mais abaixo,
+--  depois de "PRODUTOS — cadastro", porque usam o código do produto.)
 
 
 -- ---------------------------------------------------------------------
@@ -142,12 +174,6 @@ CREATE TRIGGER campanhas_atualizado_em
   BEFORE UPDATE ON campanhas
   FOR EACH ROW EXECUTE FUNCTION definir_atualizado_em();
 
--- Quais produtos participam de cada campanha
-CREATE TABLE IF NOT EXISTS campanha_produtos (
-  campanha_id  bigint NOT NULL REFERENCES campanhas (id) ON DELETE CASCADE,
-  produto_id   bigint NOT NULL REFERENCES produtos (id) ON DELETE CASCADE,
-  PRIMARY KEY (campanha_id, produto_id)
-);
 
 
 -- ---------------------------------------------------------------------
@@ -193,7 +219,7 @@ CREATE TRIGGER pedidos_atualizado_em
 CREATE TABLE IF NOT EXISTS pedido_itens (
   id              bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   pedido_id       bigint        NOT NULL REFERENCES pedidos (id) ON DELETE CASCADE,
-  variante_id     bigint        REFERENCES produto_variantes (id) ON DELETE SET NULL,
+  produto_filho_id bigint,                                  -- variação vendida (ligada a produtos_filho mais abaixo)
   produto_nome    text          NOT NULL,
   cor             text          NOT NULL,
   tamanho         text          NOT NULL,
@@ -339,25 +365,199 @@ CREATE TRIGGER layout_paginas_atualizado_em
 
 
 -- ---------------------------------------------------------------------
--- VIEW: preço final de cada produto, já com a melhor campanha ativa
+-- PRODUTOS — cadastro
+--
+--   codigo       código do produto (único, maiúsculas), ex.: CONJ-CALCA-AZUL
+--   descricao    descrição do produto (coluna já existente)
+--   preco_atual  preço atual, numeric(10,2): decimal exato (evita erros de centavos do float)
+--   campanha_id  campanha do produto — NÃO obrigatório
+--   criado_em    data da criação (coluna já existente)
+--   criado_por   vendedor que cadastrou o produto
+--   caminho      URL da imagem do produto no volume, ex.: /arquivos/<id>.jpg
+--
+--   Escrito com ADD COLUMN IF NOT EXISTS para atualizar bancos que já existem
+--   sem perder dados (produtos antigos recebem código e caminho automaticamente).
 -- ---------------------------------------------------------------------
-CREATE OR REPLACE VIEW produtos_com_preco AS
+
+-- Substituída por produtos.campanha_id (cada produto tem no máximo uma campanha)
+DROP VIEW IF EXISTS produtos_com_preco;
+DROP TABLE IF EXISTS campanha_produtos;
+
+ALTER TABLE produtos
+  ADD COLUMN IF NOT EXISTS codigo      text,
+  ADD COLUMN IF NOT EXISTS campanha_id bigint REFERENCES campanhas (id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS criado_por  bigint REFERENCES vendedores (id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS caminho     text;
+
+-- Produtos que já existiam: código a partir do slug e caminho a partir da imagem principal
+UPDATE produtos SET codigo = upper(slug) WHERE codigo IS NULL;
+
+UPDATE produtos p
+SET caminho = i.url
+FROM (
+  SELECT DISTINCT ON (produto_id) produto_id, url
+  FROM produto_imagens
+  ORDER BY produto_id, ordem, id
+) i
+WHERE p.id = i.produto_id AND p.caminho IS NULL;
+
+ALTER TABLE produtos ALTER COLUMN codigo SET NOT NULL;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'produtos_codigo_key') THEN
+    ALTER TABLE produtos ADD CONSTRAINT produtos_codigo_key UNIQUE (codigo);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'produtos_codigo_check') THEN
+    ALTER TABLE produtos ADD CONSTRAINT produtos_codigo_check
+      CHECK (codigo ~ '^[A-Z0-9][A-Z0-9._-]{1,59}$');
+  END IF;
+  -- Só aceita imagens do próprio site: enviadas (/arquivos/...) ou padrão (/images/...)
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'produtos_caminho_check') THEN
+    ALTER TABLE produtos ADD CONSTRAINT produtos_caminho_check
+      CHECK (caminho IS NULL
+             OR caminho ~ '^/arquivos/[0-9a-f-]{36}\.(jpg|png|webp)$'
+             OR caminho ~ '^/images/[A-Za-z0-9._-]+\.(jpg|jpeg|png|webp)$');
+  END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS produtos_campanha_idx   ON produtos (campanha_id);
+CREATE INDEX IF NOT EXISTS produtos_criado_por_idx ON produtos (criado_por);
+
+COMMENT ON COLUMN produtos.codigo      IS 'Código do produto (único, maiúsculas)';
+COMMENT ON COLUMN produtos.descricao   IS 'Descrição do produto';
+COMMENT ON COLUMN produtos.preco_atual IS 'Preço atual em reais (decimal exato, 2 casas)';
+COMMENT ON COLUMN produtos.campanha_id IS 'Campanha do produto (opcional)';
+COMMENT ON COLUMN produtos.criado_em   IS 'Data da criação';
+COMMENT ON COLUMN produtos.criado_por  IS 'Vendedor que cadastrou o produto';
+COMMENT ON COLUMN produtos.caminho     IS 'URL da imagem do produto no volume (ex.: /arquivos/<id>.jpg)';
+
+
+-- ---------------------------------------------------------------------
+-- PRODUTOS_FILHO — variações do produto (cor x tamanho), com o estoque
+-- (é a grade "cores nas linhas, tamanhos nas colunas" da página do produto)
+--
+--   id              código sequencial automático (1, 2, 3...)
+--   codigo_produto  código do produto pai (produtos.codigo)
+--   cor, tamanho    códigos da cor (cores) e do tamanho (tamanhos); cada combinação uma vez por produto
+--   estoque         quantidade disponível (nunca negativa)
+--
+--   Bancos antigos: a tabela "produto_variantes" (ligada por produto_id) é
+--   renomeada e convertida para usar o código do produto, sem perder dados.
+-- ---------------------------------------------------------------------
+DO $$
+BEGIN
+  IF to_regclass('public.produto_variantes') IS NOT NULL AND to_regclass('public.produtos_filho') IS NULL THEN
+    ALTER TABLE produto_variantes RENAME TO produtos_filho;
+    DROP TRIGGER IF EXISTS produto_variantes_atualizado_em ON produtos_filho;
+    ALTER INDEX IF EXISTS produto_variantes_pkey RENAME TO produtos_filho_pkey;
+  END IF;
+
+  -- Converte produto_id → codigo_produto
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'produtos_filho' AND column_name = 'produto_id') THEN
+    ALTER TABLE produtos_filho ADD COLUMN IF NOT EXISTS codigo_produto text;
+    UPDATE produtos_filho f SET codigo_produto = p.codigo FROM produtos p WHERE p.id = f.produto_id AND f.codigo_produto IS NULL;
+    ALTER TABLE produtos_filho DROP COLUMN produto_id;  -- remove também a ligação e o índice antigos
+    ALTER TABLE produtos_filho DROP CONSTRAINT IF EXISTS produto_variantes_tamanho_fkey;
+  END IF;
+
+  -- pedido_itens.variante_id → produto_filho_id
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'pedido_itens' AND column_name = 'variante_id') THEN
+    ALTER TABLE pedido_itens RENAME COLUMN variante_id TO produto_filho_id;
+  END IF;
+END $$;
+
+CREATE TABLE IF NOT EXISTS produtos_filho (
+  id              bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  codigo_produto  text        NOT NULL,
+  cor             text        NOT NULL,                                   -- código da cor (cores.codigo)
+  tamanho         text        NOT NULL,                                   -- código do tamanho (tamanhos.codigo)
+  estoque         integer     NOT NULL DEFAULT 0 CHECK (estoque >= 0),   -- nunca fica negativo
+  sku             text        UNIQUE,                                     -- código interno (opcional)
+  criado_em       timestamptz NOT NULL DEFAULT now(),
+  atualizado_em   timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE produtos_filho ALTER COLUMN codigo_produto SET NOT NULL;
+
+-- Bancos antigos: cada variação guardava o nome e o RGB da cor; agora aponta para a tabela cores
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'produtos_filho' AND column_name = 'cor_hex') THEN
+    CREATE TEMP TABLE _cores_migracao ON COMMIT DROP AS
+    SELECT DISTINCT ON (cor)
+      cor AS nome_antigo,
+      trim(BOTH '-' FROM regexp_replace(upper(translate(cor,
+        'áàâãäéèêëíìîïóòôõöúùûüçÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇ',
+        'aaaaaeeeeiiiiooooouuuucAAAAAEEEEIIIIOOOOOUUUUC')), '[^A-Z0-9]+', '-', 'g')) AS codigo,
+      upper(cor_hex) AS rgb
+    FROM produtos_filho
+    ORDER BY cor, id;
+
+    INSERT INTO cores (codigo, nome, rgb)
+    SELECT codigo, nome_antigo, rgb FROM _cores_migracao
+    ON CONFLICT DO NOTHING;
+
+    UPDATE produtos_filho f SET cor = m.codigo FROM _cores_migracao m WHERE f.cor = m.nome_antigo;
+    ALTER TABLE produtos_filho DROP COLUMN cor_hex;
+    ALTER TABLE produtos_filho DROP CONSTRAINT IF EXISTS produto_variantes_cor_check;
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  -- Ligação com o produto pai pelo código (se o código mudar, acompanha; se o produto for apagado, as variações também)
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'produtos_filho_codigo_produto_fkey') THEN
+    ALTER TABLE produtos_filho ADD CONSTRAINT produtos_filho_codigo_produto_fkey
+      FOREIGN KEY (codigo_produto) REFERENCES produtos (codigo) ON UPDATE CASCADE ON DELETE CASCADE;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'produtos_filho_cor_fkey') THEN
+    ALTER TABLE produtos_filho ADD CONSTRAINT produtos_filho_cor_fkey
+      FOREIGN KEY (cor) REFERENCES cores (codigo) ON UPDATE CASCADE;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'produtos_filho_tamanho_fkey') THEN
+    ALTER TABLE produtos_filho ADD CONSTRAINT produtos_filho_tamanho_fkey
+      FOREIGN KEY (tamanho) REFERENCES tamanhos (codigo) ON UPDATE CASCADE;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'produtos_filho_codigo_cor_tamanho_key') THEN
+    ALTER TABLE produtos_filho ADD CONSTRAINT produtos_filho_codigo_cor_tamanho_key UNIQUE (codigo_produto, cor, tamanho);
+  END IF;
+  -- Itens de pedido apontam para a variação vendida
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname IN ('pedido_itens_produto_filho_id_fkey', 'pedido_itens_variante_id_fkey')) THEN
+    ALTER TABLE pedido_itens ADD CONSTRAINT pedido_itens_produto_filho_id_fkey
+      FOREIGN KEY (produto_filho_id) REFERENCES produtos_filho (id) ON DELETE SET NULL;
+  END IF;
+END $$;
+
+-- Ligação antiga com tamanhos (de produto_variantes), substituída por produtos_filho_tamanho_fkey
+ALTER TABLE produtos_filho DROP CONSTRAINT IF EXISTS produto_variantes_tamanho_fkey;
+
+CREATE INDEX IF NOT EXISTS produtos_filho_codigo_idx ON produtos_filho (codigo_produto);
+
+DROP TRIGGER IF EXISTS produtos_filho_atualizado_em ON produtos_filho;
+CREATE TRIGGER produtos_filho_atualizado_em
+  BEFORE UPDATE ON produtos_filho
+  FOR EACH ROW EXECUTE FUNCTION definir_atualizado_em();
+
+COMMENT ON TABLE  produtos_filho                IS 'Variações do produto (cor x tamanho) com estoque';
+COMMENT ON COLUMN produtos_filho.id             IS 'Código sequencial da variação';
+COMMENT ON COLUMN produtos_filho.codigo_produto IS 'Código do produto pai (produtos.codigo)';
+
+
+-- ---------------------------------------------------------------------
+-- VIEW: produto com o preço final (preco_atual com o desconto da campanha, se estiver ativa e no período)
+-- ---------------------------------------------------------------------
+CREATE VIEW produtos_com_preco AS
 SELECT
-  p.*,
-  c.id                  AS campanha_id,
-  c.nome                AS campanha_nome,
-  c.desconto_percentual,
-  round(p.preco * (1 - COALESCE(c.desconto_percentual, 0) / 100), 2) AS preco_final
+  p.id, p.codigo, p.slug, p.nome, p.descricao, p.preco_atual, p.caminho, p.ativo, p.destaque,
+  p.campanha_id, p.criado_em, p.criado_por, p.atualizado_em,
+  c.nome AS campanha_nome,
+  CASE WHEN c.id IS NOT NULL THEN c.desconto_percentual END AS desconto_percentual,
+  round(p.preco_atual * (1 - COALESCE(c.desconto_percentual, 0) / 100), 2) AS preco_final
 FROM produtos p
-LEFT JOIN LATERAL (
-  SELECT c.*
-  FROM campanha_produtos cp
-  JOIN campanhas c ON c.id = cp.campanha_id
-  WHERE cp.produto_id = p.id
-    AND c.ativa
-    AND now() BETWEEN c.inicio AND c.fim
-  ORDER BY c.desconto_percentual DESC
-  LIMIT 1
-) c ON true;
+LEFT JOIN campanhas c
+  ON c.id = p.campanha_id
+ AND c.ativa
+ AND now() BETWEEN c.inicio AND c.fim;
 
 COMMIT;

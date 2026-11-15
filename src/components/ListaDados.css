@@ -1,0 +1,254 @@
+/* ================= Padrão de listas ================= */
+
+.lista__legenda {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.lista__vazia {
+  padding: 40px 16px;
+  border: 1px dashed var(--borda);
+  text-align: center;
+  font-size: 14px;
+  color: var(--cinza-texto);
+}
+
+/* ---------- Computador: tabela ---------- */
+.lista__tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.lista__tabela thead th {
+  position: sticky;
+  top: var(--header-altura);
+  z-index: 1;
+  padding: 0;
+  background: var(--branco);
+  border-bottom: 2px solid var(--preto);
+  text-align: left;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.lista__tabela thead th:not(:has(button)) {
+  padding: 12px;
+}
+
+.lista__cabecalho {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 12px;
+  background: none;
+  border: none;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: var(--cinza-texto);
+  cursor: pointer;
+}
+
+.lista__cabecalho:hover,
+.lista__cabecalho.is-ativa {
+  color: var(--preto);
+}
+
+.lista__cabecalho:focus-visible {
+  outline: 2px solid var(--preto);
+  outline-offset: -2px;
+}
+
+.is-direita .lista__cabecalho {
+  justify-content: flex-end;
+}
+
+.lista__seta {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.lista__seta--nenhuma {
+  opacity: 0.3;
+}
+
+.lista__tabela tbody td {
+  padding: 12px;
+  border-bottom: 1px solid var(--borda);
+  vertical-align: middle;
+}
+
+.lista__tabela tbody tr:hover td {
+  background: #fafafa;
+}
+
+.lista__tabela tbody tr.is-clicavel {
+  cursor: pointer;
+}
+
+.lista__tabela .is-direita {
+  text-align: right;
+}
+
+.lista__tabela td.is-destaque {
+  font-weight: 700;
+}
+
+.lista__acoes {
+  white-space: nowrap;
+  text-align: right;
+}
+
+.lista__acoes > * + * {
+  margin-left: 14px;
+}
+
+/* Botões de ação padrão das listas */
+.lista-acao {
+  padding: 4px 0;
+  background: none;
+  border: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--preto);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.lista-acao:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.lista-acao.is-perigo {
+  color: #b00020;
+}
+
+.lista-acao:focus-visible {
+  outline: 2px solid var(--preto);
+  outline-offset: 2px;
+}
+
+.lista__ordenar-celular {
+  display: none;
+}
+
+/* ---------- Celular: cards ---------- */
+@media (max-width: 720px) {
+  .lista__ordenar-celular {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .lista__ordenar-controles {
+    display: flex;
+    gap: 6px;
+  }
+
+  .lista__ordenar-controles select,
+  .lista__ordenar-controles button {
+    height: 40px;
+    padding: 0 10px;
+    border: 1px solid var(--preto);
+    background: var(--branco);
+    font: inherit;
+    font-size: 14px;
+    color: var(--preto);
+  }
+
+  .lista__ordenar-controles button {
+    min-width: 56px;
+    font-weight: 800;
+  }
+
+  .lista__tabela,
+  .lista__tabela tbody,
+  .lista__tabela tr,
+  .lista__tabela td {
+    display: block;
+  }
+
+  .lista__tabela thead {
+    display: none;
+  }
+
+  .lista__tabela tbody {
+    display: grid;
+    gap: 10px;
+  }
+
+  .lista__tabela tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px 16px;
+    padding: 16px;
+    border: 1px solid var(--borda);
+    background: var(--branco);
+  }
+
+  .lista__tabela tbody tr:hover td {
+    background: none;
+  }
+
+  .lista__tabela tbody td {
+    padding: 0;
+    border: none;
+    text-align: left !important;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  /* Rótulo de cada campo dentro do card */
+  .lista__tabela tbody td:not(.is-destaque):not(.lista__acoes)::before {
+    content: attr(data-titulo);
+    display: block;
+    margin-bottom: 2px;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--cinza-neutro);
+  }
+
+  .lista__tabela td.is-destaque {
+    grid-column: 1 / -1;
+    font-size: 16px;
+  }
+
+  .lista__tabela td.is-so-computador {
+    display: none;
+  }
+
+  .lista__acoes {
+    grid-column: 1 / -1;
+    display: flex !important;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    padding-top: 10px !important;
+    border-top: 1px solid var(--cinza-claro) !important;
+  }
+
+  .lista__acoes > * + * {
+    margin-left: 0;
+  }
+}

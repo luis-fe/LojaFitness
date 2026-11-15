@@ -14,15 +14,17 @@ SET client_min_messages = warning;
 BEGIN;
 
 -- Produtos -------------------------------------------------------------
-INSERT INTO produtos (slug, nome, descricao, preco, destaque) VALUES
-  ('conjunto-calca',   'Conjunto Calça',   'Top e legging de cintura alta com recorte lateral contrastante.', 159.90, true),
-  ('conjunto-short',   'Conjunto Short',   'Top nadador e short de compressão com textura canelada.',          119.90, true),
-  ('conjunto-bermuda', 'Conjunto Bermuda', 'Top e bermuda ciclista com recorte lateral em tela.',              139.90, true)
+INSERT INTO produtos (slug, codigo, nome, descricao, preco_atual, destaque, caminho) VALUES
+  ('conjunto-calca',   'CONJUNTO-CALCA',   'Conjunto Calça',   'Top e legging de cintura alta com recorte lateral contrastante.', 159.90, true, '/images/conjunto-calca.jpg'),
+  ('conjunto-short',   'CONJUNTO-SHORT',   'Conjunto Short',   'Top nadador e short de compressão com textura canelada.',          119.90, true, '/images/conjunto-short.jpg'),
+  ('conjunto-bermuda', 'CONJUNTO-BERMUDA', 'Conjunto Bermuda', 'Top e bermuda ciclista com recorte lateral em tela.',              139.90, true, '/images/conjunto-bermuda.jpg')
 ON CONFLICT (slug) DO UPDATE
-  SET nome = EXCLUDED.nome,
+  SET codigo = EXCLUDED.codigo,
+      nome = EXCLUDED.nome,
       descricao = EXCLUDED.descricao,
-      preco = EXCLUDED.preco,
-      destaque = EXCLUDED.destaque;
+      preco_atual = EXCLUDED.preco_atual,
+      destaque = EXCLUDED.destaque,
+      caminho = EXCLUDED.caminho;
 
 -- Imagens principais (arquivos em /public/images) ------------------------
 DELETE FROM produto_imagens
@@ -37,33 +39,32 @@ FROM (VALUES
 ) AS v (slug, url, alt)
 JOIN produtos p ON p.slug = v.slug;
 
--- Variantes (cor x tamanho) e estoque -----------------------------------
-INSERT INTO produto_variantes (produto_id, cor, cor_hex, tamanho, estoque)
-SELECT p.id, v.cor, v.hex, v.tamanho, v.estoque
+-- Produtos filho: variações (cor x tamanho) e estoque -----------------------------------
+INSERT INTO produtos_filho (codigo_produto, cor, tamanho, estoque)
+SELECT p.codigo, v.cor, v.tamanho, v.estoque
 FROM (VALUES
   -- Conjunto Calça
-  ('conjunto-calca', 'Azul',  '#4a7fd8', 'P', 6), ('conjunto-calca', 'Azul',  '#4a7fd8', 'M', 10),
-  ('conjunto-calca', 'Azul',  '#4a7fd8', 'G', 4), ('conjunto-calca', 'Azul',  '#4a7fd8', 'GG', 2),
-  ('conjunto-calca', 'Preto', '#111111', 'P', 8), ('conjunto-calca', 'Preto', '#111111', 'M', 12),
-  ('conjunto-calca', 'Preto', '#111111', 'G', 7), ('conjunto-calca', 'Preto', '#111111', 'GG', 3),
-  ('conjunto-calca', 'Verde', '#9db88f', 'P', 0), ('conjunto-calca', 'Verde', '#9db88f', 'M', 5),
-  ('conjunto-calca', 'Verde', '#9db88f', 'G', 2), ('conjunto-calca', 'Verde', '#9db88f', 'GG', 0),
+  ('conjunto-calca', 'AZUL', 'P', 6), ('conjunto-calca', 'AZUL', 'M', 10),
+  ('conjunto-calca', 'AZUL', 'G', 4), ('conjunto-calca', 'AZUL', 'GG', 2),
+  ('conjunto-calca', 'PRETO', 'P', 8), ('conjunto-calca', 'PRETO', 'M', 12),
+  ('conjunto-calca', 'PRETO', 'G', 7), ('conjunto-calca', 'PRETO', 'GG', 3),
+  ('conjunto-calca', 'VERDE', 'P', 0), ('conjunto-calca', 'VERDE', 'M', 5),
+  ('conjunto-calca', 'VERDE', 'G', 2), ('conjunto-calca', 'VERDE', 'GG', 0),
   -- Conjunto Short
-  ('conjunto-short', 'Azul',  '#4a7fd8', 'P', 5), ('conjunto-short', 'Azul',  '#4a7fd8', 'M', 9),
-  ('conjunto-short', 'Azul',  '#4a7fd8', 'G', 6), ('conjunto-short', 'Azul',  '#4a7fd8', 'GG', 1),
-  ('conjunto-short', 'Preto', '#111111', 'P', 3), ('conjunto-short', 'Preto', '#111111', 'M', 0),
-  ('conjunto-short', 'Preto', '#111111', 'G', 8), ('conjunto-short', 'Preto', '#111111', 'GG', 4),
+  ('conjunto-short', 'AZUL', 'P', 5), ('conjunto-short', 'AZUL', 'M', 9),
+  ('conjunto-short', 'AZUL', 'G', 6), ('conjunto-short', 'AZUL', 'GG', 1),
+  ('conjunto-short', 'PRETO', 'P', 3), ('conjunto-short', 'PRETO', 'M', 0),
+  ('conjunto-short', 'PRETO', 'G', 8), ('conjunto-short', 'PRETO', 'GG', 4),
   -- Conjunto Bermuda
-  ('conjunto-bermuda', 'Azul',  '#4a7fd8', 'P', 7), ('conjunto-bermuda', 'Azul',  '#4a7fd8', 'M', 11),
-  ('conjunto-bermuda', 'Azul',  '#4a7fd8', 'G', 5), ('conjunto-bermuda', 'Azul',  '#4a7fd8', 'GG', 2),
-  ('conjunto-bermuda', 'Preto', '#111111', 'P', 4), ('conjunto-bermuda', 'Preto', '#111111', 'M', 6),
-  ('conjunto-bermuda', 'Preto', '#111111', 'G', 0), ('conjunto-bermuda', 'Preto', '#111111', 'GG', 1),
-  ('conjunto-bermuda', 'Verde', '#9db88f', 'P', 2), ('conjunto-bermuda', 'Verde', '#9db88f', 'M', 3),
-  ('conjunto-bermuda', 'Verde', '#9db88f', 'G', 3), ('conjunto-bermuda', 'Verde', '#9db88f', 'GG', 0)
-) AS v (slug, cor, hex, tamanho, estoque)
+  ('conjunto-bermuda', 'AZUL', 'P', 7), ('conjunto-bermuda', 'AZUL', 'M', 11),
+  ('conjunto-bermuda', 'AZUL', 'G', 5), ('conjunto-bermuda', 'AZUL', 'GG', 2),
+  ('conjunto-bermuda', 'PRETO', 'P', 4), ('conjunto-bermuda', 'PRETO', 'M', 6),
+  ('conjunto-bermuda', 'PRETO', 'G', 0), ('conjunto-bermuda', 'PRETO', 'GG', 1),
+  ('conjunto-bermuda', 'VERDE', 'P', 2), ('conjunto-bermuda', 'VERDE', 'M', 3),
+  ('conjunto-bermuda', 'VERDE', 'G', 3), ('conjunto-bermuda', 'VERDE', 'GG', 0)
+) AS v (slug, cor, tamanho, estoque)
 JOIN produtos p ON p.slug = v.slug
-ON CONFLICT (produto_id, cor, tamanho) DO UPDATE
-  SET cor_hex = EXCLUDED.cor_hex,
-      estoque = EXCLUDED.estoque;
+ON CONFLICT (codigo_produto, cor, tamanho) DO UPDATE
+  SET estoque = EXCLUDED.estoque;
 
 COMMIT;

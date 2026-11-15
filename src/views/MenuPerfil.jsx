@@ -9,7 +9,7 @@ export default function MenuPerfil() {
   const { vendedor } = useAutenticacao()
   const ehAdmin = vendedor?.papel === 'admin'
   return (
-    <PaginaVendedor titulo="Perfil" descricao="Cadastre vendedores e atualize os seus dados." largura={960}>
+    <PaginaVendedor titulo="Perfil" largura={960}>
       <CardsMenu
         rotulo="Opções de perfil"
         itens={[

@@ -70,3 +70,34 @@ export const IconeSeta = () => (
     <path d="M9 6l6 6-6 6" />
   </Svg>
 )
+
+export const IconeTamanhos = () => (
+  <Svg>
+    <path d="M3 8l5-5 13 13-5 5z" />
+    <path d="M7 10l2-2M10 13l2-2M13 16l2-2" />
+  </Svg>
+)
+
+export const IconeCores = () => (
+  <Svg>
+    <path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.9 1.8-1.9 0-.5-.2-.9-.5-1.3-.3-.3-.5-.8-.5-1.3 0-1 .8-1.8 1.8-1.8H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z" />
+    <circle cx="7.5" cy="11" r="1.2" />
+    <circle cx="10" cy="7" r="1.2" />
+    <circle cx="15" cy="7.5" r="1.2" />
+  </Svg>
+)
+
+export const IconeCaixa = () => (
+  <Svg>
+    <path d="M21 8l-9-5-9 5 9 5 9-5z" />
+    <path d="M3 8v8l9 5 9-5V8" />
+    <path d="M12 13v8" />
+  </Svg>
+)
+
+export const IconeSubir = () => (
+  <Svg>
+    <path d="M12 16V4M7 9l5-5 5 5" />
+    <path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />
+  </Svg>
+)

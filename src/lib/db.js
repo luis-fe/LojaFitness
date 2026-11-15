@@ -58,7 +58,7 @@ export function query(sql, parametros = []) {
 
 // Executa várias consultas em uma transação: ou tudo dá certo, ou nada é gravado.
 //   await transacao(async (db) => {
-//     await db.query('UPDATE produto_variantes SET estoque = estoque - $1 WHERE id = $2', [2, 10])
+//     await db.query('UPDATE produtos_filho SET estoque = estoque - $1 WHERE id = $2', [2, 10])
 //     await db.query('INSERT INTO pedidos (total) VALUES ($1)', [319.8])
 //   })
 export async function transacao(funcao) {

@@ -1,0 +1,60 @@
+/* Estilos compartilhados das telas de cadastro (tamanhos, cores, produtos) */
+
+.cadastro__aviso {
+  margin-bottom: 16px;
+}
+
+.cadastro__carregando {
+  height: 240px;
+  background: var(--cinza-claro);
+}
+
+.modal__texto {
+  margin-bottom: 16px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--cinza-texto);
+}
+
+/* Cores */
+.amostra-cor {
+  display: inline-block;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid var(--borda);
+  box-shadow: inset 0 0 0 2px var(--branco);
+  vertical-align: middle;
+}
+
+.cor-nome {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cor-rgb {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+}
+
+.seletor-cor {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.seletor-cor input[type='color'] {
+  width: 56px;
+  height: 48px;
+  padding: 2px;
+  border: 1px solid #bdbdbd;
+  background: var(--branco);
+  cursor: pointer;
+}
+
+.seletor-cor input:not([type='color']) {
+  flex: 1;
+  min-width: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  text-transform: uppercase;
+}

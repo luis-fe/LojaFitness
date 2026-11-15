@@ -2,25 +2,18 @@
 
 import PaginaVendedor from '@/components/PaginaVendedor'
 import CardsMenu from '@/components/CardsMenu'
-import { IconeImagem, IconeCampanha } from '@/components/Icones'
+import { IconeTamanhos, IconeCores, IconeCaixa, IconeSubir } from '@/components/Icones'
 
 export default function MenuProdutos() {
   return (
-    <PaginaVendedor titulo="Produtos" descricao="Fotos dos produtos e campanhas de desconto." largura={960}>
+    <PaginaVendedor titulo="Produtos" largura={1080}>
       <CardsMenu
         rotulo="Opções de produtos"
         itens={[
-          {
-            titulo: 'Carregar imagens',
-            href: '/area-do-vendedor/carregar-imagens',
-            Icone: IconeImagem,
-          },
-          {
-            titulo: 'Cadastrar Campanhas',
-            href: '/area-do-vendedor/cadastrar-campanhas',
-            Icone: IconeCampanha,
-            selo: 'Em breve',
-          },
+          { titulo: 'Tamanhos', href: '/area-do-vendedor/tamanhos', Icone: IconeTamanhos },
+          { titulo: 'Cores', href: '/area-do-vendedor/cores', Icone: IconeCores },
+          { titulo: 'Produtos', href: '/area-do-vendedor/cadastro-produtos', Icone: IconeCaixa },
+          { titulo: 'Subir imagens', href: '/area-do-vendedor/carregar-imagens', Icone: IconeSubir },
         ]}
       />
     </PaginaVendedor>

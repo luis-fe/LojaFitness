@@ -14,12 +14,12 @@ export async function GET(request) {
   try {
     const [produtos, baixo, pedidos] = await Promise.all([
       query(`SELECT count(*) FILTER (WHERE ativo) AS ativos,
-                    (SELECT COALESCE(sum(estoque), 0) FROM produto_variantes) AS pecas
+                    (SELECT COALESCE(sum(estoque), 0) FROM produtos_filho) AS pecas
              FROM produtos`),
       query(
         `SELECT p.nome, v.cor, v.tamanho, v.estoque
-         FROM produto_variantes v
-         JOIN produtos p ON p.id = v.produto_id
+         FROM produtos_filho v
+         JOIN produtos p ON p.codigo = v.codigo_produto
          WHERE p.ativo AND v.estoque <= $1
          ORDER BY v.estoque, p.nome, v.cor, v.tamanho`,
         [ESTOQUE_BAIXO]
