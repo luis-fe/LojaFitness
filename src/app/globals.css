@@ -6,6 +6,8 @@
   --cinza-neutro: #737373; /* cinza neutro para informações de apoio (contraste 4.7:1) */
   --cinza-claro: #f4f4f4;
   --borda: #e2e2e2;
+  --azul: #2563eb; /* botões de ação principais (contraste 5,2:1 com texto branco) */
+  --azul-escuro: #1d4ed8;
   --whatsapp: #25d366; /* verde oficial do WhatsApp — usar com texto preto (contraste 10.6:1) */
   --whatsapp-escuro: #1ebe5d;
   --header-altura: 64px;

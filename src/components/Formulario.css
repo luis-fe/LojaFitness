@@ -38,7 +38,7 @@
 }
 
 .campo__senha input {
-  padding-right: 84px;
+  padding-right: 52px;
 }
 
 .campo__mostrar {
@@ -46,15 +46,20 @@
   right: 4px;
   top: 4px;
   bottom: 4px;
-  padding: 0 12px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  padding: 0;
   background: none;
   border: none;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  border-radius: 6px;
   color: var(--cinza-texto);
   cursor: pointer;
+}
+
+.campo__mostrar svg {
+  width: 22px;
+  height: 22px;
 }
 
 .campo__mostrar:hover {
@@ -63,6 +68,7 @@
 
 .campo__mostrar:focus-visible {
   outline: 2px solid var(--preto);
+  outline-offset: -2px;
 }
 
 

@@ -2,6 +2,7 @@
 
 import { useId, useState } from 'react'
 import './Formulario.css'
+import { IconeOlho, IconeOlhoFechado } from '@/components/Icones'
 
 // Campo de formulário acessível: rótulo, dica, mensagem de erro e opção de mostrar senha.
 //   <Campo rotulo="Telefone" valor={tel} aoMudar={setTel} erro={erros.telefone} />
@@ -47,8 +48,9 @@ export default function Campo({
             onClick={() => setMostrar((v) => !v)}
             aria-pressed={mostrar}
             aria-label={mostrar ? `Ocultar ${rotulo.toLowerCase()}` : `Mostrar ${rotulo.toLowerCase()}`}
+            title={mostrar ? 'Ocultar' : 'Mostrar'}
           >
-            {mostrar ? 'Ocultar' : 'Mostrar'}
+            {mostrar ? <IconeOlhoFechado /> : <IconeOlho />}
           </button>
         </div>
       ) : (

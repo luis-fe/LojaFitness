@@ -6,6 +6,7 @@ import Link from 'next/link'
 import '@/components/Formulario.css'
 import './Login.css'
 import { useAutenticacao } from '@/context/Autenticacao'
+import { IconeOlho, IconeOlhoFechado } from '@/components/Icones'
 
 export default function Login() {
   const { entrar, autenticado, carregado } = useAutenticacao()
@@ -46,7 +47,6 @@ export default function Login() {
       <div className="login__caixa">
         <span className="login__selo">Área do Vendedor</span>
         <h1 id="login-titulo" className="login__titulo">Entrar</h1>
-        <p className="login__texto">Use o login e a senha fornecidos pela loja.</p>
 
         <form className="login__form" onSubmit={aoEnviar} noValidate>
           <div className="campo">
@@ -83,8 +83,10 @@ export default function Login() {
                 className="campo__mostrar"
                 onClick={() => setMostrarSenha((v) => !v)}
                 aria-pressed={mostrarSenha}
+                aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
+                title={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
               >
-                {mostrarSenha ? 'Ocultar' : 'Mostrar'}
+                {mostrarSenha ? <IconeOlhoFechado /> : <IconeOlho />}
               </button>
             </div>
           </div>

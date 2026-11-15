@@ -12,6 +12,13 @@
   padding: 32px 24px;
   background: var(--branco);
   border: 1px solid var(--borda);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+}
+
+/* Campos com cantos levemente arredondados, combinando com o frame */
+.login .campo input {
+  border-radius: 10px;
 }
 
 .login__selo {
@@ -29,12 +36,6 @@
   text-transform: uppercase;
 }
 
-.login__texto {
-  margin-top: 6px;
-  font-size: 14px;
-  color: var(--cinza-texto);
-}
-
 .login__form {
   display: flex;
   flex-direction: column;
@@ -50,34 +51,35 @@
   color: #b00020;
 }
 
+/* Botão Entrar azul (texto branco com contraste 5,2:1) */
 .login__btn {
   height: 52px;
-  background: var(--preto);
+  background: var(--azul);
   color: var(--branco);
-  border: 2px solid var(--preto);
+  border: 2px solid var(--azul);
+  border-radius: 10px;
   font: inherit;
   font-size: 14px;
   font-weight: 700;
   letter-spacing: 1.5px;
   text-transform: uppercase;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
 }
 
 .login__btn:hover:not(:disabled) {
-  background: var(--branco);
-  color: var(--preto);
+  background: var(--azul-escuro);
+  border-color: var(--azul-escuro);
 }
 
+/* Enquanto faltam login/senha: continua azul, só mais claro */
 .login__btn:disabled {
-  background: var(--cinza-claro);
-  border-color: var(--borda);
-  color: var(--cinza-texto);
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 .login__btn:focus-visible {
-  outline: 2px solid var(--preto);
+  outline: 2px solid var(--azul);
   outline-offset: 3px;
 }
 
