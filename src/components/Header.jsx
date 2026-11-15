@@ -3,11 +3,8 @@ import './Header.css'
 
 const opcoes = [{ label: 'Black Friday', href: '#black-friday' }]
 
-// Opções que aparecem só no menu lateral
-const opcoesMenuLateral = [
-  ...opcoes,
-  { label: 'Área do Vendedor', href: '#area-do-vendedor' },
-]
+// Opções fixadas no rodapé do menu lateral
+const opcoesRodape = [{ label: 'Área do Vendedor', href: '#area-do-vendedor' }]
 
 export default function Header({ hashAtual = '' }) {
   const [menuAberto, setMenuAberto] = useState(false)
@@ -34,6 +31,18 @@ export default function Header({ hashAtual = '' }) {
   }, [menuAberto])
 
   const ativo = (href) => hashAtual.startsWith(href)
+
+  const renderLinkMenu = (op) => (
+    <a
+      key={op.label}
+      href={op.href}
+      className="header__drawer-link"
+      aria-current={ativo(op.href) ? 'page' : undefined}
+      onClick={() => setMenuAberto(false)}
+    >
+      {op.label}
+    </a>
+  )
 
   return (
     <header className="header">
@@ -75,18 +84,11 @@ export default function Header({ hashAtual = '' }) {
         aria-label="Menu"
         inert={menuAberto ? undefined : ''}
       >
-        <nav>
-          {opcoesMenuLateral.map((op) => (
-            <a
-              key={op.label}
-              href={op.href}
-              className="header__drawer-link"
-              aria-current={ativo(op.href) ? 'page' : undefined}
-              onClick={() => setMenuAberto(false)}
-            >
-              {op.label}
-            </a>
-          ))}
+        <nav className="header__drawer-nav">
+          {opcoes.map(renderLinkMenu)}
+        </nav>
+        <nav className="header__drawer-rodape" aria-label="Vendedor">
+          {opcoesRodape.map(renderLinkMenu)}
         </nav>
       </aside>
     </header>

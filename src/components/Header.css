@@ -108,9 +108,24 @@
   transform: translateX(0);
 }
 
+.header__drawer {
+  display: flex;
+  flex-direction: column;
+}
+
 .header__drawer nav {
   display: flex;
   flex-direction: column;
+}
+
+/* Empurra a Área do Vendedor para o fim do menu */
+.header__drawer-rodape {
+  margin-top: auto;
+  border-top: 1px solid var(--cinza);
+}
+
+.header__drawer-rodape .header__drawer-link:last-child {
+  border-bottom: none;
 }
 
 .header__drawer-link {
