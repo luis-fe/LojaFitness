@@ -1,0 +1,164 @@
+.hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: calc(100svh - var(--header-altura));
+  max-height: 820px;
+  background: var(--preto);
+  color: var(--branco);
+  overflow: hidden;
+}
+
+/* Imagem à direita no computador */
+.hero__imagem {
+  order: 2;
+  position: relative;
+}
+
+.hero__imagem img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 20%;
+  filter: grayscale(15%) contrast(1.05);
+}
+
+.hero__conteudo {
+  order: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 48px clamp(24px, 6vw, 96px);
+}
+
+.hero__selo {
+  padding: 6px 12px;
+  border: 1px solid var(--branco);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.hero__titulo {
+  font-size: clamp(32px, 4.5vw, 56px);
+  font-weight: 800;
+  line-height: 1.05;
+  text-transform: uppercase;
+  letter-spacing: -0.5px;
+}
+
+.hero__linha {
+  display: block;
+  text-wrap: balance;
+}
+
+.hero__texto {
+  max-width: 420px;
+  font-size: 17px;
+  line-height: 1.5;
+  color: #cfcfcf;
+}
+
+.hero__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.hero__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 0 32px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  text-decoration: none;
+  border: 2px solid var(--branco);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.hero__btn--principal {
+  background: var(--branco);
+  color: var(--preto);
+}
+
+.hero__btn--principal:hover {
+  background: transparent;
+  color: var(--branco);
+}
+
+.hero__btn--secundario {
+  background: transparent;
+  color: var(--branco);
+}
+
+.hero__btn--secundario:hover {
+  background: var(--branco);
+  color: var(--preto);
+}
+
+.hero__btn:focus-visible {
+  outline: 2px solid var(--branco);
+  outline-offset: 3px;
+}
+
+/* Celular: imagem em tela cheia com o texto por cima */
+@media (max-width: 768px) {
+  .hero {
+    display: block;
+    min-height: calc(100svh - var(--header-altura));
+    max-height: none;
+  }
+
+  .hero__imagem {
+    position: absolute;
+    inset: 0;
+  }
+
+  .hero__imagem::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.55) 40%, rgba(0, 0, 0, 0) 70%);
+  }
+
+  .hero__conteudo {
+    position: relative;
+    justify-content: flex-end;
+    min-height: calc(100svh - var(--header-altura));
+    padding: 24px 16px 32px;
+    gap: 14px;
+  }
+
+  .hero__titulo {
+    font-size: clamp(28px, 8vw, 40px);
+  }
+
+  .hero__texto {
+    font-size: 15px;
+  }
+
+  .hero__acoes {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .hero__btn {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__btn {
+    transition: none;
+  }
+}

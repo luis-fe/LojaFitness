@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Header from './components/Header.jsx'
 import AreaVendedor from './pages/AreaVendedor.jsx'
+import Hero from './components/Hero.jsx'
 
 // Navegação simples pelo "#" da URL (ex.: #area-do-vendedor)
 function useHash() {
@@ -31,9 +32,7 @@ export default function App() {
         {hash.startsWith('#area-do-vendedor') ? (
           <AreaVendedor />
         ) : (
-          <div style={{ padding: '32px 16px' }}>
-            <h1>JLK Fitness e Casual</h1>
-          </div>
+          <Hero />
         )}
       </main>
     </>
