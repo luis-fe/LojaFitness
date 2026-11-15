@@ -309,13 +309,15 @@
   padding: 0 16px;
   letter-spacing: 1px;
   white-space: nowrap;
-  background: var(--branco);
+  background: var(--whatsapp);
+  border-color: var(--whatsapp);
   color: var(--preto);
 }
 
 .produto__btn.produto__btn--whats:hover {
-  background: var(--preto);
-  color: var(--branco);
+  background: var(--whatsapp-escuro);
+  border-color: var(--whatsapp-escuro);
+  color: var(--preto);
 }
 
 .produto__adicionado {

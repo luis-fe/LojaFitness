@@ -227,6 +227,17 @@
   color: var(--preto);
 }
 
+.carrinho__btn.carrinho__btn--whats {
+  background: var(--whatsapp);
+  border-color: var(--whatsapp);
+  color: var(--preto);
+}
+
+.carrinho__btn.carrinho__btn--whats:hover {
+  background: var(--whatsapp-escuro);
+  border-color: var(--whatsapp-escuro);
+}
+
 .carrinho__btn--whats {
   width: 100%;
   padding: 0 16px;
