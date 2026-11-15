@@ -235,27 +235,50 @@ CREATE TRIGGER pagamentos_atualizado_em
 
 
 -- ---------------------------------------------------------------------
--- USUÁRIOS da Área do Vendedor (login com usuário e senha → token JWT)
--- A senha NUNCA é guardada: só o hash (scrypt). Crie usuários com:
---   npm run usuario:criar
+-- VENDEDORES — quem acessa a Área do Vendedor (login + senha → token JWT)
+--
+--   • A senha NUNCA é guardada: só o hash (scrypt) em senha_hash.
+--   • Telefone e CPF/CNPJ são guardados só com dígitos.
+--   • CPF/CNPJ e nome fantasia são opcionais.
+--   • Vendedor não é apagado: é desativado (ativo = false), preservando o histórico.
+--
+--   Crie o primeiro (administrador) com:
+--     npm run vendedor:criar -- --papel admin
 -- ---------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS usuarios (
-  id               bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  usuario          text        NOT NULL UNIQUE
-                   CHECK (usuario ~ '^[a-z0-9._-]{3,40}$'),          -- login, sempre em minúsculas
-  nome             text        NOT NULL CHECK (length(trim(nome)) > 0),
-  senha_hash       text        NOT NULL,
-  papel            text        NOT NULL DEFAULT 'vendedor'
-                   CHECK (papel IN ('vendedor', 'admin')),
-  ativo            boolean     NOT NULL DEFAULT true,                -- false = não consegue entrar
-  ultimo_login_em  timestamptz,
-  criado_em        timestamptz NOT NULL DEFAULT now(),
-  atualizado_em    timestamptz NOT NULL DEFAULT now()
+
+-- A tabela "usuarios" da versão anterior foi substituída por "vendedores"
+DROP TABLE IF EXISTS usuarios;
+
+CREATE TABLE IF NOT EXISTS vendedores (
+  id                 bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  login              text        NOT NULL UNIQUE
+                     CHECK (login ~ '^[a-z0-9._-]{3,40}$'),            -- sempre em minúsculas
+  nome               text        NOT NULL
+                     CHECK (length(trim(nome)) BETWEEN 2 AND 120),
+  senha_hash         text        NOT NULL,                              -- senha criptografada (scrypt)
+  telefone           text        NOT NULL
+                     CHECK (telefone ~ '^[0-9]{10,13}$'),               -- ex.: 11987654321 ou 5511987654321
+  cpf_cnpj           text        UNIQUE
+                     CHECK (cpf_cnpj ~ '^([0-9]{11}|[0-9]{14})$'),      -- opcional: 11 dígitos (CPF) ou 14 (CNPJ)
+  tipo_documento     text GENERATED ALWAYS AS (
+                       CASE length(cpf_cnpj) WHEN 11 THEN 'cpf' WHEN 14 THEN 'cnpj' END
+                     ) STORED,
+  nome_fantasia      text
+                     CHECK (nome_fantasia IS NULL OR length(trim(nome_fantasia)) BETWEEN 2 AND 120),  -- opcional
+  papel              text        NOT NULL DEFAULT 'vendedor'
+                     CHECK (papel IN ('vendedor', 'admin')),          -- admin gerencia os outros vendedores
+  ativo              boolean     NOT NULL DEFAULT true,                -- false = não consegue entrar
+  senha_alterada_em  timestamptz NOT NULL DEFAULT now(),               -- tokens emitidos antes disso deixam de valer
+  ultimo_login_em    timestamptz,
+  criado_em          timestamptz NOT NULL DEFAULT now(),
+  atualizado_em      timestamptz NOT NULL DEFAULT now()
 );
 
-DROP TRIGGER IF EXISTS usuarios_atualizado_em ON usuarios;
-CREATE TRIGGER usuarios_atualizado_em
-  BEFORE UPDATE ON usuarios
+CREATE INDEX IF NOT EXISTS vendedores_ativos_idx ON vendedores (ativo, nome);
+
+DROP TRIGGER IF EXISTS vendedores_atualizado_em ON vendedores;
+CREATE TRIGGER vendedores_atualizado_em
+  BEFORE UPDATE ON vendedores
   FOR EACH ROW EXECUTE FUNCTION definir_atualizado_em();
 
 

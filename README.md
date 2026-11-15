@@ -14,8 +14,8 @@ cp .env.example .env.local        # preencha DATABASE_URL e JWT_SECRET
 createdb jlk_loja                 # ou: psql -c "CREATE DATABASE jlk_loja;"
 npm run db:setup                  # cria as tabelas e carrega os produtos de exemplo
 
-# primeiro usuário da Área do Vendedor (a senha é pedida no terminal)
-npm run usuario:criar
+# primeiro vendedor ADMINISTRADOR (a senha é pedida no terminal)
+npm run vendedor:criar -- --papel admin
 
 npm run dev                       # http://localhost:3000
 ```
@@ -31,7 +31,7 @@ Para conferir se o banco está conectado: http://localhost:3000/api/saude
 | `npm run db:schema` | Cria/atualiza as tabelas (`db/schema.sql`) |
 | `npm run db:seed` | Carrega os produtos de exemplo (`db/seed.sql`) |
 | `npm run db:setup` | Os dois acima |
-| `npm run usuario:criar` | Cria ou redefine a senha de um usuário do vendedor |
+| `npm run vendedor:criar` | Cria ou atualiza um vendedor direto no banco (use `-- --papel admin` para o primeiro) |
 
 ## Estrutura
 
@@ -39,7 +39,7 @@ Para conferir se o banco está conectado: http://localhost:3000/api/saude
 db/
   schema.sql            criação do banco (tabelas, regras, view de preços)
   seed.sql              dados de exemplo
-scripts/                db.mjs (roda os SQL) e criar-usuario.mjs
+scripts/                db.mjs (roda os SQL) e criar-vendedor.mjs
 src/
   app/                  rotas (páginas e API)
     page.jsx                         /
@@ -51,22 +51,51 @@ src/
   components/           Header, Hero, Carrossel...
   views/                telas (Produto, Carrinho, Login, AreaVendedor)
   context/              Carrinho e Autenticacao (estado no navegador)
-  lib/                  db, auth (JWT), senha, pedidos, produtos, whatsapp
+  lib/                  db, auth (JWT), vendedores, validacao, senha, pedidos, produtos, whatsapp
 ```
 
 ## API
 
 Rotas marcadas com 🔒 exigem o cabeçalho `Authorization: Bearer <token>`.
 
-| Método | Rota | Descrição |
+| Método | Rota | Quem | Descrição |
+|---|---|---|---|
+| GET | `/api/saude` | público | Status do servidor e do banco |
+| GET | `/api/produtos` | público | Lista de produtos |
+| GET | `/api/produtos/:slug` | público | Um produto |
+| POST | `/api/pedidos` | público | Confere estoque, recalcula o total e devolve o link do WhatsApp |
+| POST | `/api/auth/login` | público | Login e senha → token JWT (expira em 3 h) |
+| GET | `/api/auth/eu` 🔒 | logado | Vendedor da sessão |
+| GET | `/api/vendedor/resumo` 🔒 | logado | Números da loja e estoque baixo |
+| GET | `/api/vendedores/eu` 🔒 | logado | Meu cadastro |
+| PATCH | `/api/vendedores/eu` 🔒 | logado | Editar meu nome, telefone, CPF/CNPJ, nome fantasia |
+| PUT | `/api/vendedores/eu/senha` 🔒 | logado | Trocar minha senha (`senhaAtual`, `novaSenha`) |
+| GET | `/api/vendedores` 🔒 | admin | Listar (`?busca=&ativo=true&pagina=1&porPagina=20`) |
+| POST | `/api/vendedores` 🔒 | admin | Cadastrar vendedor |
+| GET | `/api/vendedores/:id` 🔒 | admin ou o próprio | Ver cadastro |
+| PATCH | `/api/vendedores/:id` 🔒 | admin ou o próprio | Editar (o próprio não altera login, papel nem ativo) |
+| DELETE | `/api/vendedores/:id` 🔒 | admin | Desativar (não apaga) e derrubar as sessões dele |
+| PUT | `/api/vendedores/:id/senha` 🔒 | admin ou o próprio | Admin redefine sem a senha atual |
+
+### Vendedores — campos e regras
+
+| Campo | Obrigatório | Regra |
 |---|---|---|
-| GET | `/api/saude` | Status do servidor e do banco |
-| GET | `/api/produtos` | Lista de produtos |
-| GET | `/api/produtos/:slug` | Um produto |
-| POST | `/api/pedidos` | Confere estoque, recalcula o total e devolve o link do WhatsApp |
-| POST | `/api/auth/login` | Usuário e senha → token JWT (expira em 3 h) |
-| GET | `/api/auth/eu` 🔒 | Dados do usuário do token |
-| GET | `/api/vendedor/resumo` 🔒 | Números da loja e estoque baixo |
+| `login` | sim | 3–40 caracteres: letras minúsculas, números, `.` `-` `_` · único · convertido para minúsculas |
+| `nome` | sim | 2–120 caracteres |
+| `senha` | sim (no cadastro) | mínimo 8 caracteres · guardada só como hash scrypt · nunca volta nas respostas |
+| `telefone` | sim | DDD + número (com ou sem 55) · guardado só com dígitos |
+| `cpf_cnpj` | não | dígitos verificadores conferidos · único · guardado só com dígitos · `tipo_documento` é calculado (`cpf`/`cnpj`) |
+| `nome_fantasia` | não | 2–120 caracteres · enviar vazio ou `null` remove |
+| `papel` | não | `vendedor` (padrão) ou `admin` — só admin altera |
+| `ativo` | — | só admin altera · desativar bloqueia o login e derruba as sessões |
+
+Outras regras:
+- Vendedor nunca é apagado, só desativado (preserva o histórico de pedidos).
+- A loja sempre mantém **pelo menos um administrador ativo**; ninguém remove o próprio acesso de admin.
+- Trocar a senha invalida todos os tokens anteriores daquele vendedor.
+- Mudanças de papel valem na hora (o papel é lido do banco a cada requisição).
+- Erros de validação voltam como `422` com `campos: { campo: "mensagem" }`; login/CPF repetido volta `409`.
 
 ### Autenticação (JWT)
 
@@ -74,8 +103,8 @@ Rotas marcadas com 🔒 exigem o cabeçalho `Authorization: Bearer <token>`.
 # 1. login
 curl -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"usuario":"maria","senha":"sua-senha"}'
-# → { "token": "eyJ...", "tipo": "Bearer", "expiraEm": "...", "expiraEmSegundos": 10800, "usuario": {...} }
+  -d '{"login":"maria","senha":"sua-senha"}'
+# → { "token": "eyJ...", "tipo": "Bearer", "expiraEm": "...", "expiraEmSegundos": 10800, "vendedor": {...} }
 
 # 2. chamadas protegidas
 curl http://localhost:3000/api/vendedor/resumo -H "Authorization: Bearer eyJ..."
@@ -84,7 +113,7 @@ curl http://localhost:3000/api/vendedor/resumo -H "Authorization: Bearer eyJ..."
 - Token assinado com `JWT_SECRET` (HS256), validade definida em `JWT_EXPIRACAO` (padrão `3h`).
 - Senhas guardadas apenas como hash **scrypt**.
 - Após 5 tentativas erradas, o login é bloqueado por 15 minutos (por IP + usuário).
-- Respostas `401` trazem `codigo`: `token_ausente`, `token_invalido` ou `token_expirado`.
+- Respostas `401` trazem `codigo`: `token_ausente`, `token_invalido`, `token_expirado`, `token_revogado` (senha trocada) ou `conta_inativa`.
 
 Para proteger uma nova rota:
 
@@ -94,7 +123,7 @@ import { exigirAutenticacao } from '@/lib/auth'
 export async function GET(request) {
   const auth = await exigirAutenticacao(request) // ou { papeis: ['admin'] }
   if (auth.erro) return auth.erro
-  // auth.usuario → { id, usuario, nome, papel, expiraEm }
+  // auth.vendedor → { id, login, nome, nome_fantasia, papel, expiraEm }
 }
 ```
 

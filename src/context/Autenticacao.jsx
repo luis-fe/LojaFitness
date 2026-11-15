@@ -8,7 +8,7 @@ const AutenticacaoContext = createContext(null)
 function lerSessaoSalva() {
   try {
     const sessao = JSON.parse(localStorage.getItem(CHAVE) || 'null')
-    if (sessao?.token && new Date(sessao.expiraEm) > new Date()) return sessao
+    if (sessao?.token && sessao.vendedor && new Date(sessao.expiraEm) > new Date()) return sessao
     localStorage.removeItem(CHAVE)
   } catch {
     /* armazenamento indisponível */
@@ -18,7 +18,7 @@ function lerSessaoSalva() {
 
 // Guarda o token JWT da Área do Vendedor e o envia como "Authorization: Bearer" nas APIs.
 export function AutenticacaoProvider({ children }) {
-  const [sessao, setSessao] = useState(null) // { token, expiraEm, usuario }
+  const [sessao, setSessao] = useState(null) // { token, expiraEm, vendedor }
   const [carregado, setCarregado] = useState(false)
 
   useEffect(() => {
@@ -43,16 +43,16 @@ export function AutenticacaoProvider({ children }) {
     return () => clearTimeout(id)
   }, [sessao, sair])
 
-  const entrar = useCallback(async (usuario, senha) => {
+  const entrar = useCallback(async (login, senha) => {
     const resposta = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ usuario, senha }),
+      body: JSON.stringify({ login, senha }),
     })
     const dados = await resposta.json().catch(() => ({}))
     if (!resposta.ok) throw new Error(dados.erro || 'Não foi possível entrar.')
 
-    const nova = { token: dados.token, expiraEm: dados.expiraEm, usuario: dados.usuario }
+    const nova = { token: dados.token, expiraEm: dados.expiraEm, vendedor: dados.vendedor }
     setSessao(nova)
     try {
       localStorage.setItem(CHAVE, JSON.stringify(nova))
@@ -76,7 +76,15 @@ export function AutenticacaoProvider({ children }) {
   )
 
   const valor = useMemo(
-    () => ({ carregado, sessao, usuario: sessao?.usuario ?? null, autenticado: Boolean(sessao), entrar, sair, fetchAutenticado }),
+    () => ({
+      carregado,
+      sessao,
+      vendedor: sessao?.vendedor ?? null,
+      autenticado: Boolean(sessao),
+      entrar,
+      sair,
+      fetchAutenticado,
+    }),
     [carregado, sessao, entrar, sair, fetchAutenticado]
   )
 

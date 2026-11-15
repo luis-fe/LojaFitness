@@ -14,7 +14,7 @@ export default function Login() {
   // Só aceita voltar para páginas da própria área (evita redirecionar para outro site)
   const destino = voltar?.startsWith('/area-do-vendedor') ? voltar : '/area-do-vendedor'
 
-  const [usuario, setUsuario] = useState('')
+  const [login, setLogin] = useState('')
   const [senha, setSenha] = useState('')
   const [mostrarSenha, setMostrarSenha] = useState(false)
   const [erro, setErro] = useState('')
@@ -30,7 +30,7 @@ export default function Login() {
     setErro('')
     setEnviando(true)
     try {
-      await entrar(usuario, senha)
+      await entrar(login, senha)
       router.replace(destino)
     } catch (falha) {
       setErro(falha.message)
@@ -45,20 +45,20 @@ export default function Login() {
       <div className="login__caixa">
         <span className="login__selo">Área do Vendedor</span>
         <h1 id="login-titulo" className="login__titulo">Entrar</h1>
-        <p className="login__texto">Use o usuário e a senha fornecidos pela loja.</p>
+        <p className="login__texto">Use o login e a senha fornecidos pela loja.</p>
 
         <form className="login__form" onSubmit={aoEnviar} noValidate>
           <div className="campo">
-            <label htmlFor="usuario">Usuário</label>
+            <label htmlFor="login">Login</label>
             <input
-              id="usuario"
-              name="usuario"
+              id="login"
+              name="login"
               autoComplete="username"
               autoCapitalize="none"
               spellCheck={false}
               required
-              value={usuario}
-              onChange={(e) => setUsuario(e.target.value)}
+              value={login}
+              onChange={(e) => setLogin(e.target.value)}
               aria-invalid={Boolean(erro) || undefined}
             />
           </div>
@@ -94,7 +94,7 @@ export default function Login() {
             </p>
           )}
 
-          <button type="submit" className="login__btn" disabled={enviando || !usuario || !senha}>
+          <button type="submit" className="login__btn" disabled={enviando || !login || !senha}>
             {enviando ? 'Entrando…' : 'Entrar'}
           </button>
         </form>

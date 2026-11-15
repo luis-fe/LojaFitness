@@ -105,7 +105,7 @@ function Resumo() {
 }
 
 export default function AreaVendedor() {
-  const { usuario, sessao, sair } = useAutenticacao()
+  const { vendedor, sessao, sair } = useAutenticacao()
 
   return (
     <section className="vendedor" aria-labelledby="vendedor-titulo">
@@ -117,7 +117,7 @@ export default function AreaVendedor() {
 
       <div className="vendedor__sessao">
         <span>
-          Olá, <strong>{usuario?.nome}</strong> · sessão até {horario(sessao.expiraEm)}
+          Olá, <strong>{vendedor?.nome_fantasia || vendedor?.nome}</strong> · sessão até {horario(sessao.expiraEm)}
         </span>
         <button type="button" onClick={sair} className="vendedor__sair">
           Sair

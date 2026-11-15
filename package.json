@@ -10,7 +10,7 @@
     "db:schema": "node scripts/db.mjs schema",
     "db:seed": "node scripts/db.mjs seed",
     "db:setup": "node scripts/db.mjs setup",
-    "usuario:criar": "node scripts/criar-usuario.mjs"
+    "vendedor:criar": "node scripts/criar-vendedor.mjs"
   },
   "dependencies": {
     "jose": "^6.2.17",

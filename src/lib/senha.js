@@ -10,7 +10,6 @@ const R = 8
 const P = 1
 const TAMANHO = 64
 
-export const SENHA_MINIMA = 8
 
 export async function gerarHashSenha(senha) {
   const salt = randomBytes(16)
