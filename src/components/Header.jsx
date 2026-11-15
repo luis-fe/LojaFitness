@@ -3,6 +3,12 @@ import './Header.css'
 
 const opcoes = [{ label: 'Black Friday', href: '#black-friday' }]
 
+// Opções que aparecem só no menu lateral
+const opcoesMenuLateral = [
+  ...opcoes,
+  { label: 'Área do Vendedor', href: '#area-do-vendedor' },
+]
+
 export default function Header() {
   const [menuAberto, setMenuAberto] = useState(false)
 
@@ -31,7 +37,7 @@ export default function Header() {
         <>
           <div className="header__overlay" onClick={() => setMenuAberto(false)} />
           <aside className="header__drawer">
-            {opcoes.map((op) => (
+            {opcoesMenuLateral.map((op) => (
               <a
                 key={op.label}
                 href={op.href}
