@@ -36,29 +36,36 @@ Para conferir se o banco está conectado: http://localhost:3000/api/saude
 
 ## Estrutura
 
+Arquitetura em camadas (MVC) — detalhes em [`src/server/README.md`](src/server/README.md).
+
 ```
 db/
-  schema.sql            criação do banco (tabelas, regras, view de preços)
+  schema.sql            criação/migração do banco (tabelas, regras, view de preços)
   seed.sql              dados de exemplo
-scripts/                db.mjs (roda os SQL) e criar-vendedor.mjs
+scripts/                db.mjs (roda os SQL / pré-deploy) e criar-vendedor.mjs
 src/
-  app/                  rotas (páginas e API)
-    page.jsx                         /
-    produto/[slug]/page.jsx          /produto/conjunto-calca
-    carrinho/page.jsx                /carrinho
-    area-do-vendedor/login/          /area-do-vendedor/login
-    area-do-vendedor/(protegida)/    páginas que exigem login:
-      perfil/                        /area-do-vendedor/perfil          (menu: Novo Vendedor, Alterar Perfil)
-      perfil/alterar/                /area-do-vendedor/perfil/alterar  (meus dados e senha)
-      produtos/                      /area-do-vendedor/produtos        (menu: imagens, campanhas)
-      vendedores/                    /area-do-vendedor/vendedores      (gestão, só admin; ?novo=1 abre o cadastro)
-      layout-site/                   /area-do-vendedor/layout-site     (Meu Site, só admin)
-    api/                             backend (ver abaixo)
-  components/           Header, Hero, Carrossel, Campo, Modal, PaginaVendedor...
-  views/                telas (Produto, Carrinho, Login, AreaVendedor, Perfil, Vendedores)
-  context/              Carrinho e Autenticacao (estado no navegador)
-  lib/                  db, auth (JWT), vendedores, validacao, senha, pedidos, produtos, whatsapp
+  server/               BACKEND (só servidor)
+    config/             BancoDeDados (conexão PostgreSQL)
+    erros/              classes de erro (404, 409, 422...)
+    http/               Rota (login, corpo, erros) e Autenticador (JWT Bearer)
+    repositorios/       Model — SQL: Vendedor, Imagem, Layout, Tamanho, Cor, Produto, Campanha, Painel
+    servicos/           Model — regras: Auth, Vendedor, Imagem, Armazenamento, Layout, Tamanho, Cor, Produto, Pedido, Painel
+    controllers/        Controller — Auth, Vendedor, Imagem, Layout, Tamanho, Cor, Produto, Loja
+    utils/              LimiteTentativas, senha (scrypt), validacao
+    container.js        liga todas as classes (injeção de dependências)
+  app/                  rotas Next.js — páginas e api/**/route.js (só apontam para os controllers)
+    area-do-vendedor/(protegida)/    páginas que exigem login (perfil, produtos, tamanhos, cores,
+                                     cadastro-produtos, carregar-imagens, vendedores, layout-site)
+  views/                VIEW — telas (Produto, Carrinho, Login, AreaVendedor, Tamanhos, Cores, CadastroProdutos...)
+  components/           VIEW — peças reutilizáveis (ListaDados, Campo, Modal, CardsMenu, SeletorImagens, blocos/...)
+  context/              estado no navegador (Carrinho, Autenticacao)
+  lib/                  código compartilhado navegador + servidor (formatos, layoutModelos, produtos, whatsapp)
 ```
+
+### Padrão de listas
+
+Use `src/components/ListaDados.jsx` para qualquer lista: no computador é uma tabela em que clicar no
+cabeçalho ordena A→Z / Z→A; no celular cada linha vira um card, com o seletor "Ordenar por".
 
 ## API
 
@@ -85,6 +92,16 @@ Rotas marcadas com 🔒 exigem o cabeçalho `Authorization: Bearer <token>`.
 | GET | `/api/imagens` 🔒 | logado | Listar imagens (`?busca=&pagina=&porPagina=`) |
 | POST | `/api/imagens` 🔒 | logado | Enviar imagem (multipart: `arquivo`, `codigo`, `descricao`) |
 | GET/PATCH/DELETE | `/api/imagens/:id` 🔒 | quem enviou ou admin | Ver, editar código/descrição, excluir (apaga o arquivo) |
+| GET | `/api/tamanhos` | público | Tamanhos na sequência de exibição |
+| POST | `/api/tamanhos` 🔒 | logado | Cadastrar `{ codigo, nome, sequencia? }` |
+| PATCH/DELETE | `/api/tamanhos/:codigo` 🔒 | logado | Editar / excluir (recusa se estiver em uso) |
+| PUT | `/api/tamanhos/ordem` 🔒 | logado | Nova sequência `{ codigos: [...] }` |
+| GET | `/api/cores` | público | Cores (código, nome, RGB) |
+| POST | `/api/cores` 🔒 | logado | Cadastrar `{ nome, rgb, codigo? }` |
+| PATCH/DELETE | `/api/cores/:codigo` 🔒 | logado | Editar / excluir (recusa se estiver em uso) |
+| GET/POST | `/api/cadastro/produtos` 🔒 | logado | Listar / cadastrar produto com variações `filhos` |
+| GET/PATCH/DELETE | `/api/cadastro/produtos/:codigo` 🔒 | logado | Ver, editar, excluir produto e variações |
+| GET | `/api/campanhas` 🔒 | logado | Campanhas (para o cadastro de produtos) |
 | GET | `/arquivos/:nome` | público | Entrega a imagem guardada no volume |
 | GET/PUT | `/api/layout` 🔒 | admin | Ler layout (rascunho e publicado) / salvar rascunho `{ camadas }` |
 | POST | `/api/layout/publicar` 🔒 | admin | Publicar `{ camadas }` na página inicial |
@@ -138,16 +155,12 @@ curl http://localhost:3000/api/vendedor/resumo -H "Authorization: Bearer eyJ..."
 - Após 5 tentativas erradas, o login é bloqueado por 15 minutos (por IP + usuário).
 - Respostas `401` trazem `codigo`: `token_ausente`, `token_invalido`, `token_expirado`, `token_revogado` (senha trocada) ou `conta_inativa`.
 
-Para proteger uma nova rota:
+Para proteger uma rota, use a opção `autenticar` (ou `papeis`) no controller:
 
 ```js
-import { exigirAutenticacao } from '@/lib/auth'
-
-export async function GET(request) {
-  const auth = await exigirAutenticacao(request) // ou { papeis: ['admin'] }
-  if (auth.erro) return auth.erro
-  // auth.vendedor → { id, login, nome, nome_fantasia, papel, expiraEm }
-}
+this.listar = rota(async ({ vendedor }) => ({ ... }), { autenticar: true })   // qualquer vendedor logado
+this.criar  = rota(async ({ corpo }) => ({ ... }), { papeis: ['admin'], corpo: 'json' }) // só admin
+// vendedor → { id, login, nome, nome_fantasia, papel, expiraEm }
 ```
 
 ## Deploy (Docker / Railway)
@@ -183,5 +196,5 @@ No **Railway**:
 
 ## Observações
 
-- Os produtos exibidos no site ainda vêm de `src/lib/produtos.js` (valores de exemplo). O próximo passo é lê-los do banco.
+- A vitrine e a página de produto da loja ainda usam `src/lib/produtos.js` (exemplos). O cadastro novo (tabelas `produtos` / `produtos_filho`) já está pronto para substituí-los.
 - O número do WhatsApp da loja é configurado em `NEXT_PUBLIC_WHATSAPP_NUMERO`.

@@ -13,8 +13,8 @@ import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import pg from 'pg'
-import { gerarHashSenha } from '../src/lib/senha.js'
-import { validarVendedor } from '../src/lib/validacao.js'
+import { gerarHashSenha } from '../src/server/utils/senha.js'
+import { validarVendedor } from '../src/server/utils/validacao.js'
 
 const raiz = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 

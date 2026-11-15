@@ -54,7 +54,7 @@ COPY --from=build --chown=nextjs:nodejs /app/public ./public
 COPY --from=build --chown=nextjs:nodejs /app/package.json ./package.json
 COPY --from=build --chown=nextjs:nodejs /app/db ./db
 COPY --from=build --chown=nextjs:nodejs /app/scripts ./scripts
-COPY --from=build --chown=nextjs:nodejs /app/src/lib/senha.js /app/src/lib/validacao.js ./src/lib/
+COPY --from=build --chown=nextjs:nodejs /app/src/server/utils/senha.js /app/src/server/utils/validacao.js ./src/server/utils/
 
 USER nextjs
 EXPOSE 3000

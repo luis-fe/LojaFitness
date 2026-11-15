@@ -13,8 +13,8 @@ import path from 'node:path'
 import readline from 'node:readline'
 import { parseArgs } from 'node:util'
 import pg from 'pg'
-import { gerarHashSenha } from '../src/lib/senha.js'
-import { validarVendedor, SENHA_MINIMA } from '../src/lib/validacao.js'
+import { gerarHashSenha } from '../src/server/utils/senha.js'
+import { validarVendedor, SENHA_MINIMA } from '../src/server/utils/validacao.js'
 
 const raiz = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 for (const arquivo of ['.env.local', '.env']) {

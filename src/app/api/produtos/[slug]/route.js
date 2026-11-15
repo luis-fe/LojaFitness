@@ -1,12 +1,6 @@
-// GET /api/produtos/:slug — detalhes de um produto
-import { buscarProduto } from '@/lib/produtos'
-import { produtoPublico } from '@/lib/api'
+// Um produto do catálogo público — a lógica fica em src/server (veja LojaController)
+import { lojaController } from '@/server/container'
 
-export async function GET(_request, { params }) {
-  const { slug } = await params
-  const produto = buscarProduto(slug)
-  if (!produto) {
-    return Response.json({ erro: 'Produto não encontrado.' }, { status: 404 })
-  }
-  return Response.json({ produto: produtoPublico(produto) })
-}
+export const dynamic = 'force-dynamic'
+
+export const GET = lojaController.produto
