@@ -402,6 +402,40 @@
 
 /* Celular: imagem em cima, opções embaixo */
 @media (max-width: 768px) {
+  .grade__canto {
+    width: 27%;
+  }
+
+  .grade__cor {
+    white-space: normal;
+    gap: 6px;
+    padding-right: 0;
+  }
+
+  .grade__amostra {
+    width: 18px;
+    height: 18px;
+  }
+
+  .grade__cor small {
+    font-size: 10.5px;
+    line-height: 1.25;
+  }
+
+  .grade__cor small span {
+    display: block;
+  }
+
+  .grade__celula {
+    min-width: 0;
+    padding: 6px 2px;
+  }
+
+  .grade__rotulo {
+    font-size: 8.5px;
+    letter-spacing: 0;
+  }
+
   .produto {
     grid-template-columns: 1fr;
     gap: 24px;

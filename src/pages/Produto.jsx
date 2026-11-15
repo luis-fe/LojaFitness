@@ -68,7 +68,7 @@ export default function Produto({ slug }) {
 
         <h2 className="produto__subtitulo">Escolha a cor e o tamanho</h2>
 
-        <div className="grade" role="region" aria-label="Cores, tamanhos e estoque" tabIndex={0}>
+        <div className="grade" role="region" aria-label="Cores, tamanhos e quantidade disponível" tabIndex={0}>
           <table>
             <thead>
               <tr>
@@ -85,7 +85,9 @@ export default function Produto({ slug }) {
                     <span className="grade__amostra" style={{ background: cor.hex }} aria-hidden="true" />
                     <span>
                       {cor.nome}
-                      <small>{totalCor(cor.nome)} un.</small>
+                      <small>
+                        {totalCor(cor.nome)} <span>disponíveis</span>
+                      </small>
                     </span>
                   </th>
                   {TAMANHOS.map((tam) => {
@@ -100,12 +102,12 @@ export default function Produto({ slug }) {
                           className={`grade__celula ${ativo ? 'is-ativo' : ''} ${baixo ? 'is-baixo' : ''}`}
                           disabled={esgotado}
                           aria-pressed={ativo}
-                          aria-label={`${cor.nome}, tamanho ${tam}: ${esgotado ? 'esgotado' : `${q} em estoque`}`}
+                          aria-label={`${cor.nome}, tamanho ${tam}: ${esgotado ? 'esgotado' : `${q} ${q === 1 ? 'disponível' : 'disponíveis'}`}`}
                           onClick={() => escolher(cor.nome, tam)}
                         >
                           <span className="grade__qtd">{esgotado ? '—' : q}</span>
                           <span className="grade__rotulo">
-                            {esgotado ? 'Esgotado' : baixo ? 'Últimas' : 'un.'}
+                            {esgotado ? 'Esgotado' : baixo ? 'Últimas' : q === 1 ? 'Disponível' : 'Disponíveis'}
                           </span>
                         </button>
                       </td>
