@@ -12,19 +12,16 @@ const horario = (iso) => new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-di
 const cardsPrincipais = (ehAdmin) => [
   {
     titulo: 'Perfil',
-    descricao: 'Seus dados de acesso e o cadastro de novos vendedores.',
     href: '/area-do-vendedor/perfil',
     Icone: IconePerfil,
   },
   {
     titulo: 'Produtos',
-    descricao: 'Fotos dos produtos e campanhas de desconto.',
     href: '/area-do-vendedor/produtos',
     Icone: IconeProdutos,
   },
   {
     titulo: 'Meu Site',
-    descricao: 'Monte e publique o layout da página inicial da loja.',
     href: '/area-do-vendedor/layout-site',
     Icone: IconeSite,
     bloqueado: !ehAdmin,

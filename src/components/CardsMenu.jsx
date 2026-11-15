@@ -3,22 +3,24 @@ import './CardsMenu.css'
 import { IconeCadeado, IconeSeta } from '@/components/Icones'
 
 // Menu em cards grandes.
-//   itens: [{ titulo, descricao, href, Icone, bloqueado?, motivo?, selo? }]
-//   bloqueado = mostra o card apagado, com cadeado e o motivo (ex.: "Somente administradores")
+//   itens: [{ titulo, href, Icone, bloqueado?, motivo?, selo? }]
+//   bloqueado = card apagado com cadeado; o motivo aparece ao passar o mouse e para leitores de tela
 export default function CardsMenu({ itens, rotulo }) {
   return (
     <ul className="cards-menu" aria-label={rotulo}>
-      {itens.map(({ titulo, descricao, href, Icone, bloqueado, motivo, selo }) => (
+      {itens.map(({ titulo, href, Icone, bloqueado, motivo, selo }) => (
         <li key={titulo}>
           {bloqueado ? (
-            <div className="card-menu is-bloqueado" aria-disabled="true">
+            <div className="card-menu is-bloqueado" aria-disabled="true" title={motivo || 'Indisponível'}>
               <span className="card-menu__icone">
                 <Icone />
               </span>
-              <span className="card-menu__titulo">{titulo}</span>
-              <span className="card-menu__descricao">{descricao}</span>
-              <span className="card-menu__motivo">
-                <IconeCadeado /> {motivo || 'Indisponível'}
+              <span className="card-menu__rodape">
+                <span className="card-menu__titulo">{titulo}</span>
+                <span className="card-menu__ir">
+                  <IconeCadeado />
+                  <span className="card-menu__motivo">{motivo || 'Indisponível'}</span>
+                </span>
               </span>
             </div>
           ) : (
@@ -27,10 +29,11 @@ export default function CardsMenu({ itens, rotulo }) {
                 <Icone />
               </span>
               {selo && <span className="card-menu__selo">{selo}</span>}
-              <span className="card-menu__titulo">{titulo}</span>
-              <span className="card-menu__descricao">{descricao}</span>
-              <span className="card-menu__ir">
-                Abrir <IconeSeta />
+              <span className="card-menu__rodape">
+                <span className="card-menu__titulo">{titulo}</span>
+                <span className="card-menu__ir">
+                  <IconeSeta />
+                </span>
               </span>
             </Link>
           )}

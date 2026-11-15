@@ -12,13 +12,11 @@ export default function MenuProdutos() {
         itens={[
           {
             titulo: 'Carregar imagens',
-            descricao: 'Envie as fotos dos produtos e identifique cada uma com código e descrição.',
             href: '/area-do-vendedor/carregar-imagens',
             Icone: IconeImagem,
           },
           {
             titulo: 'Cadastrar Campanhas',
-            descricao: 'Crie promoções, defina descontos e período de validade.',
             href: '/area-do-vendedor/cadastrar-campanhas',
             Icone: IconeCampanha,
             selo: 'Em breve',

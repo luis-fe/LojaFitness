@@ -11,7 +11,7 @@
   flex-direction: column;
   gap: 8px;
   height: 100%;
-  min-height: 200px;
+  min-height: 160px;
   padding: 24px;
   background: var(--branco);
   border: 1px solid var(--borda);
@@ -67,27 +67,33 @@ a.card-menu:focus-visible {
   line-height: 1.15;
 }
 
-.card-menu__descricao {
-  font-size: 14px;
-  line-height: 1.45;
-  color: var(--cinza-texto);
-}
-
-.card-menu__ir,
-.card-menu__motivo {
-  display: inline-flex;
+.card-menu__rodape {
+  display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: space-between;
+  gap: 12px;
   margin-top: auto;
-  padding-top: 12px;
-  font-size: 13px;
-  font-weight: 700;
 }
 
-.card-menu__ir svg,
-.card-menu__motivo svg {
-  width: 16px;
-  height: 16px;
+.card-menu__ir {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.card-menu__ir svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* Texto do motivo do bloqueio: só para leitores de tela (visível no title ao passar o mouse) */
+.card-menu__motivo {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 .card-menu__ir svg {
@@ -108,18 +114,27 @@ a.card-menu:hover .card-menu__ir svg {
   background: #bdbdbd;
 }
 
-.card-menu.is-bloqueado .card-menu__titulo {
-  color: var(--cinza-texto);
-}
-
-.card-menu__motivo {
+.card-menu.is-bloqueado .card-menu__titulo,
+.card-menu.is-bloqueado .card-menu__ir {
   color: var(--cinza-neutro);
 }
 
 @media (max-width: 560px) {
   .card-menu {
     min-height: 0;
-    padding: 20px;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+  }
+
+  .card-menu__icone {
+    margin-bottom: 0;
+  }
+
+  .card-menu__rodape {
+    flex: 1;
+    margin-top: 0;
   }
 
   .card-menu__icone {

@@ -15,7 +15,6 @@ export default function MenuPerfil() {
         itens={[
           {
             titulo: 'Novo Vendedor',
-            descricao: 'Cadastre uma pessoa para acessar a Área do Vendedor e gerencie os vendedores existentes.',
             href: '/area-do-vendedor/vendedores?novo=1',
             Icone: IconeNovoVendedor,
             bloqueado: !ehAdmin,
@@ -23,7 +22,6 @@ export default function MenuPerfil() {
           },
           {
             titulo: 'Alterar Perfil',
-            descricao: 'Atualize nome, telefone, CPF/CNPJ, nome fantasia e troque a sua senha.',
             href: '/area-do-vendedor/perfil/alterar',
             Icone: IconeEditarPerfil,
           },
