@@ -96,9 +96,11 @@ export default function Header() {
         aria-label={`Carrinho: ${quantidadeTotal} ${quantidadeTotal === 1 ? 'item' : 'itens'}`}
         aria-current={pathname === '/carrinho' ? 'page' : undefined}
       >
+        {/* Carrinho de supermercado */}
         <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M6 7h12l1 14H5L6 7z" />
-          <path d="M9 7V6a3 3 0 0 1 6 0v1" />
+          <path d="M2 3h2.5l2.6 11.2a1 1 0 0 0 1 .8h9.3a1 1 0 0 0 1-.76L20.5 7H5.6" />
+          <circle cx="9" cy="19.5" r="1.5" />
+          <circle cx="17" cy="19.5" r="1.5" />
         </svg>
         {quantidadeTotal > 0 && <span className="header__badge">{quantidadeTotal}</span>}
       </Link>
