@@ -235,6 +235,31 @@ CREATE TRIGGER pagamentos_atualizado_em
 
 
 -- ---------------------------------------------------------------------
+-- USUÁRIOS da Área do Vendedor (login com usuário e senha → token JWT)
+-- A senha NUNCA é guardada: só o hash (scrypt). Crie usuários com:
+--   npm run usuario:criar
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS usuarios (
+  id               bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  usuario          text        NOT NULL UNIQUE
+                   CHECK (usuario ~ '^[a-z0-9._-]{3,40}$'),          -- login, sempre em minúsculas
+  nome             text        NOT NULL CHECK (length(trim(nome)) > 0),
+  senha_hash       text        NOT NULL,
+  papel            text        NOT NULL DEFAULT 'vendedor'
+                   CHECK (papel IN ('vendedor', 'admin')),
+  ativo            boolean     NOT NULL DEFAULT true,                -- false = não consegue entrar
+  ultimo_login_em  timestamptz,
+  criado_em        timestamptz NOT NULL DEFAULT now(),
+  atualizado_em    timestamptz NOT NULL DEFAULT now()
+);
+
+DROP TRIGGER IF EXISTS usuarios_atualizado_em ON usuarios;
+CREATE TRIGGER usuarios_atualizado_em
+  BEFORE UPDATE ON usuarios
+  FOR EACH ROW EXECUTE FUNCTION definir_atualizado_em();
+
+
+-- ---------------------------------------------------------------------
 -- VIEW: preço final de cada produto, já com a melhor campanha ativa
 -- ---------------------------------------------------------------------
 CREATE OR REPLACE VIEW produtos_com_preco AS

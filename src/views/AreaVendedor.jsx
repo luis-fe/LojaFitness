@@ -1,5 +1,11 @@
+'use client'
+
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import './AreaVendedor.css'
+import { useAutenticacao } from '@/context/Autenticacao'
+
+const horario = (iso) => new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
 
 const IconeImagem = () => (
   <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -38,7 +44,69 @@ const topicos = [
   },
 ]
 
+function Resumo() {
+  const { fetchAutenticado } = useAutenticacao()
+  const [dados, setDados] = useState(null)
+  const [erro, setErro] = useState('')
+
+  useEffect(() => {
+    let ativo = true
+    fetchAutenticado('/api/vendedor/resumo')
+      .then(async (r) => {
+        const corpo = await r.json().catch(() => ({}))
+        if (!ativo) return
+        if (r.ok) setDados(corpo)
+        else setErro(corpo.erro || 'Não foi possível carregar o resumo.')
+      })
+      .catch(() => ativo && setErro('Sem conexão com o servidor.'))
+    return () => {
+      ativo = false
+    }
+  }, [fetchAutenticado])
+
+  if (erro) return <p className="resumo-loja__erro" role="alert">{erro}</p>
+  if (!dados) return <div className="resumo-loja resumo-loja--carregando" aria-busy="true" />
+
+  return (
+    <>
+      <dl className="resumo-loja">
+        <div>
+          <dt>Produtos ativos</dt>
+          <dd>{dados.produtosAtivos}</dd>
+        </div>
+        <div>
+          <dt>Peças disponíveis</dt>
+          <dd>{dados.pecasDisponiveis}</dd>
+        </div>
+        <div>
+          <dt>Pedidos aguardando</dt>
+          <dd>{dados.pedidosAguardando}</dd>
+        </div>
+      </dl>
+      {dados.estoqueBaixo.length > 0 && (
+        <details className="estoque-baixo">
+          <summary>
+            {dados.estoqueBaixo.length} variaç{dados.estoqueBaixo.length === 1 ? 'ão' : 'ões'} com estoque baixo ou esgotado
+          </summary>
+          <ul>
+            {dados.estoqueBaixo.map((v) => (
+              <li key={`${v.nome}-${v.cor}-${v.tamanho}`}>
+                <span>
+                  {v.nome} · {v.cor} · {v.tamanho}
+                </span>
+                <strong>{v.estoque === 0 ? 'Esgotado' : `${v.estoque} disp.`}</strong>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+    </>
+  )
+}
+
 export default function AreaVendedor() {
+  const { usuario, sessao, sair } = useAutenticacao()
+
   return (
     <section className="vendedor" aria-labelledby="vendedor-titulo">
       <nav className="vendedor__breadcrumb" aria-label="Você está em">
@@ -47,10 +115,21 @@ export default function AreaVendedor() {
         <span aria-current="page">Área do Vendedor</span>
       </nav>
 
+      <div className="vendedor__sessao">
+        <span>
+          Olá, <strong>{usuario?.nome}</strong> · sessão até {horario(sessao.expiraEm)}
+        </span>
+        <button type="button" onClick={sair} className="vendedor__sair">
+          Sair
+        </button>
+      </div>
+
       <header className="vendedor__cabecalho">
         <h1 id="vendedor-titulo">Área do Vendedor</h1>
         <p>Escolha o que você quer fazer.</p>
       </header>
+
+      <Resumo />
 
       <ul className="topicos">
         {topicos.map(({ titulo, descricao, href, Icone }) => (

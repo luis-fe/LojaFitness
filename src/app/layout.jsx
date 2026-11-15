@@ -1,6 +1,7 @@
 import './globals.css'
 import Header from '@/components/Header'
 import { CarrinhoProvider } from '@/context/Carrinho'
+import { AutenticacaoProvider } from '@/context/Autenticacao'
 import { NOME_LOJA } from '@/lib/config'
 
 export const metadata = {
@@ -21,6 +22,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR" data-scroll-behavior="smooth">
       <body>
+        <AutenticacaoProvider>
         <CarrinhoProvider>
           <a href="#conteudo" className="pular-conteudo">
             Pular para o conteúdo
@@ -30,6 +32,7 @@ export default function RootLayout({ children }) {
             {children}
           </main>
         </CarrinhoProvider>
+        </AutenticacaoProvider>
       </body>
     </html>
   )
