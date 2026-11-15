@@ -3,6 +3,7 @@ import Header from './components/Header.jsx'
 import AreaVendedor from './pages/AreaVendedor.jsx'
 import Hero from './components/Hero.jsx'
 import Carrossel from './components/Carrossel.jsx'
+import Produto from './pages/Produto.jsx'
 
 // Navegação simples pelo "#" da URL (ex.: #area-do-vendedor)
 function useHash() {
@@ -19,6 +20,13 @@ function useHash() {
 
 export default function App() {
   const hash = useHash()
+  const ehProduto = hash.startsWith('#produto/')
+  const ehVendedor = hash.startsWith('#area-do-vendedor')
+
+  // Ao abrir uma página nova, começa do topo
+  useEffect(() => {
+    if (ehProduto || ehVendedor) window.scrollTo(0, 0)
+  }, [hash])
 
   return (
     <>
@@ -30,8 +38,10 @@ export default function App() {
       </a>
       <Header hashAtual={hash} />
       <main id="conteudo" tabIndex={-1} style={{ outline: 'none' }}>
-        {hash.startsWith('#area-do-vendedor') ? (
+        {ehVendedor ? (
           <AreaVendedor />
+        ) : ehProduto ? (
+          <Produto key={hash} slug={hash.replace('#produto/', '')} />
         ) : (
           <>
             <Hero />

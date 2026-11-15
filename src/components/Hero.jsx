@@ -24,11 +24,11 @@ export default function Hero() {
           Conjuntos fitness que valorizam o seu corpo com preços especiais de Black Friday.
         </p>
         <div className="hero__acoes">
-          <a href="#black-friday" className="hero__btn hero__btn--principal">
+          <a href="#novidades" className="hero__btn hero__btn--principal">
             Comprar agora
           </a>
-          <a href="#novidades" className="hero__btn hero__btn--secundario">
-            Ver novidades
+          <a href="#black-friday" className="hero__btn hero__btn--secundario">
+            Ver ofertas
           </a>
         </div>
       </div>

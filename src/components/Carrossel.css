@@ -120,6 +120,18 @@
   letter-spacing: 0.5px;
 }
 
+.carrossel__nome {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.carrossel__nome small {
+  font-size: 15px;
+  font-weight: 400;
+  text-transform: none;
+}
+
 .carrossel__cta {
   font-size: 13px;
   border-bottom: 2px solid var(--preto);

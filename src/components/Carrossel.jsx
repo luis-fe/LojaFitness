@@ -1,14 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import './Carrossel.css'
-import conjuntoCalca from '../assets/conjunto-calca.jpg'
-import conjuntoShort from '../assets/conjunto-short.jpg'
-import conjuntoBermuda from '../assets/conjunto-bermuda.jpg'
+import { produtos, formatarPreco } from '../data/produtos.js'
 
-const itens = [
-  { nome: 'Conjunto Calça', imagem: conjuntoCalca, href: '#produto/conjunto-calca' },
-  { nome: 'Conjunto Short', imagem: conjuntoShort, href: '#produto/conjunto-short' },
-  { nome: 'Conjunto Bermuda', imagem: conjuntoBermuda, href: '#produto/conjunto-bermuda' },
-]
+const itens = produtos.map((p) => ({ ...p, href: `#produto/${p.slug}` }))
 
 const INTERVALO = 4000 // tempo de cada passagem (ms)
 
@@ -164,8 +158,11 @@ export default function Carrossel() {
                     />
                   </div>
                   <div className="carrossel__legenda">
-                    <span>{item.nome}</span>
-                    <span className="carrossel__cta">Ver produto</span>
+                    <span className="carrossel__nome">
+                      {item.nome}
+                      <small>{formatarPreco(item.preco)}</small>
+                    </span>
+                    <span className="carrossel__cta">Comprar</span>
                   </div>
                 </a>
               </li>
