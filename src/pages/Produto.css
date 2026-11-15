@@ -229,13 +229,118 @@
 /* Preço logo abaixo da grade */
 .produto__compra {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 16px;
   margin-top: 24px;
   padding-top: 24px;
   border-top: 1px solid var(--borda);
+}
+
+.produto__linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.produto__total {
+  font-size: 15px;
+  color: var(--cinza-texto);
+}
+
+.produto__total strong {
+  color: var(--preto);
+  font-size: 18px;
+}
+
+/* Seletor de quantidade */
+.quantidade {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.quantidade__controle {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--preto);
+}
+
+.quantidade__controle button {
+  width: 44px;
+  height: 44px;
+  background: var(--branco);
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.quantidade__controle button:hover:not(:disabled) {
+  background: var(--cinza-claro);
+}
+
+.quantidade__controle button:disabled {
+  color: #b0b0b0;
+  cursor: not-allowed;
+}
+
+.quantidade__controle button:focus-visible {
+  outline: 2px solid var(--preto);
+  outline-offset: -2px;
+}
+
+.quantidade__controle output {
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  font-weight: 800;
+  font-size: 16px;
+  border-left: 1px solid var(--borda);
+  border-right: 1px solid var(--borda);
+}
+
+.produto__compra > .produto__btn {
+  width: 100%;
+}
+
+.produto__btn.produto__btn--whats {
+  gap: 10px;
+  padding: 0 16px;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  background: var(--branco);
+  color: var(--preto);
+}
+
+.produto__btn.produto__btn--whats:hover {
+  background: var(--preto);
+  color: var(--branco);
+}
+
+.produto__adicionado {
+  padding: 12px 14px;
+  background: var(--cinza-claro);
+  border-left: 3px solid var(--preto);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.produto__adicionado a {
+  color: var(--preto);
+  text-underline-offset: 3px;
+}
+
+.produto__whats-icone {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+}
+
+.produto__aviso {
+  font-size: 13px;
+  color: var(--cinza-texto);
+  text-align: center;
 }
 
 .produto__preco {
@@ -305,11 +410,6 @@
     order: 0;
     position: static;
     margin: 0 -16px;
-  }
-
-  .produto__compra {
-    flex-direction: column;
-    align-items: stretch;
   }
 
   .produto__btn {

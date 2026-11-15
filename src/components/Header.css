@@ -92,6 +92,44 @@
   border-bottom-color: var(--branco);
 }
 
+/* Carrinho à direita */
+.header__carrinho {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-left: auto;
+  color: var(--branco);
+}
+
+.header__carrinho svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.header__badge {
+  position: absolute;
+  top: 4px;
+  right: 2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  display: grid;
+  place-items: center;
+  background: var(--branco);
+  color: var(--preto);
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+}
+
 /* No celular, as opções ficam só no menu lateral para não brigar com a logo */
 @media (max-width: 640px) {
   .header__nav {

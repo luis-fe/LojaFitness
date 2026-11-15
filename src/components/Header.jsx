@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import './Header.css'
 import logo from '../assets/logo-jlk.png'
+import { useCarrinho } from '../context/Carrinho.jsx'
 
 const opcoes = [{ label: 'Black Friday', href: '#black-friday' }]
 
@@ -9,6 +10,7 @@ const opcoesRodape = [{ label: 'Área do Vendedor', href: '#area-do-vendedor' }]
 
 export default function Header({ hashAtual = '' }) {
   const [menuAberto, setMenuAberto] = useState(false)
+  const { quantidadeTotal } = useCarrinho()
   const botaoRef = useRef(null)
   const drawerRef = useRef(null)
 
@@ -76,6 +78,19 @@ export default function Header({ hashAtual = '' }) {
           </a>
         ))}
       </nav>
+
+      <a
+        href="#carrinho"
+        className="header__carrinho"
+        aria-label={`Carrinho: ${quantidadeTotal} ${quantidadeTotal === 1 ? 'item' : 'itens'}`}
+        aria-current={hashAtual === '#carrinho' ? 'page' : undefined}
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6 7h12l1 14H5L6 7z" />
+          <path d="M9 7V6a3 3 0 0 1 6 0v1" />
+        </svg>
+        {quantidadeTotal > 0 && <span className="header__badge">{quantidadeTotal}</span>}
+      </a>
 
       <div
         className={`header__overlay ${menuAberto ? 'is-visivel' : ''}`}

@@ -1,10 +1,23 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './Produto.css'
 import { TAMANHOS, ESTOQUE_BAIXO, buscarProduto, formatarPreco } from '../data/produtos.js'
+import { linkWhatsApp, mensagemPedido } from '../utils/whatsapp.js'
+import { useCarrinho } from '../context/Carrinho.jsx'
+import IconeWhatsApp from '../components/IconeWhatsApp.jsx'
 
 export default function Produto({ slug }) {
   const produto = buscarProduto(slug)
   const [selecao, setSelecao] = useState(null) // { cor, tamanho }
+  const [quantidade, setQuantidade] = useState(1)
+  const [adicionado, setAdicionado] = useState(false)
+  const carrinho = useCarrinho()
+
+  // Esconde o aviso de "adicionado" depois de alguns segundos
+  useEffect(() => {
+    if (!adicionado) return
+    const id = setTimeout(() => setAdicionado(false), 5000)
+    return () => clearTimeout(id)
+  }, [adicionado])
 
   if (!produto) {
     return (
@@ -18,6 +31,22 @@ export default function Produto({ slug }) {
   const qtd = (cor, tam) => produto.estoque[cor]?.[tam] ?? 0
   const totalCor = (cor) => TAMANHOS.reduce((s, t) => s + qtd(cor, t), 0)
   const qtdSelecionada = selecao ? qtd(selecao.cor, selecao.tamanho) : 0
+  const total = produto.preco * quantidade
+
+  const escolher = (cor, tamanho) => {
+    setSelecao({ cor, tamanho })
+    setAdicionado(false)
+    setQuantidade((q) => Math.min(q, qtd(cor, tamanho)))
+  }
+
+  const mensagem = selecao
+    ? mensagemPedido([{ nome: produto.nome, preco: produto.preco, quantidade, ...selecao }])
+    : ''
+
+  const adicionarAoCarrinho = () => {
+    carrinho.adicionar(produto.slug, selecao.cor, selecao.tamanho, quantidade)
+    setAdicionado(true)
+  }
 
   return (
     <section className="produto" aria-labelledby="produto-nome">
@@ -72,7 +101,7 @@ export default function Produto({ slug }) {
                           disabled={esgotado}
                           aria-pressed={ativo}
                           aria-label={`${cor.nome}, tamanho ${tam}: ${esgotado ? 'esgotado' : `${q} em estoque`}`}
-                          onClick={() => setSelecao({ cor: cor.nome, tamanho: tam })}
+                          onClick={() => escolher(cor.nome, tam)}
                         >
                           <span className="grade__qtd">{esgotado ? '—' : q}</span>
                           <span className="grade__rotulo">
@@ -100,13 +129,73 @@ export default function Produto({ slug }) {
         </p>
 
         <div className="produto__compra">
-          <div className="produto__preco">
-            <span className="produto__preco-rotulo">Preço</span>
-            <strong>{formatarPreco(produto.preco)}</strong>
+          <div className="produto__linha">
+            <div className="produto__preco">
+              <span className="produto__preco-rotulo">Preço</span>
+              <strong>{formatarPreco(produto.preco)}</strong>
+            </div>
+
+            <div className="quantidade">
+              <span className="produto__preco-rotulo" id="qtd-rotulo">Quantidade</span>
+              <div className="quantidade__controle" role="group" aria-labelledby="qtd-rotulo">
+                <button
+                  type="button"
+                  aria-label="Diminuir quantidade"
+                  disabled={!selecao || quantidade <= 1}
+                  onClick={() => setQuantidade((q) => q - 1)}
+                >
+                  −
+                </button>
+                <output aria-live="polite">{quantidade}</output>
+                <button
+                  type="button"
+                  aria-label="Aumentar quantidade"
+                  disabled={!selecao || quantidade >= qtdSelecionada}
+                  onClick={() => setQuantidade((q) => q + 1)}
+                >
+                  +
+                </button>
+              </div>
+            </div>
           </div>
-          <button type="button" className="produto__btn" disabled={!selecao}>
-            {selecao ? 'Comprar' : 'Selecione cor e tamanho'}
+
+          {quantidade > 1 && (
+            <p className="produto__total">
+              Total: <strong>{formatarPreco(total)}</strong>
+            </p>
+          )}
+
+          <button
+            type="button"
+            className="produto__btn"
+            disabled={!selecao}
+            onClick={adicionarAoCarrinho}
+          >
+            {selecao ? 'Adicionar ao carrinho' : 'Selecione cor e tamanho'}
           </button>
+
+          {adicionado && (
+            <p className="produto__adicionado" role="status">
+              ✓ Adicionado ao carrinho. <a href="#carrinho">Ver carrinho</a>
+            </p>
+          )}
+
+          {selecao ? (
+            <a
+              className="produto__btn produto__btn--whats"
+              href={linkWhatsApp(mensagem)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <IconeWhatsApp className="produto__whats-icone" />
+              Comprar direto pelo WhatsApp
+            </a>
+          ) : null}
+          {selecao && (
+            <p className="produto__aviso">
+              Adicione ao carrinho para comprar vários itens, ou compre só este direto pelo WhatsApp.
+            </p>
+          )}
         </div>
       </div>
     </section>

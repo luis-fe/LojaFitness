@@ -4,6 +4,7 @@ import AreaVendedor from './pages/AreaVendedor.jsx'
 import Hero from './components/Hero.jsx'
 import Carrossel from './components/Carrossel.jsx'
 import Produto from './pages/Produto.jsx'
+import Carrinho from './pages/Carrinho.jsx'
 
 // Navegação simples pelo "#" da URL (ex.: #area-do-vendedor)
 function useHash() {
@@ -22,10 +23,11 @@ export default function App() {
   const hash = useHash()
   const ehProduto = hash.startsWith('#produto/')
   const ehVendedor = hash.startsWith('#area-do-vendedor')
+  const ehCarrinho = hash === '#carrinho'
 
   // Ao abrir uma página nova, começa do topo
   useEffect(() => {
-    if (ehProduto || ehVendedor) window.scrollTo(0, 0)
+    if (ehProduto || ehVendedor || ehCarrinho) window.scrollTo(0, 0)
   }, [hash])
 
   return (
@@ -40,6 +42,8 @@ export default function App() {
       <main id="conteudo" tabIndex={-1} style={{ outline: 'none' }}>
         {ehVendedor ? (
           <AreaVendedor />
+        ) : ehCarrinho ? (
+          <Carrinho />
         ) : ehProduto ? (
           <Produto key={hash} slug={hash.replace('#produto/', '')} />
         ) : (
