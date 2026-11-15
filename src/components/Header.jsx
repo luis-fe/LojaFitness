@@ -1,14 +1,20 @@
-import { useEffect, useRef, useState } from 'react'
-import './Header.css'
-import logo from '../assets/logo-jlk.png'
-import { useCarrinho } from '../context/Carrinho.jsx'
+'use client'
 
-const opcoes = [{ label: 'Black Friday', href: '#black-friday' }]
+import { useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
+import { usePathname } from 'next/navigation'
+import './Header.css'
+import logo from '@/assets/logo-jlk.png'
+import { useCarrinho } from '@/context/Carrinho'
+
+const opcoes = [{ label: 'Black Friday', href: '/#black-friday' }]
 
 // Opções fixadas no rodapé do menu lateral
-const opcoesRodape = [{ label: 'Área do Vendedor', href: '#area-do-vendedor' }]
+const opcoesRodape = [{ label: 'Área do Vendedor', href: '/area-do-vendedor' }]
 
-export default function Header({ hashAtual = '' }) {
+export default function Header() {
+  const pathname = usePathname()
   const [menuAberto, setMenuAberto] = useState(false)
   const { quantidadeTotal } = useCarrinho()
   const botaoRef = useRef(null)
@@ -33,10 +39,15 @@ export default function Header({ hashAtual = '' }) {
     }
   }, [menuAberto])
 
-  const ativo = (href) => hashAtual.startsWith(href)
+  // Fecha o menu ao trocar de página
+  useEffect(() => {
+    setMenuAberto(false)
+  }, [pathname])
+
+  const ativo = (href) => !href.includes('#') && pathname.startsWith(href)
 
   const renderLinkMenu = (op) => (
-    <a
+    <Link
       key={op.label}
       href={op.href}
       className="header__drawer-link"
@@ -44,7 +55,7 @@ export default function Header({ hashAtual = '' }) {
       onClick={() => setMenuAberto(false)}
     >
       {op.label}
-    </a>
+    </Link>
   )
 
   return (
@@ -62,35 +73,35 @@ export default function Header({ hashAtual = '' }) {
         <span />
       </button>
 
-      <a href="#" className="header__logo" aria-label="JLK Fitness e Casual — página inicial">
-        <img src={logo} alt="JLK" width="440" height="106" />
-      </a>
+      <Link href="/" className="header__logo" aria-label="JLK Fitness e Casual — página inicial">
+        <Image src={logo} alt="JLK" priority sizes="110px" />
+      </Link>
 
       <nav className="header__nav" aria-label="Principal">
         {opcoes.map((op) => (
-          <a
+          <Link
             key={op.label}
             href={op.href}
             className="header__link"
             aria-current={ativo(op.href) ? 'page' : undefined}
           >
             {op.label}
-          </a>
+          </Link>
         ))}
       </nav>
 
-      <a
-        href="#carrinho"
+      <Link
+        href="/carrinho"
         className="header__carrinho"
         aria-label={`Carrinho: ${quantidadeTotal} ${quantidadeTotal === 1 ? 'item' : 'itens'}`}
-        aria-current={hashAtual === '#carrinho' ? 'page' : undefined}
+        aria-current={pathname === '/carrinho' ? 'page' : undefined}
       >
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M6 7h12l1 14H5L6 7z" />
           <path d="M9 7V6a3 3 0 0 1 6 0v1" />
         </svg>
         {quantidadeTotal > 0 && <span className="header__badge">{quantidadeTotal}</span>}
-      </a>
+      </Link>
 
       <div
         className={`header__overlay ${menuAberto ? 'is-visivel' : ''}`}
@@ -102,7 +113,7 @@ export default function Header({ hashAtual = '' }) {
         ref={drawerRef}
         className={`header__drawer ${menuAberto ? 'is-aberto' : ''}`}
         aria-label="Menu"
-        inert={menuAberto ? undefined : ''}
+        inert={!menuAberto}
       >
         <nav className="header__drawer-nav">
           {opcoes.map(renderLinkMenu)}

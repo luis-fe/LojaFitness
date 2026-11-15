@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import './AreaVendedor.css'
 
 const IconeImagem = () => (
@@ -26,13 +27,13 @@ const topicos = [
   {
     titulo: 'Carregar imagens',
     descricao: 'Envie e organize as fotos dos seus produtos.',
-    href: '#area-do-vendedor/carregar-imagens',
+    href: '/area-do-vendedor/carregar-imagens',
     Icone: IconeImagem,
   },
   {
     titulo: 'Cadastrar Campanhas',
     descricao: 'Crie promoções, defina descontos e período de validade.',
-    href: '#area-do-vendedor/cadastrar-campanhas',
+    href: '/area-do-vendedor/cadastrar-campanhas',
     Icone: IconeCampanha,
   },
 ]
@@ -41,7 +42,7 @@ export default function AreaVendedor() {
   return (
     <section className="vendedor" aria-labelledby="vendedor-titulo">
       <nav className="vendedor__breadcrumb" aria-label="Você está em">
-        <a href="#">Início</a>
+        <Link href="/">Início</Link>
         <span aria-hidden="true">/</span>
         <span aria-current="page">Área do Vendedor</span>
       </nav>
@@ -54,7 +55,7 @@ export default function AreaVendedor() {
       <ul className="topicos">
         {topicos.map(({ titulo, descricao, href, Icone }) => (
           <li key={titulo}>
-            <a href={href} className="topico">
+            <Link href={href} className="topico">
               <span className="topico__icone">
                 <Icone />
               </span>
@@ -63,7 +64,7 @@ export default function AreaVendedor() {
                 <span className="topico__descricao">{descricao}</span>
               </span>
               <Seta />
-            </a>
+            </Link>
           </li>
         ))}
       </ul>

@@ -1,18 +1,60 @@
+'use client'
+
+import { useState } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
 import './Carrinho.css'
-import { useCarrinho, estoqueDe } from '../context/Carrinho.jsx'
-import { formatarPreco } from '../data/produtos.js'
-import { linkWhatsApp, mensagemPedido } from '../utils/whatsapp.js'
-import IconeWhatsApp from '../components/IconeWhatsApp.jsx'
+import { useCarrinho, estoqueDe } from '@/context/Carrinho'
+import { formatarPreco } from '@/lib/produtos'
+import IconeWhatsApp from '@/components/IconeWhatsApp'
 
 export default function Carrinho() {
-  const { itens, total, quantidadeTotal, alterarQuantidade, remover } = useCarrinho()
+  const { carregado, itens, total, quantidadeTotal, alterarQuantidade, remover } = useCarrinho()
+  const [enviando, setEnviando] = useState(false)
+  const [erros, setErros] = useState([])
+
+  // Envia o pedido ao backend, que confere estoque, recalcula o total
+  // e devolve o link do WhatsApp com a mensagem pronta.
+  const finalizar = async () => {
+    setErros([])
+    setEnviando(true)
+    // Abre a aba já no clique (senão o navegador bloqueia como pop-up)
+    const aba = window.open('', '_blank')
+    try {
+      const resposta = await fetch('/api/pedidos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          itens: itens.map(({ slug, cor, tamanho, quantidade }) => ({ slug, cor, tamanho, quantidade })),
+        }),
+      })
+      const dados = await resposta.json()
+      if (!resposta.ok) {
+        aba?.close()
+        setErros(dados.erros || ['Não foi possível finalizar o pedido.'])
+        return
+      }
+      if (aba) aba.location.href = dados.whatsappUrl
+      else window.location.href = dados.whatsappUrl
+    } catch {
+      aba?.close()
+      setErros(['Sem conexão. Verifique sua internet e tente de novo.'])
+    } finally {
+      setEnviando(false)
+    }
+  }
+
+  // Evita mostrar "carrinho vazio" antes de ler o que está salvo no navegador
+  if (!carregado) {
+    return <section className="carrinho" aria-busy="true" />
+  }
 
   if (itens.length === 0) {
     return (
       <section className="carrinho carrinho--vazio" aria-labelledby="carrinho-titulo">
         <h1 id="carrinho-titulo" className="carrinho__titulo">Seu carrinho está vazio</h1>
         <p>Veja as novidades e escolha seu próximo conjunto.</p>
-        <a href="#novidades" className="carrinho__btn">Ver novidades</a>
+        <Link href="/#novidades" className="carrinho__btn">Ver novidades</Link>
       </section>
     )
   }
@@ -32,12 +74,12 @@ export default function Carrinho() {
             const limite = estoqueDe(item.slug, item.cor, item.tamanho)
             return (
               <li key={item.id} className="item">
-                <a href={`#produto/${item.slug}`} className="item__imagem">
-                  <img src={item.imagem} alt={item.nome} width="120" height="120" />
-                </a>
+                <Link href={`/produto/${item.slug}`} className="item__imagem">
+                  <Image src={item.imagem} alt={item.nome} sizes="110px" />
+                </Link>
 
                 <div className="item__info">
-                  <a href={`#produto/${item.slug}`} className="item__nome">{item.nome}</a>
+                  <Link href={`/produto/${item.slug}`} className="item__nome">{item.nome}</Link>
                   <span className="item__detalhe">
                     Cor: {item.cor} · Tamanho: {item.tamanho}
                   </span>
@@ -92,17 +134,25 @@ export default function Carrinho() {
             </div>
           </dl>
 
-          <a
+          {erros.length > 0 && (
+            <div className="resumo__erros" role="alert">
+              {erros.map((e) => (
+                <p key={e}>{e}</p>
+              ))}
+            </div>
+          )}
+
+          <button
+            type="button"
             className="carrinho__btn carrinho__btn--whats"
-            href={linkWhatsApp(mensagemPedido(itens))}
-            target="_blank"
-            rel="noopener noreferrer"
+            onClick={finalizar}
+            disabled={enviando}
           >
             <IconeWhatsApp className="carrinho__whats-icone" />
-            Finalizar pelo WhatsApp
-          </a>
+            {enviando ? 'Conferindo pedido…' : 'Finalizar pelo WhatsApp'}
+          </button>
           <p className="resumo__aviso">O pedido completo vai pronto na mensagem.</p>
-          <a href="#novidades" className="resumo__continuar">Continuar comprando</a>
+          <Link href="/#novidades" className="resumo__continuar">Continuar comprando</Link>
         </aside>
       </div>
     </section>

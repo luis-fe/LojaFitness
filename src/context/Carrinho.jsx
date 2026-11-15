@@ -1,18 +1,10 @@
+'use client'
+
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import { buscarProduto } from '../data/produtos.js'
+import { buscarProduto } from '@/lib/produtos'
 
 const CHAVE = 'jlk-carrinho'
 const CarrinhoContext = createContext(null)
-
-// O carrinho fica salvo no navegador do cliente (sobrevive a recarregar a página)
-function carregar() {
-  try {
-    const salvo = JSON.parse(localStorage.getItem(CHAVE) || '[]')
-    return Array.isArray(salvo) ? salvo.filter((i) => buscarProduto(i.slug)) : []
-  } catch {
-    return []
-  }
-}
 
 export const idItem = (slug, cor, tamanho) => `${slug}|${cor}|${tamanho}`
 
@@ -20,16 +12,30 @@ export function estoqueDe(slug, cor, tamanho) {
   return buscarProduto(slug)?.estoque[cor]?.[tamanho] ?? 0
 }
 
+// O carrinho fica salvo no navegador do cliente (sobrevive a recarregar a página)
 export function CarrinhoProvider({ children }) {
-  const [itens, setItens] = useState(carregar)
+  const [itens, setItens] = useState([])
+  const [carregado, setCarregado] = useState(false)
+
+  // Lê o carrinho salvo só no navegador (no servidor não existe localStorage)
+  useEffect(() => {
+    try {
+      const salvo = JSON.parse(localStorage.getItem(CHAVE) || '[]')
+      if (Array.isArray(salvo)) setItens(salvo.filter((i) => buscarProduto(i.slug)))
+    } catch {
+      /* armazenamento indisponível: começa vazio */
+    }
+    setCarregado(true)
+  }, [])
 
   useEffect(() => {
+    if (!carregado) return
     try {
       localStorage.setItem(CHAVE, JSON.stringify(itens))
     } catch {
       /* navegador sem armazenamento: o carrinho só vale nesta visita */
     }
-  }, [itens])
+  }, [itens, carregado])
 
   const valor = useMemo(() => {
     // Junta dados do produto (nome, preço, imagem) a cada item salvo
@@ -39,6 +45,7 @@ export function CarrinhoProvider({ children }) {
     })
 
     return {
+      carregado,
       itens: detalhados,
       quantidadeTotal: itens.reduce((s, i) => s + i.quantidade, 0),
       total: detalhados.reduce((s, i) => s + i.preco * i.quantidade, 0),
@@ -75,7 +82,7 @@ export function CarrinhoProvider({ children }) {
         setItens([])
       },
     }
-  }, [itens])
+  }, [itens, carregado])
 
   return <CarrinhoContext.Provider value={valor}>{children}</CarrinhoContext.Provider>
 }

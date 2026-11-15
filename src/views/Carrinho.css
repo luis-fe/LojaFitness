@@ -189,6 +189,25 @@
   color: var(--preto);
 }
 
+.resumo__erros {
+  padding: 12px 14px;
+  background: var(--branco);
+  border-left: 3px solid #b00020;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #b00020;
+}
+
+.carrinho__btn:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.carrinho__btn {
+  cursor: pointer;
+  font-family: inherit;
+}
+
 .resumo__aviso {
   font-size: 13px;
   color: var(--cinza-texto);

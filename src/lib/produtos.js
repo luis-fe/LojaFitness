@@ -1,6 +1,6 @@
-import conjuntoCalca from '../assets/conjunto-calca.jpg'
-import conjuntoShort from '../assets/conjunto-short.jpg'
-import conjuntoBermuda from '../assets/conjunto-bermuda.jpg'
+import conjuntoCalca from '@/assets/conjunto-calca.jpg'
+import conjuntoShort from '@/assets/conjunto-short.jpg'
+import conjuntoBermuda from '@/assets/conjunto-bermuda.jpg'
 
 // ⚠️ PREÇOS, CORES E ESTOQUE ABAIXO SÃO EXEMPLOS — substitua pelos valores reais da loja.
 

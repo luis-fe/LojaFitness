@@ -1,18 +1,23 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import './Carrossel.css'
-import { produtos, formatarPreco } from '../data/produtos.js'
+'use client'
 
-const itens = produtos.map((p) => ({ ...p, href: `#produto/${p.slug}` }))
+import { useCallback, useEffect, useRef, useState } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
+import './Carrossel.css'
+import { produtos, formatarPreco } from '@/lib/produtos'
+
+const itens = produtos.map((p) => ({ ...p, href: `/produto/${p.slug}` }))
 
 const INTERVALO = 4000 // tempo de cada passagem (ms)
 
 // Quantos slides aparecem ao mesmo tempo, conforme a largura da tela
 function useSlidesPorVez() {
   const consulta = '(min-width: 768px)'
-  const [porVez, setPorVez] = useState(() => (window.matchMedia(consulta).matches ? 2 : 1))
+  const [porVez, setPorVez] = useState(1) // no servidor não há tela: começa com 1
   useEffect(() => {
     const mq = window.matchMedia(consulta)
     const atualizar = () => setPorVez(mq.matches ? 2 : 1)
+    atualizar()
     mq.addEventListener('change', atualizar)
     return () => mq.removeEventListener('change', atualizar)
   }, [])
@@ -145,16 +150,15 @@ export default function Carrossel() {
                 aria-roledescription="slide"
                 aria-label={`${(i % total) + 1} de ${total}: ${item.nome}`}
                 aria-hidden={copia || undefined}
-                inert={copia ? '' : undefined}
+                inert={copia}
               >
-                <a href={item.href} className="carrossel__card">
+                <Link href={item.href} className="carrossel__card">
                   <div className="carrossel__imagem">
-                    <img
+                    <Image
                       src={item.imagem}
                       alt={`${item.nome} azul JLK`}
-                      width="900"
-                      height="900"
-                      loading="lazy"
+                      sizes="(min-width: 768px) 600px, 100vw"
+                      loading={i < 2 ? 'eager' : 'lazy'}
                     />
                   </div>
                   <div className="carrossel__legenda">
@@ -164,7 +168,7 @@ export default function Carrossel() {
                     </span>
                     <span className="carrossel__cta">Comprar</span>
                   </div>
-                </a>
+                </Link>
               </li>
             )
           })}

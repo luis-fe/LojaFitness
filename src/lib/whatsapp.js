@@ -1,5 +1,5 @@
-import { WHATSAPP_NUMERO, NOME_LOJA } from '../config.js'
-import { formatarPreco } from '../data/produtos.js'
+import { WHATSAPP_NUMERO, NOME_LOJA } from '@/lib/config'
+import { formatarPreco } from '@/lib/produtos'
 
 export function linkWhatsApp(mensagem) {
   return `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(mensagem)}`

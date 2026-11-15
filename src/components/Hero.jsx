@@ -1,16 +1,18 @@
+import Image from 'next/image'
+import Link from 'next/link'
 import './Hero.css'
-import imagem from '../assets/hero-conjunto.jpg'
+import imagem from '@/assets/hero-conjunto.jpg'
 
 export default function Hero() {
   return (
     <section className="hero" aria-labelledby="hero-titulo">
       <div className="hero__imagem">
-        <img
+        <Image
           src={imagem}
           alt="Modelo vestindo conjunto fitness preto com top e legging JLK"
-          width="1078"
-          height="1351"
-          fetchpriority="high"
+          fill
+          priority
+          sizes="(max-width: 768px) 100vw, 50vw"
         />
       </div>
 
@@ -24,12 +26,12 @@ export default function Hero() {
           Conjuntos fitness que valorizam o seu corpo com preços especiais de Black Friday.
         </p>
         <div className="hero__acoes">
-          <a href="#novidades" className="hero__btn hero__btn--principal">
+          <Link href="/#novidades" className="hero__btn hero__btn--principal">
             Comprar agora
-          </a>
-          <a href="#black-friday" className="hero__btn hero__btn--secundario">
+          </Link>
+          <Link href="/#black-friday" className="hero__btn hero__btn--secundario">
             Ver ofertas
-          </a>
+          </Link>
         </div>
       </div>
     </section>

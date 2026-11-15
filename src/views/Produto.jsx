@@ -1,9 +1,13 @@
+'use client'
+
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
 import './Produto.css'
-import { TAMANHOS, ESTOQUE_BAIXO, buscarProduto, formatarPreco } from '../data/produtos.js'
-import { linkWhatsApp, mensagemPedido } from '../utils/whatsapp.js'
-import { useCarrinho } from '../context/Carrinho.jsx'
-import IconeWhatsApp from '../components/IconeWhatsApp.jsx'
+import { TAMANHOS, ESTOQUE_BAIXO, buscarProduto, formatarPreco } from '@/lib/produtos'
+import { linkWhatsApp, mensagemPedido } from '@/lib/whatsapp'
+import { useCarrinho } from '@/context/Carrinho'
+import IconeWhatsApp from '@/components/IconeWhatsApp'
 
 export default function Produto({ slug }) {
   const produto = buscarProduto(slug)
@@ -23,7 +27,7 @@ export default function Produto({ slug }) {
     return (
       <section className="produto produto--vazio">
         <h1>Produto não encontrado</h1>
-        <a href="#novidades" className="produto__btn">Ver novidades</a>
+        <Link href="/#novidades" className="produto__btn">Ver novidades</Link>
       </section>
     )
   }
@@ -51,14 +55,14 @@ export default function Produto({ slug }) {
   return (
     <section className="produto" aria-labelledby="produto-nome">
       <div className="produto__imagem">
-        <img src={produto.imagem} alt={`${produto.nome} JLK`} width="900" height="900" />
+        <Image src={produto.imagem} alt={`${produto.nome} JLK`} priority loading="eager" sizes="(max-width: 768px) 100vw, 600px" />
       </div>
 
       <div className="produto__info">
         <nav className="produto__breadcrumb" aria-label="Você está em">
-          <a href="#">Início</a>
+          <Link href="/">Início</Link>
           <span aria-hidden="true">/</span>
-          <a href="#novidades">Novidades</a>
+          <Link href="/#novidades">Novidades</Link>
           <span aria-hidden="true">/</span>
           <span aria-current="page">{produto.nome}</span>
         </nav>
@@ -178,7 +182,7 @@ export default function Produto({ slug }) {
 
           {adicionado && (
             <p className="produto__adicionado" role="status">
-              ✓ Adicionado ao carrinho. <a href="#carrinho">Ver carrinho</a>
+              ✓ Adicionado ao carrinho. <Link href="/carrinho">Ver carrinho</Link>
             </p>
           )}
 
