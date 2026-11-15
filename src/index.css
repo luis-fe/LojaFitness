@@ -2,8 +2,12 @@
   --preto: #000000;
   --branco: #ffffff;
   --cinza: #1a1a1a;
+  --cinza-texto: #555555; /* contraste 7.4:1 sobre branco (WCAG AAA) */
+  --cinza-claro: #f4f4f4;
+  --borda: #e2e2e2;
   --header-altura: 64px;
   font-family: 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 * {
@@ -15,4 +19,24 @@
 body {
   background: var(--branco);
   color: var(--preto);
+}
+
+body.menu-aberto {
+  overflow: hidden;
+}
+
+/* Link para pular direto ao conteúdo (acessibilidade por teclado) */
+.pular-conteudo {
+  position: absolute;
+  left: 16px;
+  top: -48px;
+  z-index: 200;
+  padding: 8px 16px;
+  background: var(--branco);
+  color: var(--preto);
+  font-weight: 700;
+}
+
+.pular-conteudo:focus {
+  top: 8px;
 }

@@ -20,8 +20,14 @@ export default function App() {
 
   return (
     <>
-      <Header />
-      <main>
+      <a href="#conteudo" className="pular-conteudo" onClick={(e) => {
+        e.preventDefault()
+        document.getElementById('conteudo')?.focus()
+      }}>
+        Pular para o conteúdo
+      </a>
+      <Header hashAtual={hash} />
+      <main id="conteudo" tabIndex={-1} style={{ outline: 'none' }}>
         {hash.startsWith('#area-do-vendedor') ? (
           <AreaVendedor />
         ) : (
