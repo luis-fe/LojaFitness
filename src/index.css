@@ -3,6 +3,7 @@
   --branco: #ffffff;
   --cinza: #1a1a1a;
   --cinza-texto: #555555; /* contraste 7.4:1 sobre branco (WCAG AAA) */
+  --cinza-neutro: #737373; /* cinza neutro para informações de apoio (contraste 4.7:1) */
   --cinza-claro: #f4f4f4;
   --borda: #e2e2e2;
   --whatsapp: #25d366; /* verde oficial do WhatsApp — usar com texto preto (contraste 10.6:1) */

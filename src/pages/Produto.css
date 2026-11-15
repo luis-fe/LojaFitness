@@ -136,9 +136,9 @@
 }
 
 .grade__cor small {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 400;
-  color: var(--cinza-texto);
+  color: var(--cinza-neutro);
 }
 
 .grade__amostra {
@@ -177,16 +177,17 @@
 }
 
 .grade__qtd {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 400;
   line-height: 1;
+  color: var(--cinza-neutro);
 }
 
 .grade__rotulo {
-  font-size: 10px;
+  font-size: 9px;
   letter-spacing: 0.3px;
   text-transform: uppercase;
-  color: var(--cinza-texto);
+  color: var(--cinza-neutro);
 }
 
 .grade__celula.is-baixo .grade__rotulo {
@@ -200,8 +201,9 @@
   color: var(--branco);
 }
 
+.grade__celula.is-ativo .grade__qtd,
 .grade__celula.is-ativo .grade__rotulo {
-  color: var(--branco);
+  color: #d4d4d4;
 }
 
 .grade__celula:disabled {
@@ -211,8 +213,9 @@
   border-style: dashed;
 }
 
+.grade__celula:disabled .grade__qtd,
 .grade__celula:disabled .grade__rotulo {
-  color: #8a8a8a;
+  color: #a3a3a3;
 }
 
 .produto__selecao {
@@ -418,7 +421,7 @@
   }
 
   .grade__cor small {
-    font-size: 10.5px;
+    font-size: 10px;
     line-height: 1.25;
   }
 
@@ -432,7 +435,7 @@
   }
 
   .grade__rotulo {
-    font-size: 8.5px;
+    font-size: 8px;
     letter-spacing: 0;
   }
 
