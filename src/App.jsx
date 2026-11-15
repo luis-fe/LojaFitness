@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import Header from './components/Header.jsx'
 import AreaVendedor from './pages/AreaVendedor.jsx'
 import Hero from './components/Hero.jsx'
+import Carrossel from './components/Carrossel.jsx'
 
 // Navegação simples pelo "#" da URL (ex.: #area-do-vendedor)
 function useHash() {
@@ -32,7 +33,10 @@ export default function App() {
         {hash.startsWith('#area-do-vendedor') ? (
           <AreaVendedor />
         ) : (
-          <Hero />
+          <>
+            <Hero />
+            <Carrossel />
+          </>
         )}
       </main>
     </>
