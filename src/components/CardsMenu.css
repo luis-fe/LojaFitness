@@ -1,0 +1,140 @@
+.cards-menu {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.card-menu {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  min-height: 200px;
+  padding: 24px;
+  background: var(--branco);
+  border: 1px solid var(--borda);
+  color: var(--preto);
+  text-decoration: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+a.card-menu:hover {
+  border-color: var(--preto);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+a.card-menu:focus-visible {
+  outline: 2px solid var(--preto);
+  outline-offset: 3px;
+}
+
+.card-menu__icone {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 8px;
+  background: var(--preto);
+  color: var(--branco);
+  border-radius: 10px;
+}
+
+.card-menu__icone svg {
+  width: 26px;
+  height: 26px;
+}
+
+.card-menu__selo {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  padding: 2px 8px;
+  border: 1px solid var(--preto);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.card-menu__titulo {
+  font-size: 20px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  line-height: 1.15;
+}
+
+.card-menu__descricao {
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--cinza-texto);
+}
+
+.card-menu__ir,
+.card-menu__motivo {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: auto;
+  padding-top: 12px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.card-menu__ir svg,
+.card-menu__motivo svg {
+  width: 16px;
+  height: 16px;
+}
+
+.card-menu__ir svg {
+  transition: transform 0.15s ease;
+}
+
+a.card-menu:hover .card-menu__ir svg {
+  transform: translateX(4px);
+}
+
+/* Bloqueado (ex.: só administradores) */
+.card-menu.is-bloqueado {
+  background: var(--cinza-claro);
+  cursor: not-allowed;
+}
+
+.card-menu.is-bloqueado .card-menu__icone {
+  background: #bdbdbd;
+}
+
+.card-menu.is-bloqueado .card-menu__titulo {
+  color: var(--cinza-texto);
+}
+
+.card-menu__motivo {
+  color: var(--cinza-neutro);
+}
+
+@media (max-width: 560px) {
+  .card-menu {
+    min-height: 0;
+    padding: 20px;
+  }
+
+  .card-menu__icone {
+    width: 44px;
+    height: 44px;
+  }
+
+  .card-menu__titulo {
+    font-size: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-menu,
+  .card-menu__ir svg {
+    transition: none;
+  }
+}

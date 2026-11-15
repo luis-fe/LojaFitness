@@ -240,7 +240,7 @@ function TrocarSenha() {
 
 export default function Perfil() {
   return (
-    <PaginaVendedor titulo="Meu perfil" descricao="Seus dados de acesso e contato.">
+    <PaginaVendedor titulo="Alterar perfil" descricao="Seus dados de acesso e contato." trilha={[{ href: '/area-do-vendedor/perfil', rotulo: 'Perfil' }]}>
       <DadosPessoais />
       <TrocarSenha />
     </PaginaVendedor>

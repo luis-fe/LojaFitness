@@ -403,7 +403,7 @@ export default function CarregarImagens() {
   const { imagens = [], paginacao } = resultado ?? {}
 
   return (
-    <PaginaVendedor titulo="Carregar imagens" descricao="Envie as fotos dos produtos e identifique cada uma com código e descrição." largura={1080}>
+    <PaginaVendedor titulo="Carregar imagens" descricao="Envie as fotos dos produtos e identifique cada uma com código e descrição." largura={1080} trilha={[{ href: '/area-do-vendedor/produtos', rotulo: 'Produtos' }]}>
       <AreaEnvio
         aoEnviar={(n) => {
           setAviso(n === 1 ? '1 imagem enviada.' : `${n} imagens enviadas.`)

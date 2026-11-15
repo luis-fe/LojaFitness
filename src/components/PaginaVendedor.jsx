@@ -2,7 +2,8 @@ import Link from 'next/link'
 import './PaginaVendedor.css'
 
 // Moldura padrão das telas da Área do Vendedor: trilha de navegação, título e descrição
-export default function PaginaVendedor({ titulo, descricao, acoes, largura = 720, children }) {
+// trilha: níveis intermediários, ex.: [{ href: '/area-do-vendedor/perfil', rotulo: 'Perfil' }]
+export default function PaginaVendedor({ titulo, descricao, acoes, largura = 720, trilha = [], children }) {
   return (
     <section className="pagina-vendedor" style={{ '--pagina-largura': `${largura}px` }} aria-labelledby="pagina-titulo">
       <nav className="pagina-vendedor__trilha" aria-label="Você está em">
@@ -10,6 +11,12 @@ export default function PaginaVendedor({ titulo, descricao, acoes, largura = 720
         <span aria-hidden="true">/</span>
         <Link href="/area-do-vendedor">Área do Vendedor</Link>
         <span aria-hidden="true">/</span>
+        {trilha.map((nivel) => (
+          <span key={nivel.href} className="pagina-vendedor__nivel">
+            <Link href={nivel.href}>{nivel.rotulo}</Link>
+            <span aria-hidden="true">/</span>
+          </span>
+        ))}
         <span aria-current="page">{titulo}</span>
       </nav>
 

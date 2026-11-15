@@ -1,5 +1,5 @@
 .vendedor {
-  max-width: 720px;
+  max-width: 960px;
   margin: 0 auto;
   padding: 24px 16px 48px;
 }
@@ -248,4 +248,17 @@
   .resumo-loja dt {
     font-size: 11px;
   }
+}
+
+/* Resumo abaixo dos cards */
+.vendedor__resumo {
+  margin-top: 40px;
+}
+
+.vendedor__subtitulo {
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
 }

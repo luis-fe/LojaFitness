@@ -4,86 +4,31 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import './AreaVendedor.css'
 import { useAutenticacao } from '@/context/Autenticacao'
+import CardsMenu from '@/components/CardsMenu'
+import { IconePerfil, IconeProdutos, IconeSite } from '@/components/Icones'
 
 const horario = (iso) => new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
 
-const IconeImagem = () => (
-  <svg viewBox="0 0 24 24" aria-hidden="true">
-    <rect x="3" y="3" width="18" height="18" rx="2" />
-    <circle cx="8.5" cy="8.5" r="1.5" />
-    <path d="M21 15l-5-5L5 21" />
-  </svg>
-)
-
-const IconeCampanha = () => (
-  <svg viewBox="0 0 24 24" aria-hidden="true">
-    <path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z" />
-    <path d="M15.5 8.5a5 5 0 0 1 0 7" />
-    <path d="M18.5 5.5a9 9 0 0 1 0 13" />
-  </svg>
-)
-
-const IconePerfil = () => (
-  <svg viewBox="0 0 24 24" aria-hidden="true">
-    <circle cx="12" cy="8" r="4" />
-    <path d="M4 21a8 8 0 0 1 16 0" />
-  </svg>
-)
-
-const IconeEquipe = () => (
-  <svg viewBox="0 0 24 24" aria-hidden="true">
-    <circle cx="9" cy="8" r="3.5" />
-    <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
-    <path d="M16 4.6a3.5 3.5 0 0 1 0 6.8" />
-    <path d="M18 13.5a6.5 6.5 0 0 1 3.5 6.5" />
-  </svg>
-)
-
-const IconeLayout = () => (
-  <svg viewBox="0 0 24 24" aria-hidden="true">
-    <rect x="3" y="3" width="18" height="18" rx="2" />
-    <path d="M3 9h18M9 9v12" />
-  </svg>
-)
-
-const Seta = () => (
-  <svg className="topico__seta" viewBox="0 0 24 24" aria-hidden="true">
-    <path d="M9 6l6 6-6 6" />
-  </svg>
-)
-
-const topicos = [
+const cardsPrincipais = (ehAdmin) => [
   {
-    titulo: 'Carregar imagens',
-    descricao: 'Envie e organize as fotos dos seus produtos.',
-    href: '/area-do-vendedor/carregar-imagens',
-    Icone: IconeImagem,
-  },
-  {
-    titulo: 'Cadastrar Campanhas',
-    descricao: 'Crie promoções, defina descontos e período de validade.',
-    href: '/area-do-vendedor/cadastrar-campanhas',
-    Icone: IconeCampanha,
-  },
-  {
-    titulo: 'Construção Layout Site',
-    descricao: 'Monte a página inicial com camadas: imagem destacada, cascata, lado a lado e vitrine.',
-    href: '/area-do-vendedor/layout-site',
-    Icone: IconeLayout,
-    somenteAdmin: true,
-  },
-  {
-    titulo: 'Meu perfil',
-    descricao: 'Atualize seus dados de contato e troque sua senha.',
+    titulo: 'Perfil',
+    descricao: 'Seus dados de acesso e o cadastro de novos vendedores.',
     href: '/area-do-vendedor/perfil',
     Icone: IconePerfil,
   },
   {
-    titulo: 'Vendedores',
-    descricao: 'Cadastre, edite e desative quem acessa a Área do Vendedor.',
-    href: '/area-do-vendedor/vendedores',
-    Icone: IconeEquipe,
-    somenteAdmin: true,
+    titulo: 'Produtos',
+    descricao: 'Fotos dos produtos e campanhas de desconto.',
+    href: '/area-do-vendedor/produtos',
+    Icone: IconeProdutos,
+  },
+  {
+    titulo: 'Meu Site',
+    descricao: 'Monte e publique o layout da página inicial da loja.',
+    href: '/area-do-vendedor/layout-site',
+    Icone: IconeSite,
+    bloqueado: !ehAdmin,
+    motivo: 'Somente administradores',
   },
 ]
 
@@ -178,26 +123,14 @@ export default function AreaVendedor() {
         <p>Escolha o que você quer fazer.</p>
       </header>
 
-      <Resumo />
+      <CardsMenu rotulo="Menu da Área do Vendedor" itens={cardsPrincipais(vendedor?.papel === 'admin')} />
 
-      <ul className="topicos">
-        {topicos
-          .filter((t) => !t.somenteAdmin || vendedor?.papel === 'admin')
-          .map(({ titulo, descricao, href, Icone }) => (
-            <li key={titulo}>
-              <Link href={href} className="topico">
-                <span className="topico__icone">
-                  <Icone />
-                </span>
-                <span className="topico__texto">
-                  <span className="topico__titulo">{titulo}</span>
-                  <span className="topico__descricao">{descricao}</span>
-                </span>
-                <Seta />
-              </Link>
-            </li>
-          ))}
-      </ul>
+      <section className="vendedor__resumo" aria-labelledby="resumo-titulo">
+        <h2 id="resumo-titulo" className="vendedor__subtitulo">
+          Resumo da loja
+        </h2>
+        <Resumo />
+      </section>
     </section>
   )
 }

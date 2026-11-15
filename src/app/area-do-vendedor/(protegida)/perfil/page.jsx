@@ -1,7 +1,7 @@
-import Perfil from '@/views/Perfil'
+import MenuPerfil from '@/views/MenuPerfil'
 
-export const metadata = { title: 'Meu perfil', robots: { index: false } }
+export const metadata = { title: 'Perfil', robots: { index: false } }
 
 export default function Pagina() {
-  return <Perfil />
+  return <MenuPerfil />
 }

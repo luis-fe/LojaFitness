@@ -48,8 +48,11 @@ src/
     carrinho/page.jsx                /carrinho
     area-do-vendedor/login/          /area-do-vendedor/login
     area-do-vendedor/(protegida)/    páginas que exigem login:
-      perfil/                        /area-do-vendedor/perfil      (meus dados e senha)
-      vendedores/                    /area-do-vendedor/vendedores  (gestão, só admin)
+      perfil/                        /area-do-vendedor/perfil          (menu: Novo Vendedor, Alterar Perfil)
+      perfil/alterar/                /area-do-vendedor/perfil/alterar  (meus dados e senha)
+      produtos/                      /area-do-vendedor/produtos        (menu: imagens, campanhas)
+      vendedores/                    /area-do-vendedor/vendedores      (gestão, só admin; ?novo=1 abre o cadastro)
+      layout-site/                   /area-do-vendedor/layout-site     (Meu Site, só admin)
     api/                             backend (ver abaixo)
   components/           Header, Hero, Carrossel, Campo, Modal, PaginaVendedor...
   views/                telas (Produto, Carrinho, Login, AreaVendedor, Perfil, Vendedores)
@@ -87,6 +90,8 @@ Rotas marcadas com 🔒 exigem o cabeçalho `Authorization: Bearer <token>`.
 | POST | `/api/layout/publicar` 🔒 | admin | Publicar `{ camadas }` na página inicial |
 
 ### Telas da Área do Vendedor
+
+Menu principal em cards: **Perfil** (Novo Vendedor · Alterar Perfil), **Produtos** (Carregar imagens · Cadastrar Campanhas) e **Meu Site** (construtor de layout). Cards exclusivos de administrador aparecem bloqueados para vendedores.
 
 | Tela | Quem vê | O que faz |
 |---|---|---|

@@ -357,6 +357,17 @@ export default function Vendedores() {
   const [aviso, setAviso] = useState('')
   const [modal, setModal] = useState(null) // { tipo, vendedor }
 
+  // Veio do card "Novo Vendedor" (?novo=1): abre o cadastro e limpa o endereço
+  useEffect(() => {
+    if (eu?.papel !== 'admin') return
+    const url = new URL(window.location.href)
+    if (url.searchParams.get('novo') === '1') {
+      setModal({ tipo: 'novo' })
+      url.searchParams.delete('novo')
+      window.history.replaceState(null, '', url.pathname + url.search)
+    }
+  }, [eu?.papel])
+
   // Espera a pessoa parar de digitar para buscar
   useEffect(() => {
     const id = setTimeout(() => {
@@ -392,9 +403,9 @@ export default function Vendedores() {
 
   if (eu?.papel !== 'admin') {
     return (
-      <PaginaVendedor titulo="Vendedores">
+      <PaginaVendedor titulo="Vendedores" trilha={[{ href: '/area-do-vendedor/perfil', rotulo: 'Perfil' }]}>
         <p className="aviso aviso--erro" role="alert">
-          Somente administradores podem gerenciar vendedores. <Link href="/area-do-vendedor/perfil">Ir para o meu perfil</Link>
+          Somente administradores podem gerenciar vendedores. <Link href="/area-do-vendedor/perfil/alterar">Ir para o meu perfil</Link>
         </p>
       </PaginaVendedor>
     )
@@ -420,6 +431,7 @@ export default function Vendedores() {
     <PaginaVendedor
       titulo="Vendedores"
       descricao="Cadastre e gerencie quem acessa a Área do Vendedor."
+      trilha={[{ href: '/area-do-vendedor/perfil', rotulo: 'Perfil' }]}
       largura={960}
       acoes={
         <button type="button" className="botao" onClick={() => setModal({ tipo: 'novo' })}>

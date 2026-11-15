@@ -13,6 +13,11 @@
   color: var(--cinza-texto);
 }
 
+.pagina-vendedor__nivel {
+  display: inline-flex;
+  gap: 8px;
+}
+
 .pagina-vendedor__trilha a {
   color: var(--cinza-texto);
   text-underline-offset: 3px;
