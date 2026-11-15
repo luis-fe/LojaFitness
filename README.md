@@ -31,6 +31,7 @@ Para conferir se o banco está conectado: http://localhost:3000/api/saude
 | `npm run db:schema` | Cria/atualiza as tabelas (`db/schema.sql`) |
 | `npm run db:seed` | Carrega os produtos de exemplo (`db/seed.sql`) |
 | `npm run db:setup` | Os dois acima |
+| `npm run db:deploy` | Usado no deploy: tabelas + exemplos (se vazio) + primeiro admin (se não houver vendedores) |
 | `npm run vendedor:criar` | Cria ou atualiza um vendedor direto no banco (use `-- --papel admin` para o primeiro) |
 
 ## Estrutura
@@ -135,6 +136,22 @@ export async function GET(request) {
   // auth.vendedor → { id, login, nome, nome_fantasia, papel, expiraEm }
 }
 ```
+
+## Deploy (Docker / Railway)
+
+O `Dockerfile` gera uma imagem de produção enxuta (Next.js `standalone`, usuário sem privilégios).
+
+```bash
+docker build -t jlk-loja .
+docker run -p 3000:3000 --env-file .env.local jlk-loja
+```
+
+No **Railway**:
+1. Serviço a partir do repositório GitHub (o `Dockerfile` é detectado automaticamente) + um banco **PostgreSQL**.
+2. Variáveis do serviço: `DATABASE_URL=${{Postgres.DATABASE_URL}}`, `JWT_SECRET`, `NEXT_PUBLIC_SITE_URL`,
+   `NEXT_PUBLIC_WHATSAPP_NUMERO` e, para o primeiro acesso, `ADMIN_LOGIN` / `ADMIN_TELEFONE` / `ADMIN_SENHA_INICIAL`.
+3. Comando de pré-deploy: `node scripts/db.mjs deploy` (prepara o banco antes de cada publicação).
+4. Healthcheck: `/api/saude`.
 
 ## Observações
 
