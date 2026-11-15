@@ -315,6 +315,30 @@ CREATE TRIGGER imagens_atualizado_em
 
 
 -- ---------------------------------------------------------------------
+-- LAYOUT DO SITE (tela "Construção Layout Site" da Área do Vendedor)
+--
+--   • camadas da página em JSON: [{ id, tipo, visivel, dados }]
+--   • rascunho = o que está sendo editado · publicado = o que os clientes veem
+--   • sem linha aqui, o site usa o layout padrão definido no código
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS layout_paginas (
+  pagina          text        PRIMARY KEY CHECK (pagina IN ('inicio')),
+  rascunho        jsonb       NOT NULL CHECK (jsonb_typeof(rascunho) = 'array'),
+  publicado       jsonb       NOT NULL CHECK (jsonb_typeof(publicado) = 'array'),
+  atualizado_por  bigint      REFERENCES vendedores (id) ON DELETE SET NULL,
+  publicado_por   bigint      REFERENCES vendedores (id) ON DELETE SET NULL,
+  publicado_em    timestamptz,
+  criado_em       timestamptz NOT NULL DEFAULT now(),
+  atualizado_em   timestamptz NOT NULL DEFAULT now()
+);
+
+DROP TRIGGER IF EXISTS layout_paginas_atualizado_em ON layout_paginas;
+CREATE TRIGGER layout_paginas_atualizado_em
+  BEFORE UPDATE ON layout_paginas
+  FOR EACH ROW EXECUTE FUNCTION definir_atualizado_em();
+
+
+-- ---------------------------------------------------------------------
 -- VIEW: preço final de cada produto, já com a melhor campanha ativa
 -- ---------------------------------------------------------------------
 CREATE OR REPLACE VIEW produtos_com_preco AS

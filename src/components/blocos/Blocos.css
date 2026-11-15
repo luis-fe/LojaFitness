@@ -1,0 +1,171 @@
+/* ---------- Imagem destacada (complementa Hero.css) ---------- */
+.hero__foto {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 20%;
+  filter: grayscale(15%) contrast(1.05);
+}
+
+@media (min-width: 769px) {
+  .hero--imagem-esquerda .hero__imagem {
+    order: 1;
+  }
+
+  .hero--imagem-esquerda .hero__conteudo {
+    order: 2;
+  }
+}
+
+.bloco-sem-imagem {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  min-height: 220px;
+  background: repeating-linear-gradient(45deg, #1d1d1d, #1d1d1d 12px, #262626 12px, #262626 24px);
+  color: #bdbdbd;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.bloco-sem-imagem--faixa {
+  min-height: 160px;
+  background: repeating-linear-gradient(45deg, #f4f4f4, #f4f4f4 12px, #ececec 12px, #ececec 24px);
+  color: var(--cinza-neutro);
+}
+
+/* ---------- Camadas de imagens ---------- */
+.bloco {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 56px 16px;
+}
+
+.bloco__cabecalho {
+  margin-bottom: 24px;
+}
+
+.bloco__cabecalho h2 {
+  font-size: clamp(26px, 4vw, 36px);
+  font-weight: 800;
+  text-transform: uppercase;
+  line-height: 1.05;
+}
+
+.bloco__cabecalho p {
+  margin-top: 8px;
+  font-size: 15px;
+  color: var(--cinza-texto);
+}
+
+.bloco-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.bloco-link:focus-visible {
+  outline: 2px solid var(--preto);
+  outline-offset: 3px;
+}
+
+.bloco-link img {
+  transition: transform 0.4s ease;
+}
+
+.bloco-link:hover img {
+  transform: scale(1.03);
+}
+
+figure {
+  margin: 0;
+}
+
+figcaption {
+  padding: 10px 2px 0;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Cascata (mural em colunas) */
+.cascata {
+  column-count: var(--colunas, 3);
+  column-gap: 16px;
+}
+
+.cascata > * {
+  break-inside: avoid;
+  margin-bottom: 16px;
+}
+
+.cascata__item {
+  overflow: hidden;
+}
+
+.cascata__item img {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--cinza-claro);
+}
+
+/* Lado a lado */
+.lado-a-lado {
+  display: grid;
+  grid-template-columns: repeat(var(--quantidade, 2), minmax(0, 1fr));
+  gap: 16px;
+}
+
+.lado-a-lado__foto {
+  overflow: hidden;
+  aspect-ratio: 3 / 4;
+  background: var(--cinza-claro);
+}
+
+.lado-a-lado--quadrada .lado-a-lado__foto {
+  aspect-ratio: 1;
+}
+
+.lado-a-lado--paisagem .lado-a-lado__foto {
+  aspect-ratio: 4 / 3;
+}
+
+.lado-a-lado__foto img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (max-width: 768px) {
+  .bloco {
+    padding: 40px 16px;
+  }
+
+  .cascata {
+    column-count: 2;
+    column-gap: 10px;
+  }
+
+  .cascata > * {
+    margin-bottom: 10px;
+  }
+
+  .lado-a-lado {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bloco-link img {
+    transition: none;
+  }
+}

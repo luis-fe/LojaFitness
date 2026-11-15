@@ -26,7 +26,7 @@ function useSlidesPorVez() {
 
 const movimentoReduzido = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-export default function Carrossel() {
+export default function Carrossel({ selo = 'Lançamentos', titulo = 'Novidades', ancora = true }) {
   const total = itens.length
   const porVez = useSlidesPorVez()
   const [indice, setIndice] = useState(0)
@@ -105,10 +105,10 @@ export default function Carrossel() {
 
   return (
     <section
-      id="novidades"
+      id={ancora ? 'novidades' : undefined}
       className="carrossel"
       aria-roledescription="carrossel"
-      aria-label="Novidades"
+      aria-label={titulo || 'Produtos'}
       onMouseEnter={() => setPausado(true)}
       onMouseLeave={() => setPausado(false)}
       onFocus={() => setPausado(true)}
@@ -116,8 +116,8 @@ export default function Carrossel() {
     >
       <div className="carrossel__topo">
         <div>
-          <span className="carrossel__selo">Lançamentos</span>
-          <h2 className="carrossel__titulo">Novidades</h2>
+          {selo && <span className="carrossel__selo">{selo}</span>}
+          <h2 className="carrossel__titulo">{titulo}</h2>
         </div>
         <div className="carrossel__setas">
           <button type="button" onClick={anterior} aria-label="Slide anterior">

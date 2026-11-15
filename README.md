@@ -83,6 +83,8 @@ Rotas marcadas com 🔒 exigem o cabeçalho `Authorization: Bearer <token>`.
 | POST | `/api/imagens` 🔒 | logado | Enviar imagem (multipart: `arquivo`, `codigo`, `descricao`) |
 | GET/PATCH/DELETE | `/api/imagens/:id` 🔒 | quem enviou ou admin | Ver, editar código/descrição, excluir (apaga o arquivo) |
 | GET | `/arquivos/:nome` | público | Entrega a imagem guardada no volume |
+| GET/PUT | `/api/layout` 🔒 | admin | Ler layout (rascunho e publicado) / salvar rascunho `{ camadas }` |
+| POST | `/api/layout/publicar` 🔒 | admin | Publicar `{ camadas }` na página inicial |
 
 ### Telas da Área do Vendedor
 
@@ -90,6 +92,7 @@ Rotas marcadas com 🔒 exigem o cabeçalho `Authorization: Bearer <token>`.
 |---|---|---|
 | **Meu perfil** | todos | Editar nome, telefone, CPF/CNPJ e nome fantasia; trocar a senha (continua conectado, outras sessões caem) |
 | **Carregar imagens** | todos | Arrastar/escolher várias fotos, dar código e descrição a cada uma, ver o progresso; galeria com busca, copiar link, editar e excluir |
+| **Construção Layout Site** | só admin | Monta a página inicial com camadas (Imagem destacada, Cascata de imagens, Imagens lado a lado, Vitrine de produtos); prévia ao vivo em computador/celular; rascunho e publicar |
 | **Vendedores** | só admin | Lista com busca e filtro (todos/ativos/inativos), cadastrar, editar, redefinir senha, desativar e reativar |
 
 ### Vendedores — campos e regras
@@ -159,6 +162,13 @@ No **Railway**:
 4. Healthcheck: `/api/saude`.
 5. Imagens enviadas: volume montado em `/data`, com `UPLOADS_DIR=/data/imagens` e `RAILWAY_RUN_UID=0`
    (o volume pertence ao root; sem isso o servidor não consegue gravar).
+
+### Layout da página inicial
+
+- A página inicial é montada a partir do layout **publicado** (tabela `layout_paginas`); sem layout salvo, usa o padrão (banner + vitrine).
+- Camada = `{ id, tipo, visivel, dados }`, tipos `destaque`, `cascata`, `lado-a-lado`, `produtos` (modelos em `src/lib/layoutModelos.js`).
+- O servidor valida tudo antes de salvar: até 20 camadas, imagens só do próprio site (`/arquivos/...` ou `/images/...`), links `/...` ou `https://...`.
+- A prévia do construtor é a página `/previa-layout` dentro de um iframe, recebendo o rascunho por `postMessage`.
 
 ### Imagens
 

@@ -39,6 +39,13 @@ const IconeEquipe = () => (
   </svg>
 )
 
+const IconeLayout = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+    <path d="M3 9h18M9 9v12" />
+  </svg>
+)
+
 const Seta = () => (
   <svg className="topico__seta" viewBox="0 0 24 24" aria-hidden="true">
     <path d="M9 6l6 6-6 6" />
@@ -57,6 +64,13 @@ const topicos = [
     descricao: 'Crie promoções, defina descontos e período de validade.',
     href: '/area-do-vendedor/cadastrar-campanhas',
     Icone: IconeCampanha,
+  },
+  {
+    titulo: 'Construção Layout Site',
+    descricao: 'Monte a página inicial com camadas: imagem destacada, cascata, lado a lado e vitrine.',
+    href: '/area-do-vendedor/layout-site',
+    Icone: IconeLayout,
+    somenteAdmin: true,
   },
   {
     titulo: 'Meu perfil',
