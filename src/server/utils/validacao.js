@@ -1,6 +1,8 @@
 // Validações e normalizações compartilhadas (servidor e scripts).
 // Sem dependências do Next.js: pode ser importado por scripts Node.
 
+import { UFS, normalizarLocalizacao } from '../../lib/retirada.js'
+
 export const SENHA_MINIMA = 8
 export const SENHA_MAXIMA = 200
 
@@ -90,6 +92,41 @@ export function validarVendedor(entrada = {}, { parcial = false } = {}) {
     if (!fantasia) dados.nome_fantasia = null // opcional: vazio remove
     else if (fantasia.length < 2 || fantasia.length > 120) erros.nome_fantasia = 'Nome fantasia deve ter de 2 a 120 caracteres.'
     else dados.nome_fantasia = fantasia
+  }
+
+  // Endereço (opcional; vazio remove). É o local de retirada mostrado ao cliente.
+  if (enviado('cep')) {
+    const cep = soDigitos(entrada.cep)
+    if (!cep) dados.cep = null
+    else if (cep.length !== 8) erros.cep = 'CEP inválido. Informe os 8 números.'
+    else dados.cep = cep
+  }
+
+  if (enviado('endereco')) {
+    const endereco = texto(entrada.endereco)
+    if (!endereco) dados.endereco = null
+    else if (endereco.length < 3 || endereco.length > 200) erros.endereco = 'Endereço deve ter de 3 a 200 caracteres.'
+    else dados.endereco = endereco
+  }
+
+  if (enviado('cidade')) {
+    const cidade = texto(entrada.cidade)
+    if (!cidade) dados.cidade = null
+    else if (cidade.length < 2 || cidade.length > 100) erros.cidade = 'Cidade deve ter de 2 a 100 caracteres.'
+    else dados.cidade = cidade
+  }
+
+  if (enviado('uf')) {
+    const uf = texto(entrada.uf).toUpperCase()
+    if (!uf) dados.uf = null
+    else if (!UFS.includes(uf)) erros.uf = 'UF inválida.'
+    else dados.uf = uf
+  }
+
+  if (enviado('localizacao')) {
+    const { valor, erro } = normalizarLocalizacao(entrada.localizacao)
+    if (erro) erros.localizacao = erro
+    else dados.localizacao = valor
   }
 
   if (!parcial || enviado('senha')) {

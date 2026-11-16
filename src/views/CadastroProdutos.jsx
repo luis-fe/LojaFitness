@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import './Cadastros.css'
 import './CadastroProdutos.css'
+import { TIPO_SELO_PADRAO } from '@/lib/selos'
 import PaginaVendedor from '@/components/PaginaVendedor'
 import ListaDados from '@/components/ListaDados'
 import Campo from '@/components/Campo'
@@ -189,6 +190,7 @@ function FormProduto({ produto, cores, tamanhos, campanhas, selosExistentes = []
     mostrar_preco_anterior: produto?.mostrar_preco_anterior ?? false,
     campanha_id: produto?.campanha_id ?? '',
     selo_campanha: produto?.selo_campanha ?? '',
+    selo_tipo: produto?.selo_tipo ?? TIPO_SELO_PADRAO,
     caminho: produto?.caminho ?? null,
     ativo: produto?.ativo ?? true,
   })
@@ -303,19 +305,36 @@ function FormProduto({ produto, cores, tamanhos, campanhas, selosExistentes = []
                   rotulo="Selo-Campanha"
                   opcional
                   valor={form.selo_campanha}
-                  aoMudar={alterar('selo_campanha')}
+                  aoMudar={(v) => {
+                    alterar('selo_campanha')(v)
+                    // selo que já existe: usa o tipo que ele já tem
+                    const existente = selosExistentes.find((sl) => sl.nome.toLowerCase() === v.trim().toLowerCase())
+                    if (existente) alterar('selo_tipo')(existente.tipo)
+                  }}
                   erro={erros.selo_campanha}
                   maxLength={40}
                   placeholder="Ex.: Black Friday, Camiseta"
                   list="selos-campanha"
-                  dica="Cada Selo-Campanha vira um item no menu lateral do site, que mostra só os produtos com esse selo."
+                  dica="Cada selo vira um item no menu lateral do site, que mostra só os produtos com esse selo."
                 />
                 <datalist id="selos-campanha">
                   {selosExistentes.map((sl) => (
-                    <option key={sl} value={sl} />
+                    <option key={sl.nome} value={sl.nome} />
                   ))}
                 </datalist>
               </div>
+              {form.selo_campanha.trim() !== '' && (
+                <div className="campo largo">
+                  <label htmlFor="produto-selo-tipo">Tipo do selo</label>
+                  <select id="produto-selo-tipo" value={form.selo_tipo} onChange={(e) => alterar('selo_tipo')(e.target.value)} aria-describedby="produto-selo-tipo-dica">
+                    <option value="categoria">Categoria — tipo de produto (ex.: Camiseta, Conjunto)</option>
+                    <option value="campanha">Campanha — ação de venda (ex.: Black Friday, Lançamento)</option>
+                  </select>
+                  <span id="produto-selo-tipo-dica" className={erros.selo_tipo ? 'campo__erro' : 'campo__dica'}>
+                    {erros.selo_tipo || 'Define o grupo do menu lateral em que o selo aparece. Vale para todos os produtos com este selo.'}
+                  </span>
+                </div>
+              )}
               <div className="campo largo">
                 <label htmlFor="produto-descricao">
                   Descrição <span className="campo__opcional">(opcional)</span>
@@ -491,7 +510,7 @@ export default function CadastroProdutos() {
             },
             { id: 'codigo', titulo: 'Código', valor: (p) => p.codigo },
             { id: 'preco', titulo: 'Preço atual', valor: (p) => Number(p.preco_atual), exibir: (p) => reais(p.preco_atual), alinhar: 'direita' },
-            { id: 'selo', titulo: 'Selo-Campanha', valor: (p) => p.selo_campanha ?? '', exibir: (p) => (p.selo_campanha ? <span className="selo-campanha">{p.selo_campanha}</span> : '—') },
+            { id: 'selo', titulo: 'Selo-Campanha', valor: (p) => p.selo_campanha ?? '', exibir: (p) => (p.selo_campanha ? <span className="selo-campanha" title={p.selo_tipo === 'categoria' ? 'Categoria' : 'Campanha'}>{p.selo_campanha}</span> : '—') },
             { id: 'campanha', titulo: 'Campanha', valor: (p) => p.campanha_nome, exibir: (p) => p.campanha_nome ?? '—' },
             { id: 'estoque', titulo: 'Estoque', valor: (p) => p.estoque_total, exibir: (p) => `${p.estoque_total} (${p.variacoes} var.)`, alinhar: 'direita' },
             { id: 'criado_por', titulo: 'Criado por', valor: (p) => p.criado_por_nome, exibir: (p) => p.criado_por_nome ?? '—', noCelular: false },
@@ -523,7 +542,7 @@ export default function CadastroProdutos() {
             cores={apoio.cores}
             tamanhos={apoio.tamanhos}
             campanhas={apoio.campanhas}
-            selosExistentes={[...new Set((produtos ?? []).map((p) => p.selo_campanha).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR'))}
+            selosExistentes={[...new Map((produtos ?? []).filter((p) => p.selo_campanha).map((p) => [p.selo_campanha, { nome: p.selo_campanha, tipo: p.selo_tipo ?? TIPO_SELO_PADRAO }])).values()].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))}
             aoCriarApoio={(tipo, item) =>
               setApoio((a) =>
                 tipo === 'cor' ? { ...a, cores: [...a.cores, item].sort((x, y) => x.nome.localeCompare(y.nome, 'pt-BR')) } : { ...a, tamanhos: [...a.tamanhos, item].sort((x, y) => x.sequencia - y.sequencia) },

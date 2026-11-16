@@ -59,3 +59,61 @@
   outline: 2px solid var(--preto);
   outline-offset: 2px;
 }
+
+/* Local de retirada (aparece ao escolher "Retirar c/ vendedor") */
+.forma-envio__retirada {
+  padding: 4px 2px 2px;
+  text-align: left;
+}
+
+.retirada {
+  list-style: none;
+  display: grid;
+  gap: 14px;
+}
+
+.retirada__local {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.retirada__local + .retirada__local {
+  padding-top: 14px;
+  border-top: 1px solid var(--borda);
+}
+
+.retirada__local > span {
+  color: var(--cinza-texto);
+}
+
+.retirada__mapa {
+  display: block;
+  width: 100%;
+  height: 220px;
+  margin-top: 8px;
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  background: var(--cinza-claro);
+}
+
+.retirada__link {
+  align-self: flex-start;
+  margin-top: 6px;
+  padding: 4px 0;
+  font-weight: 700;
+  color: var(--preto);
+  text-underline-offset: 3px;
+}
+
+.retirada__link:focus-visible {
+  outline: 2px solid var(--preto);
+  outline-offset: 2px;
+}
+
+.retirada__nota {
+  font-size: 13px;
+  color: var(--cinza-texto);
+}

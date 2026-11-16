@@ -248,3 +248,21 @@
     flex-basis: 100%;
   }
 }
+
+/* Título de um grupo de campos dentro do formulário */
+.form-secao {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--borda);
+}
+
+.form-secao h3 {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.form-secao p {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--cinza-texto);
+}

@@ -2,7 +2,7 @@
 import 'server-only'
 import { ErroConflito, ErroValidacao } from '@/server/erros'
 
-const CAMPOS = `p.id, p.codigo, p.slug, p.nome, p.descricao, p.preco_atual, p.preco_anterior, p.mostrar_preco_anterior, p.selo_campanha, p.ativo, p.caminho,
+const CAMPOS = `p.id, p.codigo, p.slug, p.nome, p.descricao, p.preco_atual, p.preco_anterior, p.mostrar_preco_anterior, p.selo_campanha, p.selo_tipo, p.ativo, p.caminho,
   p.campanha_id, c.nome AS campanha_nome, p.criado_em, p.criado_por, v.nome AS criado_por_nome, p.atualizado_em,
   (SELECT count(*)::int FROM produtos_filho f WHERE f.codigo_produto = p.codigo) AS variacoes,
   (SELECT COALESCE(sum(estoque), 0)::int FROM produtos_filho f WHERE f.codigo_produto = p.codigo) AS estoque_total`
@@ -56,7 +56,7 @@ export class ProdutoRepositorio {
     const [produtos, variacoes] = await Promise.all([
       this.banco.consultar(
         `SELECT codigo, slug, nome, descricao, caminho, preco_atual, preco_final, desconto_percentual, campanha_nome,
-                preco_anterior, mostrar_preco_anterior, selo_campanha
+                preco_anterior, mostrar_preco_anterior, selo_campanha, selo_tipo
          FROM produtos_com_preco WHERE ativo ORDER BY destaque DESC NULLS LAST, criado_em, id`
       ),
       this.banco.consultar(
@@ -76,10 +76,11 @@ export class ProdutoRepositorio {
     try {
       await this.banco.transacao(async (db) => {
         await db.query(
-          `INSERT INTO produtos (codigo, slug, nome, descricao, preco_atual, campanha_id, caminho, ativo, criado_por, preco_anterior, mostrar_preco_anterior, selo_campanha)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, true), $9, $10, COALESCE($11, false), $12)`,
-          [d.codigo, d.slug, d.nome, d.descricao, d.preco_atual, d.campanha_id ?? null, d.caminho ?? null, d.ativo ?? null, d.criado_por, d.preco_anterior ?? null, d.mostrar_preco_anterior ?? null, d.selo_campanha ?? null]
+          `INSERT INTO produtos (codigo, slug, nome, descricao, preco_atual, campanha_id, caminho, ativo, criado_por, preco_anterior, mostrar_preco_anterior, selo_campanha, selo_tipo)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, true), $9, $10, COALESCE($11, false), $12, COALESCE($13, 'campanha'))`,
+          [d.codigo, d.slug, d.nome, d.descricao, d.preco_atual, d.campanha_id ?? null, d.caminho ?? null, d.ativo ?? null, d.criado_por, d.preco_anterior ?? null, d.mostrar_preco_anterior ?? null, d.selo_campanha ?? null, d.selo_tipo ?? null]
         )
+        await ProdutoRepositorio.#alinharTipoDoSelo(db, d.codigo)
         await ProdutoRepositorio.#gravarFilhos(db, d.codigo, filhos)
       })
     } catch (erro) {
@@ -101,6 +102,7 @@ export class ProdutoRepositorio {
             ...colunas.map((c) => dados[c]),
           ])
         }
+        if ('selo_campanha' in dados || 'selo_tipo' in dados) await ProdutoRepositorio.#alinharTipoDoSelo(db, dados.codigo ?? codigoAtual)
         // (as variações acompanham a troca de código automaticamente: ON UPDATE CASCADE)
         if (filhos !== undefined) await ProdutoRepositorio.#gravarFilhos(db, dados.codigo ?? codigoAtual, filhos)
         return true
@@ -113,6 +115,17 @@ export class ProdutoRepositorio {
   async excluir(codigo) {
     const { rowCount } = await this.banco.consultar('DELETE FROM produtos WHERE codigo = $1', [codigo])
     return rowCount > 0
+  }
+
+  // Um selo tem um tipo só: os outros produtos com o mesmo selo passam a ter o tipo deste produto
+  static async #alinharTipoDoSelo(db, codigo) {
+    await db.query(
+      `UPDATE produtos p SET selo_tipo = x.selo_tipo
+       FROM produtos x
+       WHERE x.codigo = $1 AND x.selo_campanha IS NOT NULL AND p.codigo <> x.codigo
+         AND lower(p.selo_campanha) = lower(x.selo_campanha) AND p.selo_tipo <> x.selo_tipo`,
+      [codigo]
+    )
   }
 
   // Mantém os ids das variações que continuam (upsert) e remove as que saíram

@@ -444,6 +444,20 @@ CREATE TABLE IF NOT EXISTS vendedores (
   atualizado_em      timestamptz NOT NULL DEFAULT now()
 );
 
+-- Endereço do vendedor (opcional). É o local de retirada mostrado ao cliente que escolhe
+-- "Retirar c/ vendedor" no pedido: só aparece se o vendedor estiver ativo e tiver endereço ou localização.
+ALTER TABLE vendedores ADD COLUMN IF NOT EXISTS cep         text CHECK (cep ~ '^[0-9]{8}$');                               -- só dígitos
+ALTER TABLE vendedores ADD COLUMN IF NOT EXISTS endereco    text CHECK (endereco IS NULL OR length(trim(endereco)) BETWEEN 3 AND 200);  -- rua, número, bairro
+ALTER TABLE vendedores ADD COLUMN IF NOT EXISTS uf          text CHECK (uf ~ '^[A-Z]{2}$');
+ALTER TABLE vendedores ADD COLUMN IF NOT EXISTS cidade      text CHECK (cidade IS NULL OR length(trim(cidade)) BETWEEN 2 AND 100);
+ALTER TABLE vendedores ADD COLUMN IF NOT EXISTS localizacao text CHECK (localizacao IS NULL OR length(localizacao) <= 500); -- link do Google Maps ou "latitude,longitude"
+
+COMMENT ON COLUMN vendedores.cep         IS 'CEP do vendedor (8 dígitos)';
+COMMENT ON COLUMN vendedores.endereco    IS 'Endereço do vendedor: rua, número, complemento, bairro';
+COMMENT ON COLUMN vendedores.uf          IS 'UF do vendedor (sigla do estado)';
+COMMENT ON COLUMN vendedores.cidade      IS 'Cidade do vendedor';
+COMMENT ON COLUMN vendedores.localizacao IS 'Localização no Google Maps: link do mapa ou "latitude,longitude" (local de retirada)';
+
 CREATE INDEX IF NOT EXISTS vendedores_ativos_idx ON vendedores (ativo, nome);
 
 DROP TRIGGER IF EXISTS vendedores_atualizado_em ON vendedores;
@@ -584,6 +598,10 @@ BEGIN
   END IF;
 END $$;
 CREATE INDEX IF NOT EXISTS produtos_selo_campanha_idx ON produtos (selo_campanha) WHERE selo_campanha IS NOT NULL;
+
+-- Tipo do selo: 'categoria' (ex.: Camiseta) ou 'campanha' (ex.: Black Friday) — define o grupo no menu lateral
+ALTER TABLE produtos ADD COLUMN IF NOT EXISTS selo_tipo text NOT NULL DEFAULT 'campanha' CHECK (selo_tipo IN ('categoria', 'campanha'));
+COMMENT ON COLUMN produtos.selo_tipo IS 'Tipo do selo: categoria ou campanha (grupo do selo no menu lateral do site)';
 
 CREATE INDEX IF NOT EXISTS produtos_campanha_idx   ON produtos (campanha_id);
 CREATE INDEX IF NOT EXISTS produtos_criado_por_idx ON produtos (criado_por);
@@ -777,7 +795,7 @@ CREATE VIEW produtos_com_preco AS
 SELECT
   p.id, p.codigo, p.slug, p.nome, p.descricao, p.preco_atual, p.caminho, p.ativo, p.destaque,
   p.campanha_id, p.criado_em, p.criado_por, p.atualizado_em, p.preco_anterior, p.mostrar_preco_anterior,
-  p.selo_campanha,
+  p.selo_campanha, p.selo_tipo,
   c.nome AS campanha_nome,
   CASE WHEN c.id IS NOT NULL THEN c.desconto_percentual END AS desconto_percentual,
   round(p.preco_atual * (1 - COALESCE(c.desconto_percentual, 0) / 100), 2) AS preco_final

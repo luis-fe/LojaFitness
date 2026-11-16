@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
+import { TIPOS_SELO, TIPO_SELO_PADRAO } from '@/lib/selos'
 import './Header.css'
 import logo from '@/assets/logo-jlk.png'
 import { useCarrinho } from '@/context/Carrinho'
@@ -69,7 +70,8 @@ function BotaoCompartilhar() {
 
 export default function Header() {
   const pathname = usePathname()
-  // Selos-Campanha dos produtos (ex.: Black Friday, Camiseta): um item do menu para cada selo existente
+  // Selos dos produtos: um item do menu para cada selo existente, em dois grupos —
+  // Categorias (ex.: Camiseta) e Campanhas (ex.: Black Friday). Cada item abre a página só com os produtos do selo.
   const [opcoes, setOpcoes] = useState([])
 
   // O Header não é remontado ao navegar; por isso busca de novo ao trocar de página e ao abrir o
@@ -79,7 +81,7 @@ export default function Header() {
     let ativo = true
     fetch('/api/selos', { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => d && ativo && setOpcoes((d.selos ?? []).map((s) => ({ label: s.nome, href: `/selo/${s.slug}` }))))
+      .then((d) => d && ativo && setOpcoes((d.selos ?? []).map((s) => ({ label: s.nome, href: `/selo/${s.slug}`, tipo: s.tipo }))))
       .catch(() => {})
     return () => {
       ativo = false
@@ -181,9 +183,17 @@ export default function Header() {
         aria-label="Menu"
         inert={!menuAberto}
       >
-        <nav className="header__drawer-nav" aria-label="Campanhas">
-          {opcoes.length > 0 && <span className="header__drawer-titulo">Campanhas</span>}
-          {opcoes.map(renderLinkMenu)}
+        <nav className="header__drawer-nav" aria-label="Categorias e campanhas">
+          {TIPOS_SELO.map((tipo) => {
+            const doTipo = opcoes.filter((op) => (op.tipo ?? TIPO_SELO_PADRAO) === tipo.id)
+            if (!doTipo.length) return null
+            return (
+              <div key={tipo.id} role="group" aria-label={tipo.plural}>
+                <span className="header__drawer-titulo">{tipo.plural}</span>
+                {doTipo.map(renderLinkMenu)}
+              </div>
+            )
+          })}
         </nav>
         <nav className="header__drawer-rodape" aria-label="Mais opções">
           {opcoesRodape.map(renderLinkMenu)}

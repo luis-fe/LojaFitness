@@ -8,7 +8,7 @@
 import 'server-only'
 import { ErroConflito, ErroNaoEncontrado, ErroRequisicao, validarOuFalhar } from '@/server/erros'
 import { MODELOS } from '@/lib/layoutModelos'
-import { normalizarSelo, slugDoSelo } from '@/lib/selos'
+import { normalizarSelo, slugDoSelo, tipoSeloValido } from '@/lib/selos'
 
 const semAcento = (v) =>
   String(v ?? '')
@@ -112,6 +112,10 @@ export class ProdutoServico {
       if (!selo) d.selo_campanha = null // não obrigatório
       else if (selo.length < 2 || !slugDoSelo(selo)) erros.selo_campanha = 'Selo-Campanha: de 2 a 40 caracteres, com letras ou números.'
       else d.selo_campanha = selo
+    }
+    if (veio('selo_tipo')) {
+      if (!tipoSeloValido(e.selo_tipo)) erros.selo_tipo = 'Tipo do selo deve ser Categoria ou Campanha.'
+      else d.selo_tipo = e.selo_tipo
     }
     if (veio('mostrar_preco_anterior')) {
       if (typeof e.mostrar_preco_anterior !== 'boolean') erros.mostrar_preco_anterior = 'Valor inválido.'
