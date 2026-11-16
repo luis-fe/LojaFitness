@@ -69,16 +69,22 @@ function BotaoCompartilhar() {
 
 export default function Header() {
   const pathname = usePathname()
-  const [menuAberto, setMenuAberto] = useState(false)
   // Selos-Campanha dos produtos (ex.: Black Friday, Camiseta): um item do menu para cada selo existente
   const [opcoes, setOpcoes] = useState([])
 
+  // O Header não é remontado ao navegar; por isso busca de novo ao trocar de página e ao abrir o
+  // menu — um selo colocado/retirado no cadastro aparece sem precisar recarregar o site.
+  const [menuAberto, setMenuAberto] = useState(false)
   useEffect(() => {
-    fetch('/api/selos')
-      .then((r) => (r.ok ? r.json() : { selos: [] }))
-      .then((d) => setOpcoes((d.selos ?? []).map((s) => ({ label: s.nome, href: `/selo/${s.slug}` }))))
-      .catch(() => setOpcoes([]))
-  }, [])
+    let ativo = true
+    fetch('/api/selos', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d && ativo && setOpcoes((d.selos ?? []).map((s) => ({ label: s.nome, href: `/selo/${s.slug}` }))))
+      .catch(() => {})
+    return () => {
+      ativo = false
+    }
+  }, [pathname, menuAberto])
   const { quantidadeTotal } = useCarrinho()
   const botaoRef = useRef(null)
   const drawerRef = useRef(null)
