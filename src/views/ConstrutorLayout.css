@@ -73,6 +73,16 @@
   border-radius: 8px;
 }
 
+.construtor__controles .rotulo-curto {
+  display: none;
+}
+
+@media (max-width: 560px) {
+  .construtor__controles .rotulo-curto {
+    display: inline;
+  }
+}
+
 .construtor__acoes {
   display: flex;
   flex-wrap: wrap;
@@ -570,6 +580,33 @@
   .construtor__acoes .botao {
     flex: 1;
     padding: 0 8px;
+  }
+
+  /* Barra de controles no celular: só os 3 botões, lado a lado, rótulos curtos */
+  .construtor__controles {
+    padding: 10px;
+  }
+
+  .construtor__controles .construtor__status {
+    display: none;
+  }
+
+  .construtor__controles .construtor__acoes {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .construtor__controles .botao {
+    gap: 6px;
+    min-height: 44px;
+    padding: 0 6px;
+    font-size: 11px;
+    letter-spacing: 0.6px;
+  }
+
+  .construtor__controles .rotulo-longo {
+    display: none;
   }
 
   .modelos {

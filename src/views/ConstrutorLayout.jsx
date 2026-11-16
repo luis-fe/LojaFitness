@@ -471,13 +471,16 @@ export default function ConstrutorLayout() {
             <IconeDesfazer />
             Descartar
           </button>
-          <button type="button" className="botao botao--secundario botao--pequeno" disabled={!alterado || ocupado} onClick={() => enviar('/api/layout', 'PUT', 'Rascunho salvo. O site ainda não mudou.')}>
+          <button type="button" className="botao botao--secundario botao--pequeno" disabled={!alterado || ocupado} onClick={() => enviar('/api/layout', 'PUT', 'Rascunho salvo. O site ainda não mudou.')} aria-label="Salvar rascunho">
             <IconeSalvar />
-            Salvar rascunho
+            {/* no celular aparece só o rótulo curto, para os 3 botões caberem lado a lado */}
+            <span className="rotulo-longo">Salvar rascunho</span>
+            <span className="rotulo-curto">Rascunho</span>
           </button>
-          <button type="button" className="botao botao--pequeno" disabled={!naoPublicado || ocupado} onClick={() => setModal({ tipo: 'publicar' })}>
+          <button type="button" className="botao botao--pequeno" disabled={!naoPublicado || ocupado} onClick={() => setModal({ tipo: 'publicar' })} aria-label="Publicar no site">
             <IconePublicar />
-            Publicar no site
+            <span className="rotulo-longo">Publicar no site</span>
+            <span className="rotulo-curto">Publicar</span>
           </button>
         </div>
       </div>
