@@ -2,7 +2,7 @@
 import 'server-only'
 import { ErroConflito, ErroValidacao } from '@/server/erros'
 
-const CAMPOS = `p.id, p.codigo, p.slug, p.nome, p.descricao, p.preco_atual, p.ativo, p.caminho,
+const CAMPOS = `p.id, p.codigo, p.slug, p.nome, p.descricao, p.preco_atual, p.preco_anterior, p.mostrar_preco_anterior, p.ativo, p.caminho,
   p.campanha_id, c.nome AS campanha_nome, p.criado_em, p.criado_por, v.nome AS criado_por_nome, p.atualizado_em,
   (SELECT count(*)::int FROM produtos_filho f WHERE f.codigo_produto = p.codigo) AS variacoes,
   (SELECT COALESCE(sum(estoque), 0)::int FROM produtos_filho f WHERE f.codigo_produto = p.codigo) AS estoque_total`
@@ -55,7 +55,8 @@ export class ProdutoRepositorio {
   async listarCatalogo() {
     const [produtos, variacoes] = await Promise.all([
       this.banco.consultar(
-        `SELECT codigo, slug, nome, descricao, caminho, preco_atual, preco_final, desconto_percentual, campanha_nome
+        `SELECT codigo, slug, nome, descricao, caminho, preco_atual, preco_final, desconto_percentual, campanha_nome,
+                preco_anterior, mostrar_preco_anterior
          FROM produtos_com_preco WHERE ativo ORDER BY destaque DESC NULLS LAST, criado_em, id`
       ),
       this.banco.consultar(
@@ -75,9 +76,9 @@ export class ProdutoRepositorio {
     try {
       await this.banco.transacao(async (db) => {
         await db.query(
-          `INSERT INTO produtos (codigo, slug, nome, descricao, preco_atual, campanha_id, caminho, ativo, criado_por)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, true), $9)`,
-          [d.codigo, d.slug, d.nome, d.descricao, d.preco_atual, d.campanha_id ?? null, d.caminho ?? null, d.ativo ?? null, d.criado_por]
+          `INSERT INTO produtos (codigo, slug, nome, descricao, preco_atual, campanha_id, caminho, ativo, criado_por, preco_anterior, mostrar_preco_anterior)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, true), $9, $10, COALESCE($11, false))`,
+          [d.codigo, d.slug, d.nome, d.descricao, d.preco_atual, d.campanha_id ?? null, d.caminho ?? null, d.ativo ?? null, d.criado_por, d.preco_anterior ?? null, d.mostrar_preco_anterior ?? null]
         )
         await ProdutoRepositorio.#gravarFilhos(db, d.codigo, filhos)
       })

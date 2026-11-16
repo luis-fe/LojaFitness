@@ -97,7 +97,26 @@ export class ProdutoServico {
       if (typeof e.ativo !== 'boolean') erros.ativo = 'Ativo deve ser verdadeiro ou falso.'
       else d.ativo = e.ativo
     }
+    if (veio('preco_anterior')) {
+      if (e.preco_anterior === null || e.preco_anterior === '') d.preco_anterior = null
+      else {
+        const p = ProdutoServico.lerPreco(e.preco_anterior)
+        if (!Number.isFinite(p) || p <= 0 || p > 99999999.99) erros.preco_anterior = 'Informe um preço anterior válido (ex.: 199,90).'
+        else d.preco_anterior = Math.round(p * 100) / 100
+      }
+    }
+    if (veio('mostrar_preco_anterior')) {
+      if (typeof e.mostrar_preco_anterior !== 'boolean') erros.mostrar_preco_anterior = 'Valor inválido.'
+      else d.mostrar_preco_anterior = e.mostrar_preco_anterior
+    }
     return { d, erros }
+  }
+
+  // Efeito X ligado exige preço anterior maior que o preço atual (senão o "de/por" não faz sentido)
+  static #validarPrecoAnterior(final, erros) {
+    if (!final.mostrar_preco_anterior || erros.preco_anterior || erros.preco_atual) return
+    if (final.preco_anterior === null || final.preco_anterior === undefined) erros.preco_anterior = 'Informe o preço anterior para usar o efeito X.'
+    else if (Number(final.preco_anterior) <= Number(final.preco_atual)) erros.preco_anterior = 'O preço anterior precisa ser maior que o preço atual.'
   }
 
   // [{ cor, tamanho, estoque }] — combinação cor+tamanho única. undefined = não mexer nas variações.
@@ -139,6 +158,7 @@ export class ProdutoServico {
   async criar(entrada, autor) {
     const { d, erros } = ProdutoServico.#validar(entrada ?? {}, { parcial: false })
     const filhos = ProdutoServico.#validarFilhos(entrada?.filhos ?? [], erros)
+    ProdutoServico.#validarPrecoAnterior(d, erros)
     validarOuFalhar(erros)
     await this.repo.criar({ ...d, slug: ProdutoServico.slugDoCodigo(d.codigo), criado_por: autor.id }, filhos)
     return this.buscar(d.codigo)
@@ -147,6 +167,10 @@ export class ProdutoServico {
   async atualizar(codigo, entrada) {
     const { d, erros } = ProdutoServico.#validar(entrada ?? {}, { parcial: true })
     const filhos = ProdutoServico.#validarFilhos(entrada?.filhos, erros)
+    if (['preco_atual', 'preco_anterior', 'mostrar_preco_anterior'].some((c) => c in d)) {
+      const atual = await this.repo.buscar(codigo)
+      if (atual) ProdutoServico.#validarPrecoAnterior({ ...atual, ...d }, erros)
+    }
     validarOuFalhar(erros)
     if (!Object.keys(d).length && filhos === undefined) throw new ErroRequisicao('Nenhum campo para atualizar.')
     if (d.codigo) d.slug = ProdutoServico.slugDoCodigo(d.codigo)

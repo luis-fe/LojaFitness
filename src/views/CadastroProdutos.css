@@ -336,3 +336,20 @@
     padding: 6px 4px;
   }
 }
+
+/* Efeito X: preço anterior riscado */
+.efeito-x {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-self: end;
+  min-height: 48px;
+  gap: 4px 16px;
+  padding: 10px 12px;
+  background: var(--cinza-claro);
+  border-radius: 10px;
+}
+
+.efeito-x s {
+  color: var(--cinza-neutro);
+}

@@ -1,7 +1,7 @@
 // Catálogo da loja (site público): monta, a partir do banco, o que a vitrine, a página do
 // produto, o carrinho e a conferência do pedido usam.
 //
-//   produto = { slug, codigo, nome, descricao, imagem, preco, precoOriginal, campanha,
+//   produto = { slug, codigo, nome, descricao, imagem, preco, precoAnterior, campanha,
 //               cores: [{ codigo, nome, hex }], tamanhos: ['P', 'M', ...],
 //               estoque: { [nomeDaCor]: { [tamanho]: quantidade } } }
 //
@@ -9,6 +9,7 @@
 //     variação excluída some do site; tamanho que não existe para uma cor fica sem chave
 //     em estoque[cor] (a página mostra "Não possui"); estoque 0 = "Esgotado".
 //   • tamanhos: todos os tamanhos da grade do produto, na sequência de exibição.
+//   • precoAnterior: só quando o efeito X está ligado e o valor é maior que o preço ("de X por Y").
 import 'server-only'
 
 const IMAGEM_PADRAO = '/images/hero-conjunto.jpg'
@@ -40,7 +41,7 @@ export class CatalogoServico {
         tamanhos.set(v.tamanho, v.sequencia)
       }
       const preco = Number(p.preco_final ?? p.preco_atual ?? 0)
-      const original = Number(p.preco_atual ?? 0)
+      const anterior = p.mostrar_preco_anterior && p.preco_anterior !== null ? Number(p.preco_anterior) : null
       return {
         slug: p.slug,
         codigo: p.codigo,
@@ -48,7 +49,7 @@ export class CatalogoServico {
         descricao: p.descricao ?? '',
         imagem: p.caminho || IMAGEM_PADRAO,
         preco,
-        precoOriginal: original > preco ? original : null,
+        precoAnterior: anterior > preco ? anterior : null,
         campanha: p.campanha_nome ?? null,
         cores,
         tamanhos: [...tamanhos.entries()].sort((a, b) => a[1] - b[1]).map(([codigo]) => codigo),

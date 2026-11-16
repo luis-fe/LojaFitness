@@ -185,6 +185,8 @@ function FormProduto({ produto, cores, tamanhos, campanhas, aoSalvar, aoCancelar
     nome: produto?.nome ?? '',
     descricao: produto?.descricao ?? '',
     preco_atual: precoParaCampo(produto?.preco_atual),
+    preco_anterior: precoParaCampo(produto?.preco_anterior),
+    mostrar_preco_anterior: produto?.mostrar_preco_anterior ?? false,
     campanha_id: produto?.campanha_id ?? '',
     caminho: produto?.caminho ?? null,
     ativo: produto?.ativo ?? true,
@@ -209,6 +211,7 @@ function FormProduto({ produto, cores, tamanhos, campanhas, aoSalvar, aoCancelar
     const corpo = {
       ...form,
       campanha_id: form.campanha_id === '' ? null : Number(form.campanha_id),
+      preco_anterior: form.preco_anterior === '' ? null : form.preco_anterior,
       filhos: filhos.map(({ cor, tamanho, estoque }) => ({ cor, tamanho, estoque: Number(estoque) || 0 })),
     }
     const { ok, dados } = produto ? await api(`/api/cadastro/produtos/${encodeURIComponent(produto.codigo)}`, { metodo: 'PATCH', corpo }) : await api('/api/cadastro/produtos', { metodo: 'POST', corpo })
@@ -274,6 +277,22 @@ function FormProduto({ produto, cores, tamanhos, campanhas, aoSalvar, aoCancelar
             <div className="grade-campos">
               <Campo rotulo="Código do produto" valor={form.codigo} aoMudar={alterar('codigo')} mascara={mascaraCodigo} erro={erros.codigo} placeholder="Ex.: CONJ-CALCA-AZUL" autoFocus={!produto} />
               <Campo rotulo="Preço atual (R$)" valor={form.preco_atual} aoMudar={alterar('preco_atual')} mascara={mascaraPreco} erro={erros.preco_atual} inputMode="decimal" placeholder="159,90" />
+              <Campo rotulo="Preço anterior (R$)" opcional valor={form.preco_anterior} aoMudar={alterar('preco_anterior')} mascara={mascaraPreco} erro={erros.preco_anterior} inputMode="decimal" placeholder="199,90" />
+              <div className="efeito-x">
+                <label className="opcao">
+                  <input type="checkbox" checked={form.mostrar_preco_anterior} onChange={(e) => alterar('mostrar_preco_anterior')(e.target.checked)} />
+                  Efeito “X” preço anterior
+                </label>
+                <span className="campo__dica">
+                  {form.mostrar_preco_anterior && form.preco_anterior && form.preco_atual ? (
+                    <>
+                      Na loja: <s>R$ {form.preco_anterior}</s> Por <strong>R$ {form.preco_atual}</strong>
+                    </>
+                  ) : (
+                    'Ligado, a loja mostra o preço anterior riscado: “de R$ X por R$ Y”.'
+                  )}
+                </span>
+              </div>
               <div className="largo">
                 <Campo rotulo="Nome" valor={form.nome} aoMudar={alterar('nome')} erro={erros.nome} maxLength={120} placeholder="Ex.: Conjunto Calça Azul" />
               </div>

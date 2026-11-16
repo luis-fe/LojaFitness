@@ -421,6 +421,16 @@ BEGIN
   END IF;
 END $$;
 
+-- Preço anterior ("de R$ X por R$ Y"): aparece riscado na loja quando mostrar_preco_anterior = true
+ALTER TABLE produtos ADD COLUMN IF NOT EXISTS preco_anterior numeric(10,2);
+ALTER TABLE produtos ADD COLUMN IF NOT EXISTS mostrar_preco_anterior boolean NOT NULL DEFAULT false;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'produtos_preco_anterior_check') THEN
+    ALTER TABLE produtos ADD CONSTRAINT produtos_preco_anterior_check CHECK (preco_anterior IS NULL OR preco_anterior > 0);
+  END IF;
+END $$;
+
 CREATE INDEX IF NOT EXISTS produtos_campanha_idx   ON produtos (campanha_id);
 CREATE INDEX IF NOT EXISTS produtos_criado_por_idx ON produtos (criado_por);
 
@@ -428,6 +438,8 @@ COMMENT ON COLUMN produtos.codigo      IS 'Código do produto (único, maiúscul
 COMMENT ON COLUMN produtos.descricao   IS 'Descrição do produto';
 COMMENT ON COLUMN produtos.preco_atual IS 'Preço atual em reais (decimal exato, 2 casas)';
 COMMENT ON COLUMN produtos.campanha_id IS 'Campanha do produto (opcional)';
+COMMENT ON COLUMN produtos.preco_anterior IS 'Preço anterior em reais (opcional), mostrado riscado: de R$ X por R$ Y';
+COMMENT ON COLUMN produtos.mostrar_preco_anterior IS 'Efeito X: mostra o preço anterior riscado na loja';
 COMMENT ON COLUMN produtos.criado_em   IS 'Data da criação';
 COMMENT ON COLUMN produtos.criado_por  IS 'Vendedor que cadastrou o produto';
 COMMENT ON COLUMN produtos.caminho     IS 'URL da imagem do produto no volume (ex.: /arquivos/<id>.jpg)';
@@ -573,7 +585,7 @@ COMMENT ON TABLE visitantes_log IS 'Visitas à loja; mantém apenas os últimos 
 CREATE VIEW produtos_com_preco AS
 SELECT
   p.id, p.codigo, p.slug, p.nome, p.descricao, p.preco_atual, p.caminho, p.ativo, p.destaque,
-  p.campanha_id, p.criado_em, p.criado_por, p.atualizado_em,
+  p.campanha_id, p.criado_em, p.criado_por, p.atualizado_em, p.preco_anterior, p.mostrar_preco_anterior,
   c.nome AS campanha_nome,
   CASE WHEN c.id IS NOT NULL THEN c.desconto_percentual END AS desconto_percentual,
   round(p.preco_atual * (1 - COALESCE(c.desconto_percentual, 0) / 100), 2) AS preco_final
