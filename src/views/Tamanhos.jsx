@@ -119,6 +119,7 @@ export default function Tamanhos() {
       descricao="Tamanhos disponíveis para os produtos e a ordem em que aparecem."
       trilha={TRILHA}
       largura={960}
+      fixarTopo
       acoes={
         <button type="button" className="botao" onClick={() => setModal({ tipo: 'novo' })}>
           + Novo tamanho

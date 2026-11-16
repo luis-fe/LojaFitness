@@ -348,6 +348,7 @@ export default function CadastroProdutos() {
       titulo="Produtos"
       trilha={TRILHA}
       largura={1200}
+      fixarTopo
       acoes={
         <button type="button" className="botao" onClick={() => setModal({ tipo: 'novo' })}>
           + Novo produto

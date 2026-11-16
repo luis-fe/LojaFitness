@@ -144,6 +144,7 @@ export default function Cores() {
       descricao="Cores disponíveis para as variações dos produtos."
       trilha={TRILHA}
       largura={960}
+      fixarTopo
       acoes={
         <button type="button" className="botao" onClick={() => setModal({ tipo: 'novo' })}>
           + Nova cor

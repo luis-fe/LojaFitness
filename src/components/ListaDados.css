@@ -26,7 +26,7 @@
 
 .lista__tabela thead th {
   position: sticky;
-  top: var(--header-altura);
+  top: calc(var(--header-altura) + var(--topo-fixo-altura, 0px)); /* abaixo do topo congelado, se houver */
   z-index: 1;
   padding: 0;
   background: var(--branco);

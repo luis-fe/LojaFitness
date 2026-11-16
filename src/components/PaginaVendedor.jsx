@@ -1,3 +1,6 @@
+'use client'
+
+import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 import './PaginaVendedor.css'
 
@@ -6,9 +9,23 @@ import './PaginaVendedor.css'
 // trilha: níveis intermediários, ex.: [{ href: '/area-do-vendedor/perfil', rotulo: 'Perfil' }]
 // fixarTopo: trilha + título + ações ficam congelados no topo ao rolar a página
 export default function PaginaVendedor({ titulo, descricao, acoes, largura = 720, trilha = [], fixarTopo = false, children }) {
+  const secaoRef = useRef(null)
+  const topoRef = useRef(null)
+
+  // Informa a altura do topo congelado (--topo-fixo-altura) para que cabeçalhos de tabela
+  // também "grudem" logo abaixo dele, em vez de ficarem escondidos atrás
+  useEffect(() => {
+    if (!fixarTopo || !topoRef.current) return
+    const observador = new ResizeObserver(([item]) => {
+      secaoRef.current?.style.setProperty('--topo-fixo-altura', `${Math.ceil(item.borderBoxSize[0].blockSize)}px`)
+    })
+    observador.observe(topoRef.current)
+    return () => observador.disconnect()
+  }, [fixarTopo])
+
   return (
-    <section className="pagina-vendedor" style={{ '--pagina-largura': `${largura}px` }} aria-labelledby="pagina-titulo">
-      <div className={fixarTopo ? 'pagina-vendedor__topo is-fixo' : 'pagina-vendedor__topo'}>
+    <section ref={secaoRef} className="pagina-vendedor" style={{ '--pagina-largura': `${largura}px` }} aria-labelledby="pagina-titulo">
+      <div ref={topoRef} className={fixarTopo ? 'pagina-vendedor__topo is-fixo' : 'pagina-vendedor__topo'}>
         <nav className="pagina-vendedor__trilha" aria-label="Você está em">
           <Link href="/area-do-vendedor">Início</Link>
           <span aria-hidden="true">/</span>
