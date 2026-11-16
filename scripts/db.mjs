@@ -94,6 +94,9 @@ try {
     await criarAdminInicial()
     const { rowCount } = await cliente.query("DELETE FROM visitantes_log WHERE data_hora < now() - interval '30 days'")
     console.log(`🧹 Log de visitantes: ${rowCount} registro(s) com mais de 30 dias removido(s).`)
+    // Pedidos em Rascunho (situação 0) há mais de 15 dias: itens e vendas_cor_tam saem junto (CASCADE)
+    const rascunhos = await cliente.query("DELETE FROM pedidos WHERE situacao = 0 AND data_emissao < now() - interval '15 days'")
+    console.log(`🧹 Pedidos em rascunho há mais de 15 dias: ${rascunhos.rowCount} removido(s).`)
   }
 } catch (erro) {
   console.error(`❌ Erro: ${erro.message}`)

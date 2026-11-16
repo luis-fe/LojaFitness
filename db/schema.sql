@@ -309,6 +309,29 @@ CREATE TABLE IF NOT EXISTS pedido_itens (
 
 CREATE INDEX IF NOT EXISTS pedido_itens_pedido_idx ON pedido_itens (pedido_id);
 
+-- Vendas por cor e tamanho = nível SKU do pedido: uma linha por produto × cor × tamanho
+--   sku é calculado sozinho: CODIGO-PRODUTO-COR-TAM (ex.: CONJUNTO-CALCA-AZUL-P)
+--   cor / tam guardam os CÓDIGOS (ex.: PRETO, M) — sem chave estrangeira de propósito, para o
+--   histórico continuar mesmo se a cor ou o tamanho forem excluídos do cadastro depois.
+CREATE TABLE IF NOT EXISTS vendas_cor_tam (
+  id              bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  id_pedido       bigint        NOT NULL REFERENCES pedidos (id_pedido) ON DELETE CASCADE,
+  codigo_produto  text          NOT NULL,
+  cor             text          NOT NULL,
+  tam             text          NOT NULL,
+  quant           integer       NOT NULL CHECK (quant > 0),
+  preco           numeric(10,2) NOT NULL CHECK (preco >= 0),
+  sku             text GENERATED ALWAYS AS (codigo_produto || '-' || cor || '-' || tam) STORED
+);
+ALTER TABLE vendas_cor_tam ADD COLUMN IF NOT EXISTS sku text GENERATED ALWAYS AS (codigo_produto || '-' || cor || '-' || tam) STORED;
+
+CREATE INDEX IF NOT EXISTS vendas_cor_tam_pedido_idx  ON vendas_cor_tam (id_pedido);
+CREATE INDEX IF NOT EXISTS vendas_cor_tam_produto_idx ON vendas_cor_tam (codigo_produto, cor, tam);
+CREATE INDEX IF NOT EXISTS vendas_cor_tam_sku_idx     ON vendas_cor_tam (sku);
+
+COMMENT ON TABLE vendas_cor_tam IS 'Nível SKU do pedido: itens vendidos por produto, cor e tamanho';
+COMMENT ON COLUMN vendas_cor_tam.preco IS 'Preço unitário no momento do pedido';
+
 
 -- ---------------------------------------------------------------------
 -- PAGAMENTOS (preparado para Pix dinâmico com expiração)

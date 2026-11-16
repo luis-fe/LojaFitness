@@ -8,6 +8,7 @@ import { validarCliente } from '@/lib/cliente'
 
 export class PedidoServico {
   static MAX_ITENS = 50
+  static LIMPEZA_A_CADA_MS = 60 * 60 * 1000 // limpeza de rascunhos antigos no máximo 1 vez por hora
 
   constructor({ catalogoServico, pedidoRepositorio }) {
     this.catalogo = catalogoServico
@@ -69,8 +70,20 @@ export class PedidoServico {
 
     const total = Math.round(itens.reduce((s, i) => s + i.subtotal, 0) * 100) / 100
     const pedido = await this.pedidos.criarRascunho({ cliente, itens, total })
+    this.#limparRascunhosSeNecessario()
     const mensagem = mensagemPedido(itens, cliente, pedido.codigo)
     const publicos = itens.map(({ codigoProduto, codigoCor, ...resto }) => resto) // códigos internos ficam no servidor
     return { pedido: { codigo: pedido.codigo, situacao: pedido.situacao }, itens: publicos, total, mensagem, whatsappUrl: linkWhatsApp(mensagem) }
+  }
+
+  // Rascunhos com mais de 15 dias saem sozinhos (não trava o pedido do cliente se falhar)
+  #limparRascunhosSeNecessario() {
+    const agora = Date.now()
+    if (agora - (globalThis.__jlkUltimaLimpezaRascunhos ?? 0) < PedidoServico.LIMPEZA_A_CADA_MS) return
+    globalThis.__jlkUltimaLimpezaRascunhos = agora
+    this.pedidos
+      .apagarRascunhosAntigos()
+      .then((n) => n && console.log(`[pedidos] ${n} rascunho(s) com mais de 15 dias removido(s)`))
+      .catch((erro) => console.error('[pedidos] falha ao limpar rascunhos antigos:', erro.message))
   }
 }
