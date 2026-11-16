@@ -7,15 +7,6 @@
   white-space: nowrap;
 }
 
-.cadastro__busca {
-  max-width: 420px;
-  margin-bottom: 16px;
-}
-
-.cadastro__busca input {
-  height: 42px;
-}
-
 .miniatura {
   display: block;
   width: 48px;

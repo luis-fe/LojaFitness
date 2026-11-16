@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import './Cadastros.css'
 import PaginaVendedor from '@/components/PaginaVendedor'
 import ListaDados from '@/components/ListaDados'
@@ -115,6 +115,13 @@ export default function Cores() {
   const [erro, setErro] = useState('')
   const [aviso, setAviso] = useState('')
   const [modal, setModal] = useState(null)
+  const [busca, setBusca] = useState('')
+
+  const filtrados = useMemo(() => {
+    const t = busca.trim().toLowerCase()
+    if (!cores || !t) return cores
+    return cores.filter((c) => `${c.codigo} ${c.nome} ${c.rgb}`.toLowerCase().includes(t))
+  }, [cores, busca])
 
   const carregar = useCallback(async () => {
     const { ok, dados } = await api('/api/cores')
@@ -141,13 +148,12 @@ export default function Cores() {
   return (
     <PaginaVendedor
       titulo="Cores"
-      descricao="Cores disponíveis para as variações dos produtos."
       trilha={TRILHA}
       largura={960}
       fixarTopo
       acoes={
-        <button type="button" className="botao" onClick={() => setModal({ tipo: 'novo' })}>
-          + Nova cor
+        <button type="button" className="botao botao--compacto botao--dourado" aria-label="Nova cor" onClick={() => setModal({ tipo: 'novo' })}>
+          + Novo
         </button>
       }
     >
@@ -158,15 +164,24 @@ export default function Cores() {
         </p>
       )}
 
+      {cores && cores.length > 0 && (
+        <div className="campo cadastro__busca">
+          <label htmlFor="busca-cores" className="sr-only">
+            Buscar cores
+          </label>
+          <input id="busca-cores" type="search" placeholder="Buscar por nome, código ou RGB" value={busca} onChange={(e) => setBusca(e.target.value)} />
+        </div>
+      )}
+
       {!cores && !erro ? (
         <div className="cadastro__carregando" aria-busy="true" aria-label="Carregando cores" />
       ) : cores ? (
         <ListaDados
           rotulo="Cores"
-          itens={cores}
+          itens={filtrados}
           chave={(c) => c.codigo}
           ordemInicial={{ coluna: 'nome', direcao: 'asc' }}
-          vazio="Nenhuma cor cadastrada."
+          vazio={busca ? `Nenhuma cor encontrada para “${busca}”.` : 'Nenhuma cor cadastrada.'}
           colunas={[
             {
               id: 'nome',

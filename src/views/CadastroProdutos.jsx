@@ -399,8 +399,8 @@ export default function CadastroProdutos() {
       largura={1200}
       fixarTopo
       acoes={
-        <button type="button" className="botao" onClick={() => setModal({ tipo: 'novo' })}>
-          + Novo produto
+        <button type="button" className="botao botao--compacto botao--dourado" aria-label="Novo produto" onClick={() => setModal({ tipo: 'novo' })}>
+          + Novo
         </button>
       }
     >

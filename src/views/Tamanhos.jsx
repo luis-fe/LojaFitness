@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import './Cadastros.css'
 import PaginaVendedor from '@/components/PaginaVendedor'
 import ListaDados from '@/components/ListaDados'
@@ -78,6 +78,13 @@ export default function Tamanhos() {
   const [erro, setErro] = useState('')
   const [aviso, setAviso] = useState('')
   const [modal, setModal] = useState(null) // { tipo: 'novo' | 'editar' | 'excluir', item }
+  const [busca, setBusca] = useState('')
+
+  const filtrados = useMemo(() => {
+    const t = busca.trim().toLowerCase()
+    if (!tamanhos || !t) return tamanhos
+    return tamanhos.filter((x) => `${x.codigo} ${x.nome}`.toLowerCase().includes(t))
+  }, [tamanhos, busca])
 
   const carregar = useCallback(async () => {
     const { ok, dados } = await api('/api/tamanhos')
@@ -116,13 +123,12 @@ export default function Tamanhos() {
   return (
     <PaginaVendedor
       titulo="Tamanhos"
-      descricao="Tamanhos disponíveis para os produtos e a ordem em que aparecem."
       trilha={TRILHA}
       largura={960}
       fixarTopo
       acoes={
-        <button type="button" className="botao" onClick={() => setModal({ tipo: 'novo' })}>
-          + Novo tamanho
+        <button type="button" className="botao botao--compacto botao--dourado" aria-label="Novo tamanho" onClick={() => setModal({ tipo: 'novo' })}>
+          + Novo
         </button>
       }
     >
@@ -133,15 +139,24 @@ export default function Tamanhos() {
         </p>
       )}
 
+      {tamanhos && tamanhos.length > 0 && (
+        <div className="campo cadastro__busca">
+          <label htmlFor="busca-tamanhos" className="sr-only">
+            Buscar tamanhos
+          </label>
+          <input id="busca-tamanhos" type="search" placeholder="Buscar por código ou nome" value={busca} onChange={(e) => setBusca(e.target.value)} />
+        </div>
+      )}
+
       {!tamanhos && !erro ? (
         <div className="cadastro__carregando" aria-busy="true" aria-label="Carregando tamanhos" />
       ) : tamanhos ? (
         <ListaDados
           rotulo="Tamanhos"
-          itens={tamanhos}
+          itens={filtrados}
           chave={(t) => t.codigo}
           ordemInicial={{ coluna: 'sequencia', direcao: 'asc' }}
-          vazio="Nenhum tamanho cadastrado."
+          vazio={busca ? `Nenhum tamanho encontrado para “${busca}”.` : 'Nenhum tamanho cadastrado.'}
           colunas={[
             { id: 'sequencia', titulo: 'Sequência', valor: (t) => t.sequencia, alinhar: 'direita' },
             { id: 'codigo', titulo: 'Código', valor: (t) => t.codigo, destaque: true },

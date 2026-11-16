@@ -171,6 +171,29 @@
   }
 }
 
+/* Botão compacto do topo das telas ("+ Novo") */
+.botao.botao--compacto {
+  min-height: 38px;
+  padding: 0 16px;
+  font-size: 12px;
+  border-radius: 8px;
+}
+
+/* Dourado (telas de Produtos): texto preto para bom contraste (6,4:1) */
+.botao.botao--dourado {
+  background: var(--dourado);
+  border-color: var(--dourado);
+  color: var(--preto);
+}
+
+@media (hover: hover) {
+  .botao.botao--dourado:hover:not(:disabled) {
+    background: #c99a3c;
+    border-color: #c99a3c;
+    color: var(--preto);
+  }
+}
+
 .botao:focus-visible {
   outline: 2px solid var(--preto);
   outline-offset: 3px;

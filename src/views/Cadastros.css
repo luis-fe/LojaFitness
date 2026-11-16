@@ -58,3 +58,13 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   text-transform: uppercase;
 }
+
+/* Campo de busca acima das listas (Tamanhos, Cores, Produtos) */
+.cadastro__busca {
+  max-width: 420px;
+  margin-bottom: 16px;
+}
+
+.cadastro__busca input {
+  height: 42px;
+}
