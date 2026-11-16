@@ -2,8 +2,12 @@
 //   • Lista os pedidos em Rascunho (situação 0)
 //   • Extrato por SKU (vendas_cor_tam): o vendedor pode mudar preço e quantidade e excluir SKUs
 //   • Efetivar: grava as mudanças, recalcula o total e o pedido passa a Pago/aprovado (situação 1)
+//   • Lançamento manual: venda feita fora do site, gravada já como Paga (origem manual)
+//   • Histórico: vendas pagas filtradas por período e por cliente
 import 'server-only'
-import { ErroConflito, ErroNaoEncontrado, ErroValidacao } from '@/server/erros'
+import { ErroConflito, ErroNaoEncontrado, ErroValidacao, validarOuFalhar } from '@/server/erros'
+import { validarCliente } from '@/lib/cliente'
+import { cpfCnpjValido } from '@/server/utils/validacao'
 
 const MAX_QUANT = 9999
 
@@ -66,5 +70,63 @@ export class VendaServico {
     if (r.ok) return
     if (r.motivo === 'ja_aprovado') throw new ErroConflito('Pedido já aprovado não pode ser excluído.')
     throw new ErroNaoEncontrado('Pedido não encontrado.')
+  }
+
+  produtosParaVenda() {
+    return this.repo.listarProdutosParaVenda()
+  }
+
+  // entrada: { cliente: { nome, cpf_cnpj, cep, bairro, cidade, estado }, itens: [{ codigo, cor, tamanho, quant, preco }] }
+  async lancarManual(entrada, vendedor) {
+    const { dados: cliente, erros } = validarCliente(entrada?.cliente ?? {})
+    const documento = String(entrada?.cliente?.cpf_cnpj ?? '').replace(/\D/g, '')
+    if (!cpfCnpjValido(documento)) erros.cpf_cnpj = 'Informe um CNPJ (ou CPF) válido.'
+    validarOuFalhar(erros)
+
+    const lista = Array.isArray(entrada?.itens) ? entrada.itens : []
+    if (!lista.length) throw new ErroValidacao({ itens: 'Adicione pelo menos 1 produto.' }, 'Adicione pelo menos 1 produto.')
+    if (lista.length > 100) throw new ErroValidacao({ itens: 'No máximo 100 itens por venda.' }, 'No máximo 100 itens por venda.')
+
+    // variações que existem no cadastro: "CODIGO|COR|TAM"
+    const produtos = await this.repo.listarProdutosParaVenda()
+    const existe = new Set(produtos.flatMap((p) => p.variacoes.map((v) => `${p.codigo}|${v.cor}|${v.tamanho}`)))
+    const msgs = []
+    const vistos = new Set()
+    const itens = lista.map((it, n) => {
+      const rotulo = `Produto ${n + 1}`
+      const codigo = String(it?.codigo ?? '').trim().toUpperCase()
+      const cor = String(it?.cor ?? '').trim().toUpperCase()
+      const tamanho = String(it?.tamanho ?? '').trim().toUpperCase()
+      const quant = Number(it?.quant)
+      const preco = typeof it?.preco === 'number' ? it.preco : Number(String(it?.preco ?? '').replace(/\./g, '').replace(',', '.'))
+      const chave = `${codigo}|${cor}|${tamanho}`
+      if (!existe.has(chave)) msgs.push(`${rotulo}: escolha produto, tamanho e cor do cadastro.`)
+      else if (vistos.has(chave)) msgs.push(`${rotulo}: este produto/tamanho/cor já está na venda — some a quantidade na mesma linha.`)
+      vistos.add(chave)
+      if (!Number.isInteger(quant) || quant < 1 || quant > MAX_QUANT) msgs.push(`${rotulo}: quantidade deve ser um número inteiro de 1 a ${MAX_QUANT}.`)
+      if (!Number.isFinite(preco) || preco < 0 || preco > 99999999.99) msgs.push(`${rotulo}: preço unitário inválido.`)
+      return { codigo, cor, tamanho, quant, preco: Math.round(preco * 100) / 100 }
+    })
+    if (msgs.length) {
+      const e = new ErroValidacao(undefined, msgs[0])
+      e.listaErros = msgs
+      throw e
+    }
+    return this.repo.criarManual({ cliente: { ...cliente, cpf_cnpj: documento }, itens, vendedorId: vendedor.id })
+  }
+
+  // filtros: de / ate (AAAA-MM-DD) e cliente (nome, CPF/CNPJ ou CEP)
+  async historico({ de, ate, cliente } = {}) {
+    const data = (v, campo) => {
+      if (!v) return null
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(v) || Number.isNaN(Date.parse(v))) throw new ErroValidacao({ [campo]: 'Data inválida.' }, 'Data inválida.')
+      return v
+    }
+    const filtros = { de: data(de, 'de'), ate: data(ate, 'ate'), cliente: String(cliente ?? '').trim().slice(0, 80) || null }
+    if (filtros.de && filtros.ate && filtros.de > filtros.ate) throw new ErroValidacao({ ate: 'A data final é anterior à inicial.' }, 'A data final é anterior à inicial.')
+    const vendas = await this.repo.historico(filtros)
+    const total = Math.round(vendas.reduce((s, v) => s + Number(v.total), 0) * 100) / 100
+    const pecas = vendas.reduce((s, v) => s + v.pecas, 0)
+    return { vendas, resumo: { quantidade: vendas.length, total, pecas } }
   }
 }

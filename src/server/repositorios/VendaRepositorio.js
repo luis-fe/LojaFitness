@@ -3,8 +3,9 @@ import 'server-only'
 import { SITUACAO } from '@/server/repositorios/PedidoRepositorio'
 
 export class VendaRepositorio {
-  constructor(banco) {
+  constructor(banco, { clienteRepositorio } = {}) {
     this.banco = banco
+    this.clientes = clienteRepositorio
   }
 
   async listarRascunhos() {
@@ -26,8 +27,8 @@ export class VendaRepositorio {
   // Pedido + cliente + linhas por SKU (com nome do produto e da cor do cadastro, quando ainda existirem)
   async buscarExtrato(idPedido) {
     const { rows } = await this.banco.consultar(
-      `SELECT p.id_pedido, p.codigo, p.data_emissao, p.situacao, p.total, p.aprovado_em,
-              p.cliente_nome, p.cliente_cep, c.bairro, c.cidade, c.estado, va.nome AS aprovado_por
+      `SELECT p.id_pedido, p.codigo, p.data_emissao, p.situacao, p.total, p.aprovado_em, p.origem,
+              p.cliente_nome, p.cliente_cep, c.bairro, c.cidade, c.estado, c.cpf_cnpj, va.nome AS aprovado_por
        FROM pedidos p
        JOIN clientes c ON c.cep = p.cliente_cep AND c.nome = p.cliente_nome
        LEFT JOIN vendedores va ON va.id = p.aprovado_por
@@ -99,5 +100,97 @@ export class VendaRepositorio {
     if (rowCount) return { ok: true }
     const { rows } = await this.banco.consultar('SELECT situacao FROM pedidos WHERE id_pedido = $1', [idPedido])
     return { ok: false, motivo: rows[0] ? 'ja_aprovado' : 'nao_encontrado' }
+  }
+
+  // Produtos do cadastro (inclusive ocultos na loja) com as variações, para o lançamento manual
+  async listarProdutosParaVenda() {
+    const { rows } = await this.banco.consultar(
+      `SELECT p.codigo, p.nome, p.preco_atual, p.ativo,
+              COALESCE(json_agg(json_build_object('cor', f.cor, 'corNome', c.nome, 'rgb', c.rgb, 'tamanho', f.tamanho, 'sequencia', t.sequencia, 'estoque', f.estoque)
+                       ORDER BY c.nome, t.sequencia) FILTER (WHERE f.id IS NOT NULL), '[]') AS variacoes
+       FROM produtos p
+       LEFT JOIN produtos_filho f ON f.codigo_produto = p.codigo
+       LEFT JOIN cores c ON c.codigo = f.cor
+       LEFT JOIN tamanhos t ON t.codigo = f.tamanho
+       GROUP BY p.id
+       ORDER BY p.nome`
+    )
+    return rows
+  }
+
+  // Lançamento manual: numa transação grava o cliente, o pedido já Pago (1, origem manual), as
+  // linhas de vendas_cor_tam e pedido_itens. itens: [{ codigo, cor, tamanho, quant, preco }]
+  async criarManual({ cliente, itens, vendedorId }) {
+    return this.banco.transacao(async (db) => {
+      await this.clientes.salvar(cliente, db)
+      const total = Math.round(itens.reduce((s, i) => s + i.quant * i.preco, 0) * 100) / 100
+      const { rows } = await db.query(
+        `INSERT INTO pedidos (situacao, origem, cliente_cep, cliente_nome, total, aprovado_em, aprovado_por)
+         VALUES ($1, 'manual', $2, $3, $4, now(), $5)
+         RETURNING id_pedido, codigo, total`,
+        [SITUACAO.PAGO, cliente.cep, cliente.nome, total, vendedorId]
+      )
+      const pedido = rows[0]
+      for (const i of itens) {
+        await db.query(`INSERT INTO vendas_cor_tam (id_pedido, codigo_produto, cor, tam, quant, preco) VALUES ($1, $2, $3, $4, $5, $6)`, [
+          pedido.id_pedido,
+          i.codigo,
+          i.cor,
+          i.tamanho,
+          i.quant,
+          i.preco,
+        ])
+        await db.query(
+          `INSERT INTO pedido_itens (pedido_id, produto_filho_id, produto_nome, cor, tamanho, quantidade, preco_unitario)
+           SELECT $1, f.id, p.nome, COALESCE(c.nome, $3), $4, $5, $6
+           FROM produtos p
+           LEFT JOIN produtos_filho f ON f.codigo_produto = p.codigo AND f.cor = $3 AND f.tamanho = $4
+           LEFT JOIN cores c ON c.codigo = $3
+           WHERE p.codigo = $2`,
+          [pedido.id_pedido, i.codigo, i.cor, i.tamanho, i.quant, i.preco]
+        )
+      }
+      return pedido
+    })
+  }
+
+  // Histórico: vendas pagas (situação 1), filtradas por período (data da venda = aprovação) e por cliente
+  async historico({ de, ate, cliente }) {
+    const filtros = ['p.situacao = $1']
+    const valores = [SITUACAO.PAGO]
+    if (de) {
+      valores.push(de)
+      filtros.push(`COALESCE(p.aprovado_em, p.data_emissao) >= $${valores.length}::date`)
+    }
+    if (ate) {
+      valores.push(ate)
+      filtros.push(`COALESCE(p.aprovado_em, p.data_emissao) < ($${valores.length}::date + 1)`)
+    }
+    if (cliente) {
+      valores.push(`%${cliente}%`)
+      const n = valores.length
+      const digitos = cliente.replace(/\D/g, '')
+      let doc = ''
+      if (digitos.length >= 3) {
+        valores.push(`%${digitos}%`)
+        doc = ` OR c.cpf_cnpj LIKE $${valores.length} OR p.cliente_cep LIKE $${valores.length}`
+      }
+      filtros.push(`(p.cliente_nome ILIKE $${n}${doc})`)
+    }
+    const { rows } = await this.banco.consultar(
+      `SELECT p.id_pedido, p.codigo, p.origem, p.total, p.data_emissao, COALESCE(p.aprovado_em, p.data_emissao) AS data_venda,
+              p.cliente_nome, p.cliente_cep, c.cpf_cnpj, c.cidade, c.estado, va.nome AS aprovado_por,
+              COALESCE(sum(v.quant), 0)::int AS pecas, count(v.id)::int AS skus
+       FROM pedidos p
+       JOIN clientes c ON c.cep = p.cliente_cep AND c.nome = p.cliente_nome
+       LEFT JOIN vendedores va ON va.id = p.aprovado_por
+       LEFT JOIN vendas_cor_tam v ON v.id_pedido = p.id_pedido
+       WHERE ${filtros.join(' AND ')}
+       GROUP BY p.id_pedido, c.cpf_cnpj, c.cidade, c.estado, va.nome
+       ORDER BY data_venda DESC
+       LIMIT 500`,
+      valores
+    )
+    return rows
   }
 }

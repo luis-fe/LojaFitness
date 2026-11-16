@@ -226,6 +226,16 @@ BEGIN
   END IF;
 END $$;
 
+-- CPF/CNPJ do cliente (só dígitos; opcional no site, informado no lançamento manual)
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS cpf_cnpj text;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'clientes_cpf_cnpj_check') THEN
+    ALTER TABLE clientes ADD CONSTRAINT clientes_cpf_cnpj_check CHECK (cpf_cnpj IS NULL OR cpf_cnpj ~ '^([0-9]{11}|[0-9]{14})$');
+  END IF;
+END $$;
+CREATE INDEX IF NOT EXISTS clientes_cpf_cnpj_idx ON clientes (cpf_cnpj) WHERE cpf_cnpj IS NOT NULL;
+
 DROP TRIGGER IF EXISTS clientes_atualizado_em ON clientes;
 CREATE TRIGGER clientes_atualizado_em
   BEFORE UPDATE ON clientes
@@ -283,6 +293,16 @@ END $$;
 -- Aprovação do pagamento (situação 0 → 1): quando e por quem
 ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS aprovado_em  timestamptz;
 ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS aprovado_por bigint REFERENCES vendedores (id) ON DELETE SET NULL;
+
+-- Origem do pedido: 'site' (WhatsApp) ou 'manual' (Registro de Vendas → Lançamento Manual)
+ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS origem text NOT NULL DEFAULT 'site';
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'pedidos_origem_check') THEN
+    ALTER TABLE pedidos ADD CONSTRAINT pedidos_origem_check CHECK (origem IN ('site', 'manual'));
+  END IF;
+END $$;
+CREATE INDEX IF NOT EXISTS pedidos_aprovado_em_idx ON pedidos (aprovado_em DESC) WHERE situacao = 1;
 
 CREATE INDEX IF NOT EXISTS pedidos_situacao_idx ON pedidos (situacao, data_emissao DESC);
 CREATE INDEX IF NOT EXISTS pedidos_cliente_idx  ON pedidos (cliente_cep, cliente_nome);

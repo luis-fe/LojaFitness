@@ -215,3 +215,22 @@ export const IconeAprovar = () => (
     <path d="m9 15 2 2 4-4" />
   </Svg>
 )
+
+// Prancheta com lápis (lançamento manual de venda)
+export const IconeLancamento = () => (
+  <Svg>
+    <path d="M9 4h6v3H9z" />
+    <path d="M15 5h2a2 2 0 0 1 2 2v4M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4" />
+    <path d="M8 11h7M8 15h4" />
+    <path d="m17.5 13.5 3 3L15 22h-3v-3l5.5-5.5Z" />
+  </Svg>
+)
+
+// Relógio com seta (histórico de vendas)
+export const IconeHistorico = () => (
+  <Svg>
+    <path d="M3 12a9 9 0 1 0 3-6.7" />
+    <path d="M3 4v4h4" />
+    <path d="M12 7v5l3 2" />
+  </Svg>
+)

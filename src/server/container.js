@@ -63,7 +63,7 @@ const painelRepositorio = new PainelRepositorio(banco)
 const visitaRepositorio = new VisitaRepositorio(banco)
 const clienteRepositorio = new ClienteRepositorio(banco)
 const pedidoRepositorio = new PedidoRepositorio(banco, { clienteRepositorio })
-const vendaRepositorio = new VendaRepositorio(banco)
+const vendaRepositorio = new VendaRepositorio(banco, { clienteRepositorio })
 
 // ---------- Serviços (regras de negócio) ----------
 export const authServico = new AuthServico({ vendedorRepositorio, limiteTentativas: new LimiteTentativas({ nome: 'login' }) })

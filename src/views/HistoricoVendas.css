@@ -1,0 +1,256 @@
+.historico__filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 14px;
+  margin-bottom: 16px;
+}
+
+.historico__filtros .campo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.historico__filtros label {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.historico__filtros input {
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid #b5b5b5;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 14px;
+  background: var(--branco);
+}
+
+.historico__busca {
+  flex: 1 1 220px;
+}
+
+.historico__busca input {
+  width: 100%;
+}
+
+.historico__periodos {
+  display: flex;
+  border: 1px solid var(--preto);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.historico__periodos button {
+  min-height: 40px;
+  padding: 0 12px;
+  background: var(--branco);
+  border: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.historico__periodos button + button {
+  border-left: 1px solid var(--preto);
+}
+
+.historico__periodos button[aria-pressed='true'] {
+  background: var(--verde);
+  color: var(--branco);
+}
+
+.historico__periodos button:focus-visible {
+  outline: 2px solid var(--preto);
+  outline-offset: -3px;
+}
+
+/* Resumo */
+.historico__resumo {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.historico__resumo > div {
+  padding: 14px 16px;
+  background: var(--cinza-claro);
+  border-radius: 14px;
+}
+
+.historico__resumo dt {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--cinza-texto);
+}
+
+.historico__resumo dd {
+  margin-top: 4px;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.historico__nome small {
+  display: block;
+  font-size: 11px;
+  color: var(--cinza-neutro);
+}
+
+.historico__origem {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.historico__origem--site {
+  background: #e8f0fe;
+  color: #1d4ed8;
+}
+
+.historico__origem--manual {
+  background: #e6f4ea;
+  color: #116632;
+}
+
+/* Extrato da venda */
+.historico__carregando {
+  height: 200px;
+  border-radius: 12px;
+  background: var(--cinza-claro);
+}
+
+.historico__cliente {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px 20px;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  background: var(--cinza-claro);
+  border-radius: 12px;
+}
+
+.historico__cliente dt {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--cinza-neutro);
+}
+
+.historico__cliente dd {
+  margin-top: 2px;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.historico__cliente small {
+  color: var(--cinza-neutro);
+}
+
+.historico__itens {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.historico__itens th {
+  padding: 8px;
+  border-bottom: 2px solid var(--preto);
+  text-align: left;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.historico__itens td {
+  padding: 8px;
+  border-bottom: 1px solid var(--borda);
+}
+
+.historico__itens td strong {
+  display: block;
+}
+
+.historico__itens code {
+  font-size: 11px;
+  color: var(--cinza-neutro);
+}
+
+.historico__num {
+  text-align: right !important;
+  white-space: nowrap;
+}
+
+.historico__cor {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.historico__total-extrato {
+  margin-top: 12px;
+  text-align: right;
+  font-size: 14px;
+}
+
+.historico__total-extrato strong {
+  margin-left: 8px;
+  font-size: 20px;
+}
+
+@media (max-width: 720px) {
+  .historico__resumo dd {
+    font-size: 18px;
+  }
+
+  .historico__cliente {
+    grid-template-columns: 1fr;
+  }
+
+  .historico__periodos {
+    width: 100%;
+  }
+
+  .historico__periodos button {
+    flex: 1;
+    padding: 0 6px;
+  }
+
+  .historico__filtros .campo:not(.historico__busca) {
+    flex: 1 1 140px;
+  }
+
+  .historico__filtros input[type='date'] {
+    width: 100%;
+  }
+
+  .historico__itens thead {
+    display: none;
+  }
+
+  .historico__itens,
+  .historico__itens tbody,
+  .historico__itens tr,
+  .historico__itens td {
+    display: block;
+  }
+
+  .historico__itens tr {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--borda);
+  }
+
+  .historico__itens td {
+    padding: 2px 0;
+    border: none;
+    text-align: left !important;
+  }
+}

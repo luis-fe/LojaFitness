@@ -29,7 +29,8 @@ export function useDadosCliente() {
 }
 
 // Nome, CEP (preenche bairro, cidade e estado sozinho), bairro, cidade e estado
-export default function DadosCliente({ cliente, setCliente, idBase = 'cliente' }) {
+//   legenda: título do quadro · extras: campos depois do nome (ex.: CNPJ no lançamento manual)
+export default function DadosCliente({ cliente, setCliente, idBase = 'cliente', legenda = 'Dados para entrega', extras = null }) {
   const [buscando, setBuscando] = useState(false)
   const [avisoCep, setAvisoCep] = useState('')
   const ultimoCep = useRef('')
@@ -71,12 +72,13 @@ export default function DadosCliente({ cliente, setCliente, idBase = 'cliente' }
 
   return (
     <fieldset className="dados-cliente">
-      <legend>Dados para entrega</legend>
+      <legend>{legenda}</legend>
       <div className="dados-cliente__grade">
         <div className="campo dados-cliente__largo">
           <label htmlFor={`${idBase}-nome`}>Nome</label>
-          <input id={`${idBase}-nome`} value={cliente.nome} onChange={mudar('nome')} autoComplete="name" maxLength={120} placeholder="Seu nome completo" />
+          <input id={`${idBase}-nome`} value={cliente.nome} onChange={mudar('nome')} autoComplete="name" maxLength={120} placeholder="Nome completo" />
         </div>
+        {extras}
         <div className="campo">
           <label htmlFor={`${idBase}-cep`}>CEP</label>
           <input
