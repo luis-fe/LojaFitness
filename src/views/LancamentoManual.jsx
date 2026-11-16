@@ -60,7 +60,10 @@ export default function LancamentoManual() {
     mudar(l.id, { tamanho, cor: cores.length === 1 ? cores[0].cor : '' })
   }
 
-  const linhaValida = (l) => l.codigo && l.tamanho && l.cor && Number.isInteger(Number(l.quant)) && Number(l.quant) >= 1 && lerPreco(l.preco) >= 0 && l.preco !== ''
+  const estoqueDe = (l) => coresDe(l.codigo, l.tamanho).find((c) => c.cor === l.cor)?.estoque ?? 0
+  // mesma variação não se repete (o servidor recusa), então o limite é o estoque da linha
+  const semEstoque = (l) => l.cor && Number(l.quant) > estoqueDe(l)
+  const linhaValida = (l) => l.codigo && l.tamanho && l.cor && Number.isInteger(Number(l.quant)) && Number(l.quant) >= 1 && !semEstoque(l) && lerPreco(l.preco) >= 0 && l.preco !== ''
   const total = linhas.reduce((s, l) => s + (linhaValida(l) ? Number(l.quant) * lerPreco(l.preco) : 0), 0)
   const pecas = linhas.reduce((s, l) => s + (linhaValida(l) ? Number(l.quant) : 0), 0)
   const documento = cliente.cpf_cnpj.replace(/\D/g, '')
@@ -164,7 +167,16 @@ export default function LancamentoManual() {
                     </div>
                     <div className="campo">
                       <label htmlFor={`lin-${l.id}-qtd`}>Qtd.</label>
-                      <input id={`lin-${l.id}-qtd`} type="number" min={1} max={9999} value={l.quant} onChange={(e) => mudar(l.id, { quant: e.target.value })} />
+                      <input
+                        id={`lin-${l.id}-qtd`}
+                        type="number"
+                        min={1}
+                        max={l.cor ? estoqueDe(l) : 9999}
+                        value={l.quant}
+                        onChange={(e) => mudar(l.id, { quant: e.target.value })}
+                        aria-invalid={semEstoque(l) || undefined}
+                      />
+                      {semEstoque(l) && <span className="campo__erro">Estoque: {estoqueDe(l)}</span>}
                     </div>
                     <div className="campo">
                       <label htmlFor={`lin-${l.id}-preco`}>Preço unit. (R$)</label>
@@ -202,7 +214,8 @@ export default function LancamentoManual() {
             {salvando ? 'Salvando…' : 'Salvar'}
           </button>
         </div>
-        {!podeSalvar && !salvando && <p className="campo__dica lancamento__dica">Preencha o cliente (nome, CNPJ/CPF e CEP) e escolha produto, tamanho e cor em todas as linhas para salvar.</p>}
+        {!podeSalvar && !salvando && <p className="campo__dica lancamento__dica">Preencha o cliente (nome, CNPJ/CPF e CEP) e escolha produto, tamanho, cor e quantidade (até o estoque) em todas as linhas para salvar.</p>}
+        <p className="campo__dica lancamento__dica">Ao salvar, as quantidades saem do estoque das variações.</p>
       </form>
     </PaginaVendedor>
   )

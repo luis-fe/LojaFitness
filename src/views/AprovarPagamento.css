@@ -204,3 +204,15 @@ tr.is-excluida td code {
   justify-content: flex-end;
   gap: 6px 14px;
 }
+
+.extrato__estoque {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--cinza-neutro);
+}
+
+.extrato__estoque.is-falta {
+  color: #b00020;
+  font-weight: 700;
+}

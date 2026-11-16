@@ -44,7 +44,8 @@ function Extrato({ idPedido, aoAprovar, aoCancelar }) {
   const mudar = (id, campo, valor) => setLinhas((ls) => ls.map((l) => (l.id === id ? { ...l, [campo]: valor } : l)))
 
   const validas = linhas.filter((l) => !l.excluida)
-  const invalida = (l) => !(Number.isInteger(Number(l.quant)) && Number(l.quant) >= 1 && Number(l.quant) <= 9999) || !(lerPreco(l.preco) >= 0)
+  const semEstoque = (l) => l.estoque === null || Number(l.quant) > l.estoque
+  const invalida = (l) => !(Number.isInteger(Number(l.quant)) && Number(l.quant) >= 1 && Number(l.quant) <= 9999) || !(lerPreco(l.preco) >= 0) || semEstoque(l)
   const pecas = validas.reduce((s, l) => s + (Number(l.quant) || 0), 0)
   const total = validas.reduce((s, l) => s + (invalida(l) ? 0 : Number(l.quant) * lerPreco(l.preco)), 0)
   const podeEfetivar = validas.length > 0 && !validas.some(invalida) && !salvando
@@ -124,6 +125,11 @@ function Extrato({ idPedido, aoAprovar, aoCancelar }) {
                     aria-label={`Quantidade de ${l.sku}`}
                     aria-invalid={erro || undefined}
                   />
+                  {!l.excluida && (
+                    <small className={`extrato__estoque ${semEstoque(l) ? 'is-falta' : ''}`}>
+                      {l.estoque === null ? 'fora do cadastro — exclua' : `estoque ${l.estoque}`}
+                    </small>
+                  )}
                 </td>
                 <td data-rotulo="Preço unit. (R$)">
                   <input
@@ -163,6 +169,8 @@ function Extrato({ idPedido, aoAprovar, aoCancelar }) {
           <strong>Total {formatarPreco(total)}</strong>
         </p>
         {validas.length === 0 && <p className="campo__erro">Mantenha pelo menos 1 SKU para aprovar o pedido.</p>}
+        {validas.some(semEstoque) && <p className="campo__erro">Há SKU sem estoque suficiente: diminua a quantidade ou exclua o SKU.</p>}
+        <p className="campo__dica">Ao aprovar, as quantidades saem do estoque das variações.</p>
         <div className="acoes-form">
           <button type="button" className="botao botao--secundario" onClick={aoCancelar} disabled={salvando}>
             Cancelar

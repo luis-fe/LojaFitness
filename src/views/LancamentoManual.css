@@ -144,3 +144,12 @@
     justify-self: end;
   }
 }
+
+.lancamento__linha input[aria-invalid='true'] {
+  border-color: #b00020;
+  outline: 1px solid #b00020;
+}
+
+.lancamento__linha .campo__erro {
+  font-size: 11px;
+}

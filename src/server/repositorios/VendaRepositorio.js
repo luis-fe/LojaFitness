@@ -1,6 +1,34 @@
 // Registro de Vendas: pedidos em rascunho, extrato por SKU (vendas_cor_tam) e aprovação do pagamento.
 import 'server-only'
 import { SITUACAO } from '@/server/repositorios/PedidoRepositorio'
+import { ErroConflito } from '@/server/erros'
+
+// Baixa o estoque das linhas (vendas_cor_tam) dentro da transação. Se faltar peça ou a variação não
+// existir mais no cadastro, lança erro — a transação inteira é desfeita (nada é gravado).
+async function baixarEstoque(db, linhas) {
+  const faltas = []
+  for (const l of linhas) {
+    const { rows } = await db.query(
+      `UPDATE produtos_filho SET estoque = estoque - $4
+       WHERE codigo_produto = $1 AND cor = $2 AND tamanho = $3 AND estoque >= $4
+       RETURNING estoque`,
+      [l.codigo, l.cor, l.tamanho, l.quant]
+    )
+    if (rows[0]) continue
+    const atual = await db.query('SELECT estoque FROM produtos_filho WHERE codigo_produto = $1 AND cor = $2 AND tamanho = $3', [l.codigo, l.cor, l.tamanho])
+    const sku = `${l.codigo}-${l.cor}-${l.tamanho}`
+    faltas.push(
+      atual.rows[0]
+        ? `${sku}: estoque insuficiente (pedido ${l.quant}, disponível ${atual.rows[0].estoque}).`
+        : `${sku}: a variação não existe mais no cadastro — exclua este SKU.`
+    )
+  }
+  if (faltas.length) {
+    const e = new ErroConflito(`Sem estoque para concluir: ${faltas[0]}`)
+    e.listaErros = faltas
+    throw e
+  }
+}
 
 export class VendaRepositorio {
   constructor(banco, { clienteRepositorio } = {}) {
@@ -38,9 +66,10 @@ export class VendaRepositorio {
     if (!rows[0]) return null
     const linhas = await this.banco.consultar(
       `SELECT v.id, v.sku, v.codigo_produto, pr.nome AS produto_nome, v.cor, co.nome AS cor_nome, co.rgb,
-              v.tam, v.quant, v.preco
+              v.tam, v.quant, v.preco, f.estoque
        FROM vendas_cor_tam v
        LEFT JOIN produtos pr ON pr.codigo = v.codigo_produto
+       LEFT JOIN produtos_filho f ON f.codigo_produto = v.codigo_produto AND f.cor = v.cor AND f.tamanho = v.tam
        LEFT JOIN cores co ON co.codigo = v.cor
        LEFT JOIN tamanhos t ON t.codigo = v.tam
        WHERE v.id_pedido = $1
@@ -51,7 +80,7 @@ export class VendaRepositorio {
   }
 
   // Numa transação: aplica as edições do extrato (preço/quantidade), remove os SKUs excluídos,
-  // recalcula o total, refaz pedido_itens e marca o pedido como Pago (1).
+  // BAIXA O ESTOQUE, recalcula o total, refaz pedido_itens e marca o pedido como Pago (1).
   // linhas: [{ id, quant, preco }] — SKUs que ficaram. Devolve false se o pedido não está em rascunho.
   async aprovar(idPedido, linhas, vendedorId) {
     return this.banco.transacao(async (db) => {
@@ -68,6 +97,10 @@ export class VendaRepositorio {
       for (const l of linhas) {
         await db.query('UPDATE vendas_cor_tam SET quant = $1, preco = $2 WHERE id = $3 AND id_pedido = $4', [l.quant, l.preco, l.id, idPedido])
       }
+
+      // baixa o estoque das linhas finais (sem estoque → erro e nada é gravado)
+      const { rows: finais } = await db.query('SELECT codigo_produto AS codigo, cor, tam AS tamanho, quant FROM vendas_cor_tam WHERE id_pedido = $1', [idPedido])
+      await baixarEstoque(db, finais)
 
       // pedido_itens acompanha o extrato final
       await db.query('DELETE FROM pedido_itens WHERE pedido_id = $1', [idPedido])
@@ -118,10 +151,11 @@ export class VendaRepositorio {
     return rows
   }
 
-  // Lançamento manual: numa transação grava o cliente, o pedido já Pago (1, origem manual), as
+  // Lançamento manual: numa transação baixa o estoque e grava o cliente, o pedido já Pago (1, origem manual), as
   // linhas de vendas_cor_tam e pedido_itens. itens: [{ codigo, cor, tamanho, quant, preco }]
   async criarManual({ cliente, itens, vendedorId }) {
     return this.banco.transacao(async (db) => {
+      await baixarEstoque(db, itens) // sem estoque → erro e nada é gravado
       await this.clientes.salvar(cliente, db)
       const total = Math.round(itens.reduce((s, i) => s + i.quant * i.preco, 0) * 100) / 100
       const { rows } = await db.query(
