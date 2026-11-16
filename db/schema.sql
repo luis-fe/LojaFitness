@@ -304,6 +304,24 @@ BEGIN
 END $$;
 CREATE INDEX IF NOT EXISTS pedidos_aprovado_em_idx ON pedidos (aprovado_em DESC) WHERE situacao = 1;
 
+-- ---------------------------------------------------------------------
+-- FRETE: opções de entrega da venda (cadastro fixo, ampliável)
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS frete (
+  id        smallint PRIMARY KEY,
+  descricao text     NOT NULL UNIQUE,
+  ativo     boolean  NOT NULL DEFAULT true
+);
+INSERT INTO frete (id, descricao) VALUES
+  (1, 'Retirar c/ vendedor'),
+  (2, 'Combinar Frete')
+ON CONFLICT (id) DO UPDATE SET descricao = EXCLUDED.descricao;
+COMMENT ON TABLE frete IS 'Opções de frete da venda: 1 Retirar c/ vendedor, 2 Combinar Frete';
+
+-- Frete escolhido na venda (opcional: vendas antigas ficam sem)
+ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS frete smallint REFERENCES frete (id) ON UPDATE CASCADE;
+COMMENT ON COLUMN pedidos.frete IS 'Opção de frete (tabela frete)';
+
 CREATE INDEX IF NOT EXISTS pedidos_situacao_idx ON pedidos (situacao, data_emissao DESC);
 CREATE INDEX IF NOT EXISTS pedidos_cliente_idx  ON pedidos (cliente_cep, cliente_nome);
 
