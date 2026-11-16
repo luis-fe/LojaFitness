@@ -153,3 +153,13 @@ export const IconeVariacoes = () => (
     <rect x="14" y="14" width="7" height="7" rx="1.5" />
   </Svg>
 )
+
+// Fachada de loja com toldo (Área do Vendedor)
+export const IconeLoja = () => (
+  <Svg>
+    <path d="M3 9.5 4.6 4h14.8L21 9.5" />
+    <path d="M3 9.5a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0" />
+    <path d="M5 12v8h14v-8" />
+    <path d="M10 20v-5h4v5" />
+  </Svg>
+)

@@ -7,13 +7,14 @@ import { usePathname } from 'next/navigation'
 import './Header.css'
 import logo from '@/assets/logo-jlk.png'
 import { useCarrinho } from '@/context/Carrinho'
+import { IconeLoja } from '@/components/Icones'
 
 const opcoes = [{ label: 'Black Friday', href: '/#black-friday' }]
 
 // Opções fixadas no rodapé do menu lateral
 const opcoesRodape = [
+  { label: 'Área do Vendedor', href: '/area-do-vendedor', Icone: IconeLoja },
   { label: 'Política de Privacidade', href: '/politica-de-privacidade' },
-  { label: 'Área do Vendedor', href: '/area-do-vendedor' },
 ]
 
 // Abre o menu de compartilhamento nativo do celular (WhatsApp, Instagram, etc.).
@@ -52,11 +53,12 @@ function BotaoCompartilhar() {
   return (
     <>
       <button type="button" className="header__compartilhar" aria-label="Compartilhar esta página" onClick={compartilhar}>
-        {/* Seta saindo da caixa (padrão de compartilhar no celular) */}
+        {/* Três pontos ligados (símbolo universal de compartilhar) */}
         <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 15V3" />
-          <path d="M7.5 7.5 12 3l4.5 4.5" />
-          <path d="M8 10H6a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1h-2" />
+          <circle cx="18" cy="5" r="2.6" />
+          <circle cx="6" cy="12" r="2.6" />
+          <circle cx="18" cy="19" r="2.6" />
+          <path d="m8.3 10.8 7.4-4.4M8.3 13.2l7.4 4.4" />
         </svg>
       </button>
       <span className="header__aviso" role="status" hidden={!aviso}>
@@ -107,6 +109,11 @@ export default function Header() {
       aria-current={ativo(op.href) ? 'page' : undefined}
       onClick={() => setMenuAberto(false)}
     >
+      {op.Icone && (
+        <span className="header__drawer-icone">
+          <op.Icone />
+        </span>
+      )}
       {op.label}
     </Link>
   )

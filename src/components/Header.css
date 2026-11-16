@@ -182,6 +182,23 @@
   pointer-events: none;
 }
 
+/* Ícone ao lado do texto no menu lateral (ex.: Área do Vendedor) */
+.header__drawer-icone {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--branco);
+  color: var(--preto);
+}
+
+.header__drawer-icone svg {
+  width: 20px;
+  height: 20px;
+}
+
 /* No celular, as opções ficam só no menu lateral para não brigar com a logo */
 @media (max-width: 640px) {
   .header__nav {
@@ -253,6 +270,7 @@
 .header__drawer-link {
   display: flex;
   align-items: center;
+  gap: 12px;
   min-height: 56px;
   padding: 0 24px;
   color: var(--branco);
