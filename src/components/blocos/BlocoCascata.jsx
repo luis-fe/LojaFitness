@@ -1,5 +1,6 @@
 import './Blocos.css'
 import Acao from './Acao'
+import AnuncioProduto from './AnuncioProduto'
 
 function Foto({ img }) {
   const conteudo = (
@@ -17,9 +18,11 @@ function Foto({ img }) {
   )
 }
 
-// "Cascata de imagens": fotos em colunas com alturas diferentes (mural)
-export default function BlocoCascata({ dados, id }) {
-  const { titulo, subtitulo, colunas, imagens } = dados
+// "Cascata de imagens": anúncios de produtos em colunas com alturas diferentes (mural)
+//   catalogo: { [slug]: produto } — produto oculto/excluído some do site
+export default function BlocoCascata({ dados, id, catalogo }) {
+  const { titulo, subtitulo, colunas } = dados
+  const imagens = dados.imagens.filter((img) => !img.produto || catalogo?.[img.produto])
   return (
     <section className="bloco" aria-labelledby={titulo ? `titulo-${id}` : undefined} aria-label={titulo ? undefined : 'Galeria de imagens'}>
       {(titulo || subtitulo) && (
@@ -30,12 +33,18 @@ export default function BlocoCascata({ dados, id }) {
       )}
       {imagens.length ? (
         <div className="cascata" style={{ '--colunas': colunas }}>
-          {imagens.map((img, i) => (
-            <Foto key={`${img.url}-${i}`} img={img} />
-          ))}
+          {imagens.map((img, i) =>
+            img.produto ? (
+              <div key={`${img.produto}-${i}`} className="cascata__item">
+                <AnuncioProduto produto={catalogo[img.produto]} classeFoto="anuncio__foto anuncio__foto--livre" />
+              </div>
+            ) : (
+              <Foto key={`${img.url}-${i}`} img={img} />
+            )
+          )}
         </div>
       ) : (
-        <div className="bloco-sem-imagem bloco-sem-imagem--faixa">Adicione imagens a esta camada</div>
+        <div className="bloco-sem-imagem bloco-sem-imagem--faixa">Adicione produtos a esta camada</div>
       )}
     </section>
   )

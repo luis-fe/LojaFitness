@@ -5,9 +5,10 @@ import Carrossel from '@/components/Carrossel'
 
 // Desenha as camadas do layout, na ordem. Usado na página inicial e na prévia do construtor.
 //   destacada → id da camada selecionada no construtor (ganha um contorno na prévia)
-//   produtos → catálogo para a vitrine (sem ele, a vitrine busca em /api/produtos)
+//   produtos → catálogo (vitrine e anúncios das imagens de produtos)
 export default function RenderizadorLayout({ camadas, produtos, destacada, aoClicarCamada }) {
   const visiveis = camadas.filter((c) => c.visivel)
+  const catalogo = produtos ? Object.fromEntries(produtos.map((p) => [p.slug, p])) : null
   const primeiroDestaque = visiveis.find((c) => c.tipo === 'destaque')?.id
   let vitrineUsada = false
 
@@ -15,17 +16,21 @@ export default function RenderizadorLayout({ camadas, produtos, destacada, aoCli
     let bloco
     switch (camada.tipo) {
       case 'destaque':
-        bloco = <BlocoDestaque dados={camada.dados} id={camada.id} primeiro={camada.id === primeiroDestaque} />
+        bloco = <BlocoDestaque dados={camada.dados} id={camada.id} primeiro={camada.id === primeiroDestaque} catalogo={catalogo} />
         break
       case 'cascata':
-        bloco = <BlocoCascata dados={camada.dados} id={camada.id} />
+        bloco = <BlocoCascata dados={camada.dados} id={camada.id} catalogo={catalogo} />
         break
       case 'lado-a-lado':
-        bloco = <BlocoLadoALado dados={camada.dados} id={camada.id} />
+        bloco = <BlocoLadoALado dados={camada.dados} id={camada.id} catalogo={catalogo} />
         break
       case 'produtos':
         // A primeira vitrine recebe a âncora #novidades (usada pelos botões "Comprar agora")
-        bloco = <Carrossel produtos={produtos} selo={camada.dados.selo} titulo={camada.dados.titulo} ancora={!vitrineUsada} />
+        {
+          // Só os produtos escolhidos na camada, na ordem escolhida (nenhum escolhido = todos à venda)
+          const escolhidos = (camada.dados.imagens ?? []).map((i) => catalogo?.[i.produto]).filter(Boolean)
+          bloco = <Carrossel key={escolhidos.map((p) => p.slug).join()} produtos={escolhidos.length ? escolhidos : produtos} selo={camada.dados.selo} titulo={camada.dados.titulo} ancora={!vitrineUsada} />
+        }
         vitrineUsada = true
         break
       default:

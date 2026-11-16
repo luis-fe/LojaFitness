@@ -1,18 +1,29 @@
 // Layout da página inicial: rascunho (editado no construtor) e publicado (o que os clientes veem).
 import 'server-only'
 import { ErroValidacao } from '@/server/erros'
-import { LAYOUT_PADRAO, validarLayout } from '@/lib/layoutModelos'
+import { LAYOUT_PADRAO, produtosDoLayout, validarLayout } from '@/lib/layoutModelos'
 
 const PAGINA = 'inicio'
 
 export class LayoutServico {
-  constructor({ layoutRepositorio }) {
+  constructor({ layoutRepositorio, catalogoServico }) {
     this.repo = layoutRepositorio
+    this.catalogo = catalogoServico
   }
 
-  static #validar(camadas) {
-    const v = validarLayout(camadas)
+  // Ao salvar/publicar: só imagens de produtos, e cada produto precisa estar à venda (visível na loja)
+  async #validar(camadas) {
+    const v = validarLayout(camadas, { estrito: true })
     if (!v.ok) throw new ErroValidacao({ camadas: v.erros }, v.erros[0])
+    const usados = produtosDoLayout(v.camadas)
+    if (usados.length) {
+      const aVenda = new Set((await this.catalogo.listar()).map((p) => p.slug))
+      const fora = usados.filter((slug) => !aVenda.has(slug))
+      if (fora.length) {
+        const erros = fora.map((slug) => `O produto "${slug}" não está à venda (oculto ou excluído). Escolha outro produto.`)
+        throw new ErroValidacao({ camadas: erros }, erros[0])
+      }
+    }
     return v.camadas
   }
 
@@ -43,12 +54,12 @@ export class LayoutServico {
   }
 
   async salvarRascunho(camadas, autor) {
-    await this.repo.salvarRascunho(PAGINA, LayoutServico.#validar(camadas), LAYOUT_PADRAO, autor.id)
+    await this.repo.salvarRascunho(PAGINA, await this.#validar(camadas), LAYOUT_PADRAO, autor.id)
     return this.obterEditor()
   }
 
   async publicar(camadas, autor) {
-    await this.repo.publicar(PAGINA, LayoutServico.#validar(camadas), autor.id)
+    await this.repo.publicar(PAGINA, await this.#validar(camadas), autor.id)
     return this.obterEditor()
   }
 }

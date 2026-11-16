@@ -10,7 +10,8 @@ import { useAutenticacao } from '@/context/Autenticacao'
 import { IconeDesfazer, IconeSalvar, IconePublicar } from '@/components/Icones'
 import { useErro } from '@/context/Erro'
 import { formatarDataHora } from '@/lib/formatos'
-import SeletorImagens from '@/components/SeletorImagens'
+import SeletorProdutos from '@/components/SeletorProdutos'
+import Preco from '@/components/Preco'
 import { LAYOUT_PADRAO, MAX_CAMADAS, MAX_IMAGENS_POR_CAMADA, MODELOS, novaCamada, novoId } from '@/lib/layoutModelos'
 
 const clonar = (v) => JSON.parse(JSON.stringify(v))
@@ -95,45 +96,63 @@ function AreaTexto({ rotulo, valor, aoMudar, max }) {
   )
 }
 
-// Lista editável de imagens (cascata e lado a lado)
-function ListaImagens({ imagens, limite, aoMudar, abrirSeletor }) {
+// Lista editável de produtos da camada (cascata, lado a lado e vitrine).
+// Cada item é { produto: slug }; imagens avulsas antigas aparecem com aviso para trocar.
+function ListaProdutos({ imagens, limite, aoMudar, abrirSeletor, catalogo, rotulo = 'Produtos' }) {
   const mover = (i, d) => {
     const nova = [...imagens]
     ;[nova[i], nova[i + d]] = [nova[i + d], nova[i]]
     aoMudar(nova)
   }
-  const atualizar = (i, campo, v) => aoMudar(imagens.map((img, n) => (n === i ? { ...img, [campo]: v } : img)))
   return (
     <div className="lista-imagens">
       <span className="campo__rotulo">
-        Imagens ({imagens.length}/{limite})
+        {rotulo} ({imagens.length}/{limite})
       </span>
       {imagens.length > 0 && (
         <ol>
-          {imagens.map((img, i) => (
-            <li key={`${img.url}-${i}`} className="lista-imagens__item">
-              <img src={img.url} alt="" />
-              <div className="lista-imagens__campos">
-                <input aria-label={`Legenda da imagem ${i + 1}`} placeholder="Legenda (opcional)" value={img.legenda ?? ''} maxLength={120} onChange={(e) => atualizar(i, 'legenda', e.target.value)} />
-                <input aria-label={`Link da imagem ${i + 1}`} placeholder="Link ao clicar (opcional), ex.: /produto/conjunto-calca" value={img.link ?? ''} maxLength={300} onChange={(e) => atualizar(i, 'link', e.target.value)} />
-              </div>
-              <div className="lista-imagens__acoes">
-                <button type="button" onClick={() => mover(i, -1)} disabled={i === 0} aria-label={`Mover imagem ${i + 1} para cima`}>
-                  ↑
-                </button>
-                <button type="button" onClick={() => mover(i, 1)} disabled={i === imagens.length - 1} aria-label={`Mover imagem ${i + 1} para baixo`}>
-                  ↓
-                </button>
-                <button type="button" onClick={() => aoMudar(imagens.filter((_, n) => n !== i))} aria-label={`Remover imagem ${i + 1}`}>
-                  ✕
-                </button>
-              </div>
-            </li>
-          ))}
+          {imagens.map((img, i) => {
+            const produto = img.produto ? catalogo?.[img.produto] : null
+            return (
+              <li key={`${img.produto ?? img.url}-${i}`} className={`lista-imagens__item ${produto ? '' : 'is-pendente'}`}>
+                <img src={produto?.imagem ?? img.url ?? ''} alt="" />
+                <div className="lista-imagens__campos">
+                  {produto ? (
+                    <>
+                      <strong>{produto.nome}</strong>
+                      <span className="lista-imagens__preco">
+                        <Preco produto={produto} />
+                      </span>
+                    </>
+                  ) : img.produto ? (
+                    <span className="lista-imagens__alerta">Produto “{img.produto}” não está à venda — remova ou troque.</span>
+                  ) : (
+                    <span className="lista-imagens__alerta">Imagem avulsa antiga — troque por um produto do cadastro.</span>
+                  )}
+                </div>
+                <div className="lista-imagens__acoes">
+                  <button type="button" onClick={() => mover(i, -1)} disabled={i === 0} aria-label={`Mover item ${i + 1} para cima`}>
+                    ↑
+                  </button>
+                  <button type="button" onClick={() => mover(i, 1)} disabled={i === imagens.length - 1} aria-label={`Mover item ${i + 1} para baixo`}>
+                    ↓
+                  </button>
+                  <button type="button" onClick={() => aoMudar(imagens.filter((_, n) => n !== i))} aria-label={`Remover item ${i + 1}`}>
+                    ✕
+                  </button>
+                </div>
+              </li>
+            )
+          })}
         </ol>
       )}
-      <button type="button" className="botao botao--secundario botao--pequeno" disabled={imagens.length >= limite} onClick={() => abrirSeletor(limite - imagens.length)}>
-        + Adicionar imagens
+      <button
+        type="button"
+        className="botao botao--secundario botao--pequeno"
+        disabled={imagens.length >= limite}
+        onClick={() => abrirSeletor(limite - imagens.length, (slugs) => aoMudar([...imagens, ...slugs.map((produto) => ({ produto }))]), true, imagens.map((i) => i.produto).filter(Boolean))}
+      >
+        + Adicionar produtos
       </button>
     </div>
   )
@@ -142,7 +161,7 @@ function ListaImagens({ imagens, limite, aoMudar, abrirSeletor }) {
 // ---------------------------------------------------------------------------
 // Editor de cada tipo de camada
 // ---------------------------------------------------------------------------
-function EditorCamada({ camada, aoMudar, abrirSeletor }) {
+function EditorCamada({ camada, aoMudar, abrirSeletor, catalogo }) {
   const d = camada.dados
   const set = (campo) => (v) => aoMudar({ ...d, [campo]: v })
 
@@ -151,10 +170,25 @@ function EditorCamada({ camada, aoMudar, abrirSeletor }) {
       return (
         <div className="editor">
           <div className="editor__imagem">
-            {d.imagem ? <img src={d.imagem.url} alt="" /> : <div className="editor__sem-imagem">Sem imagem</div>}
+            {(() => {
+              const produto = d.imagem?.produto ? catalogo?.[d.imagem.produto] : null
+              if (produto) return <img src={produto.imagem} alt="" />
+              if (d.imagem?.url) return <img src={d.imagem.url} alt="" />
+              return <div className="editor__sem-imagem">Sem produto</div>
+            })()}
             <div className="editor__imagem-acoes">
-              <button type="button" className="botao botao--secundario botao--pequeno" onClick={() => abrirSeletor(1, (imgs) => set('imagem')({ url: imgs[0].url, alt: imgs[0].alt }))}>
-                {d.imagem ? 'Trocar imagem' : 'Escolher imagem'}
+              <button
+                type="button"
+                className="botao botao--secundario botao--pequeno"
+                onClick={() =>
+                  abrirSeletor(1, ([slug]) => {
+                    // botão principal leva ao produto, se ainda estiver no link padrão
+                    const linkPadrao = !d.botaoLink || d.botaoLink === '/#novidades' || d.botaoLink.startsWith('/produto/')
+                    aoMudar({ ...d, imagem: { produto: slug }, botaoLink: linkPadrao ? `/produto/${slug}` : d.botaoLink })
+                  })
+                }
+              >
+                {d.imagem ? 'Trocar produto' : 'Escolher produto'}
               </button>
               {d.imagem && (
                 <button type="button" className="link-acao" onClick={() => set('imagem')(null)}>
@@ -163,8 +197,14 @@ function EditorCamada({ camada, aoMudar, abrirSeletor }) {
               )}
             </div>
           </div>
-          {d.imagem && <Campo rotulo="Descrição da imagem (acessibilidade)" valor={d.imagem.alt} aoMudar={(v) => set('imagem')({ ...d.imagem, alt: v })} maxLength={200} />}
-          <Segmentado rotulo="Posição da imagem" valor={d.posicao} aoMudar={set('posicao')} opcoes={[['esquerda', 'Esquerda'], ['direita', 'Direita']]} />
+          {d.imagem?.produto && catalogo?.[d.imagem.produto] && (
+            <p className="editor__nota">
+              <strong>{catalogo[d.imagem.produto].nome}</strong> — foto, preço e tamanhos vêm do cadastro do produto.
+            </p>
+          )}
+          {d.imagem?.produto && !catalogo?.[d.imagem.produto] && <p className="lista-imagens__alerta">Produto “{d.imagem.produto}” não está à venda — troque o produto.</p>}
+          {d.imagem && !d.imagem.produto && <p className="lista-imagens__alerta">Imagem avulsa antiga — troque por um produto do cadastro.</p>}
+          <Segmentado rotulo="Posição do produto" valor={d.posicao} aoMudar={set('posicao')} opcoes={[['esquerda', 'Esquerda'], ['direita', 'Direita']]} />
           <Campo rotulo="Selo" opcional valor={d.selo} aoMudar={set('selo')} maxLength={40} dica="Ex.: Black Friday, Lançamento" />
           <Campo rotulo="Título" valor={d.titulo} aoMudar={set('titulo')} maxLength={120} />
           <AreaTexto rotulo="Texto" valor={d.texto} aoMudar={set('texto')} max={300} />
@@ -184,7 +224,7 @@ function EditorCamada({ camada, aoMudar, abrirSeletor }) {
           <Campo rotulo="Título" opcional valor={d.titulo} aoMudar={set('titulo')} maxLength={120} />
           <Campo rotulo="Subtítulo" opcional valor={d.subtitulo} aoMudar={set('subtitulo')} maxLength={200} />
           <Segmentado rotulo="Colunas (computador)" valor={d.colunas} aoMudar={set('colunas')} opcoes={[[2, '2'], [3, '3'], [4, '4']]} />
-          <ListaImagens imagens={d.imagens} limite={MAX_IMAGENS_POR_CAMADA} aoMudar={set('imagens')} abrirSeletor={(n) => abrirSeletor(n, (imgs) => set('imagens')([...d.imagens, ...imgs.map((i) => ({ url: i.url, alt: i.alt, legenda: '', link: '' }))]), true)} />
+          <ListaProdutos imagens={d.imagens} limite={MAX_IMAGENS_POR_CAMADA} aoMudar={set('imagens')} abrirSeletor={abrirSeletor} catalogo={catalogo} />
         </div>
       )
     case 'lado-a-lado':
@@ -193,7 +233,7 @@ function EditorCamada({ camada, aoMudar, abrirSeletor }) {
           <Campo rotulo="Título" opcional valor={d.titulo} aoMudar={set('titulo')} maxLength={120} />
           <Campo rotulo="Subtítulo" opcional valor={d.subtitulo} aoMudar={set('subtitulo')} maxLength={200} />
           <Segmentado rotulo="Formato das fotos" valor={d.proporcao} aoMudar={set('proporcao')} opcoes={[['retrato', 'Retrato'], ['quadrada', 'Quadrada'], ['paisagem', 'Paisagem']]} />
-          <ListaImagens imagens={d.imagens} limite={4} aoMudar={set('imagens')} abrirSeletor={(n) => abrirSeletor(n, (imgs) => set('imagens')([...d.imagens, ...imgs.map((i) => ({ url: i.url, alt: i.alt, legenda: '', link: '' }))]), true)} />
+          <ListaProdutos imagens={d.imagens} limite={4} aoMudar={set('imagens')} abrirSeletor={abrirSeletor} catalogo={catalogo} />
         </div>
       )
     case 'produtos':
@@ -201,7 +241,12 @@ function EditorCamada({ camada, aoMudar, abrirSeletor }) {
         <div className="editor">
           <Campo rotulo="Selo" opcional valor={d.selo} aoMudar={set('selo')} maxLength={40} />
           <Campo rotulo="Título" valor={d.titulo} aoMudar={set('titulo')} maxLength={120} />
-          <p className="editor__nota">Os produtos, preços e fotos desta vitrine vêm do catálogo da loja.</p>
+          <ListaProdutos imagens={d.imagens ?? []} limite={MAX_IMAGENS_POR_CAMADA} aoMudar={set('imagens')} abrirSeletor={abrirSeletor} catalogo={catalogo} rotulo="Produtos da passagem" />
+          <p className="editor__nota">
+            {(d.imagens ?? []).length
+              ? 'No site, estes produtos passam sozinhos no carrossel, na ordem acima.'
+              : 'Nenhum produto escolhido: a passagem mostra todos os produtos à venda.'}
+          </p>
         </div>
       )
     default:
@@ -222,7 +267,16 @@ export default function ConstrutorLayout() {
   const [modal, setModal] = useState(null) // { tipo: 'adicionar' | 'imagens' | 'publicar' | 'padrao' | 'descartar', ... }
   const [aviso, setAviso] = useState(null) // { tipo, texto, lista? }
   const [ocupado, setOcupado] = useState(false)
+  const [produtos, setProdutos] = useState(null) // catálogo (produtos à venda) para escolher nas camadas
   const quadro = useRef(null)
+  const catalogo = useMemo(() => (produtos ? Object.fromEntries(produtos.map((p) => [p.slug, p])) : null), [produtos])
+
+  useEffect(() => {
+    fetch('/api/produtos')
+      .then((r) => r.json())
+      .then((d) => setProdutos(d.produtos ?? []))
+      .catch(() => setProdutos([]))
+  }, [])
 
   const ehAdmin = vendedor?.papel === 'admin'
 
@@ -419,7 +473,8 @@ export default function ConstrutorLayout() {
                     <EditorCamada
                       camada={c}
                       aoMudar={(dados) => atualizarCamada(c.id, { dados })}
-                      abrirSeletor={(limite, aoEscolher, multiplo = false) => setModal({ tipo: 'imagens', limite, aoEscolher, multiplo })}
+                      catalogo={catalogo}
+                      abrirSeletor={(limite, aoEscolher, multiplo = false, jaUsados = []) => setModal({ tipo: 'produtos', limite, aoEscolher, multiplo, jaUsados })}
                     />
                   )}
                 </li>
@@ -489,11 +544,11 @@ export default function ConstrutorLayout() {
       <Modal
         aberto={Boolean(modal)}
         aoFechar={() => !ocupado && setModal(null)}
-        largura={modal?.tipo === 'imagens' ? 860 : modal?.tipo === 'adicionar' ? 720 : 480}
+        largura={modal?.tipo === 'produtos' ? 860 : modal?.tipo === 'adicionar' ? 720 : 480}
         titulo={
           {
             adicionar: 'Nova camada',
-            imagens: modal?.multiplo ? 'Escolher imagens' : 'Escolher imagem',
+            produtos: modal?.multiplo ? 'Escolher produtos' : 'Escolher produto',
             publicar: 'Publicar no site?',
             padrao: 'Restaurar layout padrão?',
             descartar: 'Descartar alterações?',
@@ -513,10 +568,12 @@ export default function ConstrutorLayout() {
             ))}
           </ul>
         )}
-        {modal?.tipo === 'imagens' && (
-          <SeletorImagens
+        {modal?.tipo === 'produtos' && (
+          <SeletorProdutos
+            produtos={produtos}
             multiplo={modal.multiplo}
             limite={modal.limite}
+            jaUsados={modal.jaUsados}
             aoCancelar={() => setModal(null)}
             aoEscolher={(imgs) => {
               modal.aoEscolher(imgs)

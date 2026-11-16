@@ -9,6 +9,15 @@ import { validarLayout } from '@/lib/layoutModelos'
 export default function PreviaLayout() {
   const [camadas, setCamadas] = useState(null)
   const [selecionada, setSelecionada] = useState(null)
+  const [produtos, setProdutos] = useState(null)
+
+  // Catálogo para montar os anúncios (preço, cores, tamanhos) na prévia
+  useEffect(() => {
+    fetch('/api/produtos')
+      .then((r) => r.json())
+      .then((d) => setProdutos(d.produtos ?? []))
+      .catch(() => setProdutos([]))
+  }, [])
 
   useEffect(() => {
     const aoReceber = (e) => {
@@ -29,7 +38,7 @@ export default function PreviaLayout() {
     document.querySelector(`[data-camada="${CSS.escape(selecionada)}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [selecionada])
 
-  if (!camadas) return <div style={{ minHeight: '60vh' }} aria-busy="true" />
+  if (!camadas || !produtos) return <div style={{ minHeight: '60vh' }} aria-busy="true" />
 
   if (!camadas.some((c) => c.visivel)) {
     return (
@@ -50,6 +59,7 @@ export default function PreviaLayout() {
       `}</style>
       <RenderizadorLayout
         camadas={camadas}
+        produtos={produtos}
         destacada={selecionada}
         aoClicarCamada={(id) => window.parent?.postMessage({ tipo: 'jlk-previa-clique', id }, window.location.origin)}
       />

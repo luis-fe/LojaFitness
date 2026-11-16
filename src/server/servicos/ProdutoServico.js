@@ -30,9 +30,10 @@ export class ProdutoServico {
     ;(Array.isArray(camadas) ? camadas : []).forEach((c, i) => {
       const onde = `camada ${i + 1} (${MODELOS[c?.tipo]?.nome ?? c?.tipo})`
       const d = c?.dados ?? {}
+      if (d.imagem?.produto === slug) usos.push(`${onde}, imagem`)
       if (alvo.test(d.botaoLink ?? '')) usos.push(`${onde}, botão 1`)
       if (alvo.test(d.botao2Link ?? '')) usos.push(`${onde}, botão 2`)
-      ;(d.imagens ?? []).forEach((img, n) => alvo.test(img?.link ?? '') && usos.push(`${onde}, imagem ${n + 1}`))
+      ;(d.imagens ?? []).forEach((img, n) => (img?.produto === slug || alvo.test(img?.link ?? '')) && usos.push(`${onde}, imagem ${n + 1}`))
     })
     return usos
   }

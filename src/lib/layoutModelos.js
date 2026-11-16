@@ -2,6 +2,10 @@
 //
 // O layout é uma lista ordenada de camadas. Cada camada tem:
 //   { id, tipo, visivel, dados }
+//
+// Imagens das camadas = PRODUTOS cadastrados: { produto: 'slug' }. O anúncio (foto, nome, preço,
+// cores e tamanhos, link) é montado sozinho a partir do cadastro. Imagens avulsas antigas
+// ({ url, ... }) continuam aparecendo no site, mas não podem mais ser salvas.
 // tipos: 'destaque' | 'cascata' | 'lado-a-lado' | 'produtos'
 
 export const MAX_CAMADAS = 20
@@ -10,7 +14,7 @@ export const MAX_IMAGENS_POR_CAMADA = 12
 export const MODELOS = {
   destaque: {
     nome: 'Imagem destacada',
-    descricao: 'Uma imagem grande com título, texto e botões. Ideal para a abertura e campanhas.',
+    descricao: 'Um produto em destaque, grande, com título, texto, preço e botões. Ideal para a abertura e campanhas.',
     novo: () => ({
       selo: 'Novidade',
       titulo: 'Título da campanha',
@@ -23,20 +27,20 @@ export const MODELOS = {
       botao2Link: '',
     }),
   },
+  produtos: {
+    nome: 'Vitrine de produtos',
+    descricao: 'Carrossel com passagem automática dos produtos que você escolher (foto, preço e botão de comprar).',
+    novo: () => ({ selo: 'Lançamentos', titulo: 'Novidades', imagens: [] }),
+  },
   cascata: {
     nome: 'Cascata de imagens',
-    descricao: 'Várias fotos em colunas, com alturas diferentes, como um mural.',
+    descricao: 'Vários produtos em colunas, com alturas diferentes, como um mural — cada um com preço e tamanhos.',
     novo: () => ({ titulo: 'Inspire-se', subtitulo: '', colunas: 3, imagens: [] }),
   },
   'lado-a-lado': {
     nome: 'Imagens lado a lado',
-    descricao: 'De 2 a 4 fotos do mesmo tamanho, alinhadas na mesma linha.',
+    descricao: 'De 2 a 4 produtos do mesmo tamanho, alinhados na mesma linha — cada um com preço e tamanhos.',
     novo: () => ({ titulo: '', subtitulo: '', proporcao: 'retrato', imagens: [] }),
-  },
-  produtos: {
-    nome: 'Vitrine de produtos',
-    descricao: 'Carrossel com os produtos da loja, preço e botão de comprar.',
-    novo: () => ({ selo: 'Lançamentos', titulo: 'Novidades' }),
   },
 }
 
@@ -59,10 +63,10 @@ export const LAYOUT_PADRAO = [
       selo: 'Black Friday',
       titulo: 'Conforto para treinar. Estilo para o dia a dia.',
       texto: 'Conjuntos fitness que valorizam o seu corpo com preços especiais de Black Friday.',
-      imagem: { url: '/images/hero-conjunto.jpg', alt: 'Modelo vestindo conjunto fitness preto com top e legging JLK' },
+      imagem: { produto: 'conjunto-calca' },
       posicao: 'direita',
       botaoTexto: 'Comprar agora',
-      botaoLink: '/#novidades',
+      botaoLink: '/produto/conjunto-calca',
       botao2Texto: 'Ver ofertas',
       botao2Link: '/#black-friday',
     },
@@ -91,8 +95,22 @@ const urlImagemValida = (u) =>
 // Links: páginas do site (/...), âncoras, https ou WhatsApp
 const linkValido = (u) => u === '' || /^\/[^\s]*$/.test(u) || /^#[\w-]+$/.test(u) || /^https:\/\/[^\s]+$/.test(u)
 
-function imagem(i, erros, onde) {
+const slugValido = (v) => typeof v === 'string' && /^[a-z0-9]+(-[a-z0-9]+)*$/.test(v) && v.length <= 80
+
+// estrito (salvar/publicar): só produtos. Sem estrito (exibir): aceita também imagens avulsas antigas.
+function imagem(i, erros, onde, estrito) {
   if (!i) return null
+  if (i.produto !== undefined) {
+    if (!slugValido(i.produto)) {
+      erros.push(`${onde}: produto inválido.`)
+      return null
+    }
+    return { produto: i.produto }
+  }
+  if (estrito) {
+    erros.push(`${onde}: escolha um produto do cadastro (imagens avulsas não são mais aceitas).`)
+    return null
+  }
   if (!urlImagemValida(i.url)) {
     erros.push(`${onde}: imagem inválida.`)
     return null
@@ -106,19 +124,32 @@ function link(v, erros, onde) {
   return l
 }
 
-function listaImagens(lista, erros, onde, { min = 0 } = {}) {
+function listaImagens(lista, erros, onde, { min = 0, estrito = false } = {}) {
   if (!Array.isArray(lista)) return []
-  if (lista.length > MAX_IMAGENS_POR_CAMADA) erros.push(`${onde}: no máximo ${MAX_IMAGENS_POR_CAMADA} imagens.`)
+  if (lista.length > MAX_IMAGENS_POR_CAMADA) erros.push(`${onde}: no máximo ${MAX_IMAGENS_POR_CAMADA} produtos.`)
   const saida = lista.slice(0, MAX_IMAGENS_POR_CAMADA).map((it, n) => {
-    const img = imagem(it, erros, `${onde}, imagem ${n + 1}`)
-    return img && { ...img, legenda: texto(it.legenda, 120), link: link(it.link, erros, `${onde}, imagem ${n + 1}`) }
+    const img = imagem(it, erros, `${onde}, imagem ${n + 1}`, estrito)
+    if (!img || img.produto) return img
+    return { ...img, legenda: texto(it.legenda, 120), link: link(it.link, erros, `${onde}, imagem ${n + 1}`) }
   })
   const validas = saida.filter(Boolean)
   if (validas.length < min) erros.push(`${onde}: adicione pelo menos ${min} imagens.`)
   return validas
 }
 
-export function validarLayout(entrada) {
+// Produtos (slugs) usados nas imagens das camadas
+export function produtosDoLayout(camadas) {
+  const slugs = new Set()
+  for (const c of Array.isArray(camadas) ? camadas : []) {
+    const d = c?.dados ?? {}
+    if (d.imagem?.produto) slugs.add(d.imagem.produto)
+    for (const i of Array.isArray(d.imagens) ? d.imagens : []) if (i?.produto) slugs.add(i.produto)
+  }
+  return [...slugs]
+}
+
+// { estrito: true } ao salvar/publicar: imagens precisam ser produtos do cadastro
+export function validarLayout(entrada, { estrito = false } = {}) {
   const erros = []
   if (!Array.isArray(entrada)) return { ok: false, erros: ['O layout deve ser uma lista de camadas.'] }
   if (entrada.length > MAX_CAMADAS) erros.push(`No máximo ${MAX_CAMADAS} camadas.`)
@@ -142,7 +173,7 @@ export function validarLayout(entrada) {
           selo: texto(d.selo, 40),
           titulo: texto(d.titulo, 120),
           texto: texto(d.texto, 300),
-          imagem: imagem(d.imagem, erros, onde),
+          imagem: imagem(d.imagem, erros, onde, estrito),
           posicao: d.posicao === 'esquerda' ? 'esquerda' : 'direita',
           botaoTexto: texto(d.botaoTexto, 40),
           botaoLink: link(d.botaoLink, erros, `${onde}, botão 1`),
@@ -156,7 +187,7 @@ export function validarLayout(entrada) {
           titulo: texto(d.titulo, 120),
           subtitulo: texto(d.subtitulo, 200),
           colunas: [2, 3, 4].includes(Number(d.colunas)) ? Number(d.colunas) : 3,
-          imagens: listaImagens(d.imagens, erros, onde),
+          imagens: listaImagens(d.imagens, erros, onde, { estrito }),
         }
         break
       case 'lado-a-lado':
@@ -164,11 +195,12 @@ export function validarLayout(entrada) {
           titulo: texto(d.titulo, 120),
           subtitulo: texto(d.subtitulo, 200),
           proporcao: ['quadrada', 'retrato', 'paisagem'].includes(d.proporcao) ? d.proporcao : 'retrato',
-          imagens: listaImagens(d.imagens, erros, onde).slice(0, 4),
+          imagens: listaImagens(d.imagens, erros, onde, { estrito }).slice(0, 4),
         }
         break
       case 'produtos':
-        dados = { selo: texto(d.selo, 40), titulo: texto(d.titulo, 120) }
+        // imagens = produtos escolhidos para a passagem (vazio = todos os produtos à venda)
+        dados = { selo: texto(d.selo, 40), titulo: texto(d.titulo, 120), imagens: listaImagens(d.imagens, erros, onde, { estrito: true }).filter((i) => i.produto) }
         break
     }
     return { id, tipo: c.tipo, visivel: c.visivel !== false, dados }
