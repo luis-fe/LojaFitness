@@ -1,15 +1,81 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import './SeletorImagens.css'
+import Campo from '@/components/Campo'
 import { useAutenticacao } from '@/context/Autenticacao'
 import { IMAGENS_PADRAO } from '@/lib/layoutModelos'
+import { TIPOS_ACEITOS, TAMANHO_MAX, codigoDoNome, descricaoDoNome, mascaraCodigo } from '@/lib/imagens'
 
-// Seletor de imagens (enviadas em "Subir imagens" + imagens padrão do site). Usar dentro de <Modal>.
+// Envio de uma imagem nova direto do seletor (sem sair do cadastro)
+function EnvioImagem({ arquivo, aoEnviar, aoCancelar }) {
+  const { fetchAutenticado } = useAutenticacao()
+  const [previa] = useState(() => URL.createObjectURL(arquivo))
+  const [codigo, setCodigo] = useState(() => codigoDoNome(arquivo.name))
+  const [descricao, setDescricao] = useState(() => descricaoDoNome(arquivo.name))
+  const [erros, setErros] = useState({})
+  const [enviando, setEnviando] = useState(false)
+
+  useEffect(() => () => URL.revokeObjectURL(previa), [previa])
+
+  const enviar = async (e) => {
+    e.preventDefault()
+    const novos = {}
+    if (codigo.length < 2) novos.codigo = 'Informe o código.'
+    if (descricao.trim().length < 2) novos.descricao = 'Informe a descrição.'
+    setErros(novos)
+    if (Object.keys(novos).length) return
+    setEnviando(true)
+    const dados = new FormData()
+    dados.append('arquivo', arquivo)
+    dados.append('codigo', codigo)
+    dados.append('descricao', descricao.trim())
+    try {
+      const resposta = await fetchAutenticado('/api/imagens', { method: 'POST', body: dados })
+      const corpo = await resposta.json().catch(() => null)
+      if (resposta.ok) return aoEnviar(corpo.imagem)
+      setErros({ geral: corpo?.erro || 'Não foi possível enviar a imagem.', ...(corpo?.campos ?? {}) })
+    } catch {
+      setErros({ geral: 'Sem conexão com o servidor.' })
+    }
+    setEnviando(false)
+  }
+
+  return (
+    <form className="seletor__envio" onSubmit={enviar} noValidate aria-label="Enviar nova imagem">
+      <img src={previa} alt="Prévia da imagem escolhida" className="seletor__envio-previa" />
+      <div className="seletor__envio-campos">
+        {erros.geral && (
+          <p className="aviso aviso--erro" role="alert">
+            {erros.geral}
+          </p>
+        )}
+        {erros.arquivo && (
+          <p className="aviso aviso--erro" role="alert">
+            {erros.arquivo}
+          </p>
+        )}
+        <Campo rotulo="Código" valor={codigo} aoMudar={setCodigo} mascara={mascaraCodigo} erro={erros.codigo} />
+        <Campo rotulo="Descrição" valor={descricao} aoMudar={setDescricao} erro={erros.descricao} maxLength={200} />
+        <div className="acoes-form">
+          <button type="button" className="botao botao--secundario" onClick={aoCancelar} disabled={enviando}>
+            Cancelar
+          </button>
+          <button type="submit" className="botao" disabled={enviando}>
+            {enviando ? 'Enviando…' : 'Enviar e usar'}
+          </button>
+        </div>
+      </div>
+    </form>
+  )
+}
+
+// Seletor de imagens (imagens enviadas + imagens padrão do site), com envio de imagem nova.
 //   multiplo: escolher várias (com limite) · aoEscolher([{ url, alt, codigo }])
 export default function SeletorImagens({ multiplo, limite, aoEscolher, aoCancelar }) {
   const { api } = useAutenticacao()
+  const [arquivoNovo, setArquivoNovo] = useState(null)
+  const [avisoArquivo, setAvisoArquivo] = useState('')
   const [aba, setAba] = useState('enviadas')
   const [busca, setBusca] = useState('')
   const [enviadas, setEnviadas] = useState(null)
@@ -29,6 +95,23 @@ export default function SeletorImagens({ multiplo, limite, aoEscolher, aoCancela
     aba === 'enviadas'
       ? enviadas ?? []
       : IMAGENS_PADRAO.filter((i) => !busca || `${i.codigo} ${i.descricao}`.toLowerCase().includes(busca.toLowerCase()))
+
+  const aoSelecionarArquivo = (e) => {
+    const arquivo = e.target.files?.[0]
+    e.target.value = '' // permite escolher o mesmo arquivo de novo
+    if (!arquivo) return
+    if (!TIPOS_ACEITOS.includes(arquivo.type)) return setAvisoArquivo('Formato não aceito. Envie JPG, PNG ou WEBP.')
+    if (arquivo.size > TAMANHO_MAX) return setAvisoArquivo('A imagem passa de 5 MB.')
+    setAvisoArquivo('')
+    setArquivoNovo(arquivo)
+  }
+
+  const aoEnviar = (img) => {
+    setArquivoNovo(null)
+    setAba('enviadas')
+    setEnviadas((atual) => [img, ...(atual ?? [])])
+    escolher(img) // a imagem enviada já fica escolhida
+  }
 
   const escolher = (img) => {
     const item = { url: img.url, alt: img.descricao, codigo: img.codigo }
@@ -61,7 +144,19 @@ export default function SeletorImagens({ multiplo, limite, aoEscolher, aoCancela
           </label>
           <input id="seletor-busca" type="search" placeholder="Buscar por código ou descrição" value={busca} onChange={(e) => setBusca(e.target.value)} />
         </div>
+        <label className="botao botao--pequeno seletor__enviar">
+          + Enviar nova imagem
+          <input type="file" accept={TIPOS_ACEITOS.join(',')} onChange={aoSelecionarArquivo} className="sr-only" />
+        </label>
       </div>
+
+      {avisoArquivo && (
+        <p className="aviso aviso--erro" role="alert">
+          {avisoArquivo}
+        </p>
+      )}
+
+      {arquivoNovo && <EnvioImagem key={arquivoNovo.name + arquivoNovo.size} arquivo={arquivoNovo} aoEnviar={aoEnviar} aoCancelar={() => setArquivoNovo(null)} />}
 
       {aba === 'enviadas' && enviadas === null ? (
         <div className="seletor__vazio" aria-busy="true">
@@ -70,9 +165,7 @@ export default function SeletorImagens({ multiplo, limite, aoEscolher, aoCancela
       ) : lista.length === 0 ? (
         <div className="seletor__vazio">
           {aba === 'enviadas' ? (
-            <>
-              Nenhuma imagem encontrada. <Link href="/area-do-vendedor/carregar-imagens">Enviar imagens</Link>
-            </>
+            'Nenhuma imagem encontrada. Use “+ Enviar nova imagem” para adicionar.'
           ) : (
             'Nenhuma imagem encontrada.'
           )}

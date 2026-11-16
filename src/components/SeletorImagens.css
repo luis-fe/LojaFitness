@@ -136,3 +136,50 @@
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+/* Botão "+ Enviar nova imagem" (o input de arquivo fica escondido dentro do rótulo) */
+.seletor__enviar {
+  position: relative;
+  cursor: pointer;
+}
+
+.seletor__enviar:focus-within {
+  outline: 2px solid var(--preto);
+  outline-offset: 2px;
+}
+
+/* Formulário de envio */
+.seletor__envio {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+  padding: 16px;
+  background: var(--cinza-claro);
+  border-radius: 16px;
+}
+
+.seletor__envio-previa {
+  flex-shrink: 0;
+  width: 120px;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 10px;
+  background: var(--branco);
+}
+
+.seletor__envio-campos {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 560px) {
+  .seletor__envio {
+    flex-direction: column;
+  }
+
+  .seletor__envio-previa {
+    width: 100%;
+    height: 180px;
+  }
+}

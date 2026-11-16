@@ -7,36 +7,12 @@ import Campo from '@/components/Campo'
 import Modal from '@/components/Modal'
 import { useAutenticacao } from '@/context/Autenticacao'
 import { formatarDataHora } from '@/lib/formatos'
+import { TIPOS_ACEITOS, TAMANHO_MAX, codigoDoNome, mascaraCodigo } from '@/lib/imagens'
 
-const TIPOS_ACEITOS = ['image/jpeg', 'image/png', 'image/webp']
-const TAMANHO_MAX = 5 * 1024 * 1024
 const POR_PAGINA = 24
 
 const formatarTamanho = (bytes) =>
   bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`
-
-// "Conjunto calça azul.jpg" → "CONJUNTO-CALCA-AZUL"
-function codigoDoNome(nome) {
-  return nome
-    .replace(/\.[^.]+$/, '')
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .trim()
-    .toUpperCase()
-    .replace(/[\s_]+/g, '-')
-    .replace(/[^A-Z0-9.-]/g, '')
-    .replace(/-{2,}/g, '-')
-    .slice(0, 60)
-}
-
-const mascaraCodigo = (v) =>
-  v
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toUpperCase()
-    .replace(/\s/g, '-')
-    .replace(/[^A-Z0-9._-]/g, '')
-    .slice(0, 60)
 
 // Envia com XMLHttpRequest para mostrar o progresso (fetch não informa progresso de envio)
 function enviarComProgresso({ token, arquivo, codigo, descricao, aoProgresso }) {
