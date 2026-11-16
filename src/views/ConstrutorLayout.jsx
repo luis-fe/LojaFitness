@@ -7,7 +7,7 @@ import '@/components/Formulario.css'
 import Campo from '@/components/Campo'
 import Modal from '@/components/Modal'
 import { useAutenticacao } from '@/context/Autenticacao'
-import { IconeDesfazer, IconeSalvar, IconePublicar } from '@/components/Icones'
+import { IconeDesfazer, IconeSalvar, IconePublicar, IconeSetaCima, IconeSetaBaixo, IconeOlho, IconeOlhoFechado, IconeMais, IconeDuplicar, IconeLixeira } from '@/components/Icones'
 import { useErro } from '@/context/Erro'
 import { formatarDataHora } from '@/lib/formatos'
 import SeletorProdutos from '@/components/SeletorProdutos'
@@ -65,6 +65,27 @@ function IlustracaoModelo({ tipo }) {
         </>
       )}
     </svg>
+  )
+}
+
+// Miniatura da camada na lista: fotos dos primeiros produtos (ou o desenho do modelo, se ainda não tem produto)
+const TEMPO_DESFAZER = 7000 // quanto tempo o "Desfazer" fica disponível depois de remover (ms)
+
+function fotosDaCamada(camada, catalogo, produtos) {
+  const d = camada.dados
+  // vitrine antiga, sem lista de produtos = todos à venda
+  if (camada.tipo === 'produtos' && d.imagens === undefined) return (produtos ?? []).map((p) => p.imagem)
+  const itens = d.imagem ? [d.imagem] : (d.imagens ?? [])
+  return itens.map((i) => (i.produto ? catalogo?.[i.produto]?.imagem : i.url)).filter(Boolean)
+}
+
+function MiniaturaCamada({ camada, numero, catalogo, produtos }) {
+  const fotos = fotosDaCamada(camada, catalogo, produtos)
+  return (
+    <span className={`camada__miniatura ${fotos.length > 1 ? 'tem-varias' : ''}`}>
+      {fotos.length ? <img src={fotos[0]} alt="" loading="lazy" /> : <IlustracaoModelo tipo={camada.tipo} />}
+      <span className="camada__numero">{numero}</span>
+    </span>
   )
 }
 
@@ -267,6 +288,8 @@ export default function ConstrutorLayout() {
   const [modal, setModal] = useState(null) // { tipo: 'adicionar' | 'imagens' | 'publicar' | 'padrao' | 'descartar', ... }
   const [aviso, setAviso] = useState(null) // { tipo, texto, lista? }
   const [ocupado, setOcupado] = useState(false)
+  const [menuAberto, setMenuAberto] = useState(null) // id da camada com o menu "mais ações" aberto
+  const [removida, setRemovida] = useState(null) // { camada, indice } — última camada removida (para desfazer)
   const [produtos, setProdutos] = useState(null) // catálogo (produtos à venda) para escolher nas camadas
   const quadro = useRef(null)
   const catalogo = useMemo(() => (produtos ? Object.fromEntries(produtos.map((p) => [p.slug, p])) : null), [produtos])
@@ -281,6 +304,7 @@ export default function ConstrutorLayout() {
   const ehAdmin = vendedor?.papel === 'admin'
 
   const aplicarEstado = useCallback((dados) => {
+    setRemovida(null)
     setEstado(dados)
     setCamadas(clonar(dados.rascunho))
   }, [])
@@ -337,6 +361,30 @@ export default function ConstrutorLayout() {
     return () => clearTimeout(id)
   }, [aviso])
 
+  // Menu "mais ações": fecha ao clicar fora ou apertar Esc
+  useEffect(() => {
+    if (!menuAberto) return
+    const aoClicar = (e) => {
+      if (!e.target.closest?.('.camada__menu')) setMenuAberto(null)
+    }
+    const aoTeclar = (e) => {
+      if (e.key === 'Escape') setMenuAberto(null)
+    }
+    document.addEventListener('pointerdown', aoClicar)
+    document.addEventListener('keydown', aoTeclar)
+    return () => {
+      document.removeEventListener('pointerdown', aoClicar)
+      document.removeEventListener('keydown', aoTeclar)
+    }
+  }, [menuAberto])
+
+  // O "Desfazer" some sozinho depois de alguns segundos
+  useEffect(() => {
+    if (!removida) return
+    const id = setTimeout(() => setRemovida(null), TEMPO_DESFAZER)
+    return () => clearTimeout(id)
+  }, [removida])
+
   // ---------- ações nas camadas ----------
   const atualizarCamada = (id, mudancas) => setCamadas((cs) => cs.map((c) => (c.id === id ? { ...c, ...mudancas } : c)))
   const mover = (i, d) =>
@@ -345,9 +393,28 @@ export default function ConstrutorLayout() {
       ;[n[i], n[i + d]] = [n[i + d], n[i]]
       return n
     })
+  // Remove na hora, sem pergunta: dá para voltar atrás pelo "Desfazer"
   const remover = (id) => {
+    const indice = camadas.findIndex((c) => c.id === id)
+    if (indice < 0) return
+    setRemovida({ camada: camadas[indice], indice })
     setCamadas((cs) => cs.filter((c) => c.id !== id))
     if (selecionada === id) setSelecionada(null)
+  }
+  const desfazerRemocao = () => {
+    if (!removida) return
+    const { camada, indice } = removida
+    setRemovida(null)
+    if (camadas.length >= MAX_CAMADAS) {
+      mostrarErro(`A página já tem ${MAX_CAMADAS} camadas. Remova uma para trazer a outra de volta.`)
+      return
+    }
+    setCamadas((cs) => {
+      const n = [...cs]
+      n.splice(Math.min(indice, n.length), 0, camada)
+      return n
+    })
+    setTimeout(() => document.getElementById(`camada-${camada.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50)
   }
   const duplicar = (i) =>
     setCamadas((cs) => {
@@ -454,28 +521,55 @@ export default function ConstrutorLayout() {
                 <li key={c.id} id={`camada-${c.id}`} className={`camada ${aberta ? 'is-aberta' : ''} ${c.visivel ? '' : 'is-oculta'}`}>
                   <div className="camada__cabecalho">
                     <button type="button" className="camada__titulo" aria-expanded={aberta} onClick={() => setSelecionada(aberta ? null : c.id)}>
-                      <span className="camada__numero">{i + 1}</span>
+                      <MiniaturaCamada camada={c} numero={i + 1} catalogo={catalogo} produtos={produtos} />
                       <span className="camada__textos">
                         <strong>{MODELOS[c.tipo].nome}</strong>
-                        <span>{resumo}</span>
+                        <span>{c.visivel ? resumo : `Oculta · ${resumo}`}</span>
                       </span>
                     </button>
                     <div className="camada__acoes">
                       <button type="button" onClick={() => mover(i, -1)} disabled={i === 0} aria-label={`Subir camada ${i + 1}`} title="Subir">
-                        ↑
+                        <IconeSetaCima />
                       </button>
                       <button type="button" onClick={() => mover(i, 1)} disabled={i === camadas.length - 1} aria-label={`Descer camada ${i + 1}`} title="Descer">
-                        ↓
+                        <IconeSetaBaixo />
                       </button>
-                      <button type="button" onClick={() => atualizarCamada(c.id, { visivel: !c.visivel })} aria-label={c.visivel ? `Ocultar camada ${i + 1}` : `Mostrar camada ${i + 1}`} title={c.visivel ? 'Ocultar' : 'Mostrar'} aria-pressed={!c.visivel}>
-                        {c.visivel ? '👁' : '⊘'}
+                      <button type="button" onClick={() => atualizarCamada(c.id, { visivel: !c.visivel })} aria-label={c.visivel ? `Ocultar camada ${i + 1}` : `Mostrar camada ${i + 1}`} title={c.visivel ? 'Ocultar no site' : 'Mostrar no site'} aria-pressed={!c.visivel}>
+                        {c.visivel ? <IconeOlho /> : <IconeOlhoFechado />}
                       </button>
-                      <button type="button" onClick={() => duplicar(i)} disabled={camadas.length >= MAX_CAMADAS} aria-label={`Duplicar camada ${i + 1}`} title="Duplicar">
-                        ⧉
-                      </button>
-                      <button type="button" className="is-perigo" onClick={() => remover(c.id)} aria-label={`Remover camada ${i + 1}`} title="Remover">
-                        🗑
-                      </button>
+                      <div className="camada__menu">
+                        <button type="button" onClick={() => setMenuAberto(menuAberto === c.id ? null : c.id)} aria-haspopup="menu" aria-expanded={menuAberto === c.id} aria-label={`Mais ações da camada ${i + 1}`} title="Mais ações">
+                          <IconeMais />
+                        </button>
+                        {menuAberto === c.id && (
+                          <div className="camada__menu-lista" role="menu">
+                            <button
+                              type="button"
+                              role="menuitem"
+                              disabled={camadas.length >= MAX_CAMADAS}
+                              onClick={() => {
+                                setMenuAberto(null)
+                                duplicar(i)
+                              }}
+                            >
+                              <IconeDuplicar />
+                              Duplicar
+                            </button>
+                            <button
+                              type="button"
+                              role="menuitem"
+                              className="is-perigo"
+                              onClick={() => {
+                                setMenuAberto(null)
+                                remover(c.id)
+                              }}
+                            >
+                              <IconeLixeira />
+                              Remover
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                   {aberta && (
@@ -519,6 +613,17 @@ export default function ConstrutorLayout() {
 
       {/* Barra de controles: fica sempre visível no rodapé da tela enquanto a página rola */}
       <div className="construtor__controles" role="region" aria-label="Salvar e publicar">
+        {/* Camada removida: dá para trazer de volta por alguns segundos */}
+        <div className="construtor__desfazer" role="status">
+          {removida && (
+            <>
+              <span>Camada “{MODELOS[removida.camada.tipo].nome}” removida.</span>
+              <button type="button" onClick={desfazerRemocao}>
+                Desfazer
+              </button>
+            </>
+          )}
+        </div>
         <p className="construtor__status" aria-live="polite">
           {!estado
             ? 'Carregando…'
@@ -616,6 +721,7 @@ export default function ConstrutorLayout() {
                 type="button"
                 className="botao"
                 onClick={() => {
+                  setRemovida(null)
                   setCamadas(comNovosIds(LAYOUT_PADRAO))
                   setSelecionada(null)
                   setModal(null)
@@ -637,6 +743,7 @@ export default function ConstrutorLayout() {
                 type="button"
                 className="botao botao--perigo"
                 onClick={() => {
+                  setRemovida(null)
                   setCamadas(clonar(estado.rascunho))
                   setSelecionada(null)
                   setModal(null)
