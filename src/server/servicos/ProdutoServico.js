@@ -8,6 +8,7 @@
 import 'server-only'
 import { ErroConflito, ErroNaoEncontrado, ErroRequisicao, validarOuFalhar } from '@/server/erros'
 import { MODELOS } from '@/lib/layoutModelos'
+import { normalizarSelo, slugDoSelo } from '@/lib/selos'
 
 const semAcento = (v) =>
   String(v ?? '')
@@ -105,6 +106,12 @@ export class ProdutoServico {
         if (!Number.isFinite(p) || p <= 0 || p > 99999999.99) erros.preco_anterior = 'Informe um preço anterior válido (ex.: 199,90).'
         else d.preco_anterior = Math.round(p * 100) / 100
       }
+    }
+    if (veio('selo_campanha')) {
+      const selo = normalizarSelo(e.selo_campanha)
+      if (!selo) d.selo_campanha = null // não obrigatório
+      else if (selo.length < 2 || !slugDoSelo(selo)) erros.selo_campanha = 'Selo-Campanha: de 2 a 40 caracteres, com letras ou números.'
+      else d.selo_campanha = selo
     }
     if (veio('mostrar_preco_anterior')) {
       if (typeof e.mostrar_preco_anterior !== 'boolean') erros.mostrar_preco_anterior = 'Valor inválido.'

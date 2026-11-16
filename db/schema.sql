@@ -537,6 +537,16 @@ BEGIN
   END IF;
 END $$;
 
+-- Selo-Campanha (opcional): agrupa produtos no menu lateral do site (ex.: Black Friday, Camiseta)
+ALTER TABLE produtos ADD COLUMN IF NOT EXISTS selo_campanha text;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'produtos_selo_campanha_check') THEN
+    ALTER TABLE produtos ADD CONSTRAINT produtos_selo_campanha_check CHECK (selo_campanha IS NULL OR length(selo_campanha) BETWEEN 2 AND 40);
+  END IF;
+END $$;
+CREATE INDEX IF NOT EXISTS produtos_selo_campanha_idx ON produtos (selo_campanha) WHERE selo_campanha IS NOT NULL;
+
 CREATE INDEX IF NOT EXISTS produtos_campanha_idx   ON produtos (campanha_id);
 CREATE INDEX IF NOT EXISTS produtos_criado_por_idx ON produtos (criado_por);
 
@@ -546,6 +556,7 @@ COMMENT ON COLUMN produtos.preco_atual IS 'Preço atual em reais (decimal exato,
 COMMENT ON COLUMN produtos.campanha_id IS 'Campanha do produto (opcional)';
 COMMENT ON COLUMN produtos.preco_anterior IS 'Preço anterior em reais (opcional), mostrado riscado: de R$ X por R$ Y';
 COMMENT ON COLUMN produtos.mostrar_preco_anterior IS 'Efeito X: mostra o preço anterior riscado na loja';
+COMMENT ON COLUMN produtos.selo_campanha IS 'Selo-Campanha (opcional): cria um item no menu lateral do site que filtra os produtos';
 COMMENT ON COLUMN produtos.criado_em   IS 'Data da criação';
 COMMENT ON COLUMN produtos.criado_por  IS 'Vendedor que cadastrou o produto';
 COMMENT ON COLUMN produtos.caminho     IS 'URL da imagem do produto no volume (ex.: /arquivos/<id>.jpg)';
@@ -692,6 +703,7 @@ CREATE VIEW produtos_com_preco AS
 SELECT
   p.id, p.codigo, p.slug, p.nome, p.descricao, p.preco_atual, p.caminho, p.ativo, p.destaque,
   p.campanha_id, p.criado_em, p.criado_por, p.atualizado_em, p.preco_anterior, p.mostrar_preco_anterior,
+  p.selo_campanha,
   c.nome AS campanha_nome,
   CASE WHEN c.id IS NOT NULL THEN c.desconto_percentual END AS desconto_percentual,
   round(p.preco_atual * (1 - COALESCE(c.desconto_percentual, 0) / 100), 2) AS preco_final

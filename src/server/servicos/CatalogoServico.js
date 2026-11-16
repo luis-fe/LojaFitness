@@ -11,6 +11,7 @@
 //   • tamanhos: todos os tamanhos da grade do produto, na sequência de exibição.
 //   • precoAnterior: só quando o efeito X está ligado e o valor é maior que o preço ("de X por Y").
 import 'server-only'
+import { slugDoSelo } from '@/lib/selos'
 
 const IMAGEM_PADRAO = '/images/hero-conjunto.jpg'
 
@@ -51,11 +52,29 @@ export class CatalogoServico {
         preco,
         precoAnterior: anterior > preco ? anterior : null,
         campanha: p.campanha_nome ?? null,
+        selo: p.selo_campanha ?? null,
+        seloSlug: p.selo_campanha ? slugDoSelo(p.selo_campanha) : null,
         cores,
         tamanhos: [...tamanhos.entries()].sort((a, b) => a[1] - b[1]).map(([codigo]) => codigo),
         estoque,
       }
     })
+  }
+
+  // Selos-Campanha dos produtos à venda: [{ nome, slug, quantidade }] — viram itens do menu lateral
+  async listarSelos() {
+    const selos = new Map()
+    for (const p of await this.listar()) {
+      if (!p.seloSlug) continue
+      const s = selos.get(p.seloSlug) ?? { nome: p.selo, slug: p.seloSlug, quantidade: 0 }
+      s.quantidade++
+      selos.set(p.seloSlug, s)
+    }
+    return [...selos.values()].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
+  }
+
+  async listarPorSelo(seloSlug) {
+    return (await this.listar()).filter((p) => p.seloSlug === seloSlug)
   }
 
   async buscar(slug) {

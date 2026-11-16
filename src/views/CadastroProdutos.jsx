@@ -178,7 +178,7 @@ function Variacoes({ filhos, setFilhos, cores, tamanhos, erro, gerador, setGerad
 // ---------------------------------------------------------------------------
 // Formulário do produto
 // ---------------------------------------------------------------------------
-function FormProduto({ produto, cores, tamanhos, campanhas, aoSalvar, aoCancelar, aoCriarApoio }) {
+function FormProduto({ produto, cores, tamanhos, campanhas, selosExistentes = [], aoSalvar, aoCancelar, aoCriarApoio }) {
   const { api } = useAutenticacao()
   const [form, setForm] = useState({
     codigo: produto?.codigo ?? '',
@@ -188,6 +188,7 @@ function FormProduto({ produto, cores, tamanhos, campanhas, aoSalvar, aoCancelar
     preco_anterior: precoParaCampo(produto?.preco_anterior),
     mostrar_preco_anterior: produto?.mostrar_preco_anterior ?? false,
     campanha_id: produto?.campanha_id ?? '',
+    selo_campanha: produto?.selo_campanha ?? '',
     caminho: produto?.caminho ?? null,
     ativo: produto?.ativo ?? true,
   })
@@ -211,6 +212,7 @@ function FormProduto({ produto, cores, tamanhos, campanhas, aoSalvar, aoCancelar
     const corpo = {
       ...form,
       campanha_id: form.campanha_id === '' ? null : Number(form.campanha_id),
+      selo_campanha: form.selo_campanha.trim() === '' ? null : form.selo_campanha,
       preco_anterior: form.preco_anterior === '' ? null : form.preco_anterior,
       filhos: filhos.map(({ cor, tamanho, estoque }) => ({ cor, tamanho, estoque: Number(estoque) || 0 })),
     }
@@ -295,6 +297,24 @@ function FormProduto({ produto, cores, tamanhos, campanhas, aoSalvar, aoCancelar
               </div>
               <div className="largo">
                 <Campo rotulo="Nome" valor={form.nome} aoMudar={alterar('nome')} erro={erros.nome} maxLength={120} placeholder="Ex.: Conjunto Calça Azul" />
+              </div>
+              <div className="largo">
+                <Campo
+                  rotulo="Selo-Campanha"
+                  opcional
+                  valor={form.selo_campanha}
+                  aoMudar={alterar('selo_campanha')}
+                  erro={erros.selo_campanha}
+                  maxLength={40}
+                  placeholder="Ex.: Black Friday, Camiseta"
+                  list="selos-campanha"
+                  dica="Cada Selo-Campanha vira um item no menu lateral do site, que mostra só os produtos com esse selo."
+                />
+                <datalist id="selos-campanha">
+                  {selosExistentes.map((sl) => (
+                    <option key={sl} value={sl} />
+                  ))}
+                </datalist>
               </div>
               <div className="campo largo">
                 <label htmlFor="produto-descricao">
@@ -406,7 +426,7 @@ export default function CadastroProdutos() {
   const filtrados = useMemo(() => {
     const t = busca.trim().toLowerCase()
     if (!produtos || !t) return produtos
-    return produtos.filter((p) => `${p.codigo} ${p.nome} ${p.campanha_nome ?? ''}`.toLowerCase().includes(t))
+    return produtos.filter((p) => `${p.codigo} ${p.nome} ${p.campanha_nome ?? ''} ${p.selo_campanha ?? ''}`.toLowerCase().includes(t))
   }, [produtos, busca])
 
   const faltaCadastro = !apoio.cores.length || !apoio.tamanhos.length
@@ -435,7 +455,7 @@ export default function CadastroProdutos() {
           <label htmlFor="busca-produtos" className="sr-only">
             Buscar produtos
           </label>
-          <input id="busca-produtos" type="search" placeholder="Buscar por código, nome ou campanha" value={busca} onChange={(e) => setBusca(e.target.value)} />
+          <input id="busca-produtos" type="search" placeholder="Buscar por código, nome, campanha ou selo" value={busca} onChange={(e) => setBusca(e.target.value)} />
         </div>
       )}
 
@@ -471,6 +491,7 @@ export default function CadastroProdutos() {
             },
             { id: 'codigo', titulo: 'Código', valor: (p) => p.codigo },
             { id: 'preco', titulo: 'Preço atual', valor: (p) => Number(p.preco_atual), exibir: (p) => reais(p.preco_atual), alinhar: 'direita' },
+            { id: 'selo', titulo: 'Selo-Campanha', valor: (p) => p.selo_campanha ?? '', exibir: (p) => (p.selo_campanha ? <span className="selo-campanha">{p.selo_campanha}</span> : '—') },
             { id: 'campanha', titulo: 'Campanha', valor: (p) => p.campanha_nome, exibir: (p) => p.campanha_nome ?? '—' },
             { id: 'estoque', titulo: 'Estoque', valor: (p) => p.estoque_total, exibir: (p) => `${p.estoque_total} (${p.variacoes} var.)`, alinhar: 'direita' },
             { id: 'criado_por', titulo: 'Criado por', valor: (p) => p.criado_por_nome, exibir: (p) => p.criado_por_nome ?? '—', noCelular: false },
@@ -502,6 +523,7 @@ export default function CadastroProdutos() {
             cores={apoio.cores}
             tamanhos={apoio.tamanhos}
             campanhas={apoio.campanhas}
+            selosExistentes={[...new Set((produtos ?? []).map((p) => p.selo_campanha).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR'))}
             aoCriarApoio={(tipo, item) =>
               setApoio((a) =>
                 tipo === 'cor' ? { ...a, cores: [...a.cores, item].sort((x, y) => x.nome.localeCompare(y.nome, 'pt-BR')) } : { ...a, tamanhos: [...a.tamanhos, item].sort((x, y) => x.sequencia - y.sequencia) },

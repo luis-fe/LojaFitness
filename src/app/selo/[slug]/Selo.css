@@ -1,0 +1,37 @@
+.selo-pagina__trilha {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--cinza-texto);
+}
+
+.selo-pagina__trilha a {
+  color: inherit;
+  text-underline-offset: 3px;
+}
+
+.selo-pagina__trilha [aria-current] {
+  color: var(--preto);
+  font-weight: 600;
+}
+
+.selo-pagina .bloco__cabecalho h1 {
+  font-size: clamp(26px, 4vw, 36px);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.selo-pagina__grade {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 20px 16px;
+}
+
+@media (max-width: 560px) {
+  .selo-pagina__grade {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 10px;
+  }
+}

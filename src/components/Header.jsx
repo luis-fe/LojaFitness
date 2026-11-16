@@ -9,7 +9,6 @@ import logo from '@/assets/logo-jlk.png'
 import { useCarrinho } from '@/context/Carrinho'
 import { IconeLoja } from '@/components/Icones'
 
-const opcoes = [{ label: 'Black Friday', href: '/#black-friday' }]
 
 // Opções fixadas no rodapé do menu lateral
 const opcoesRodape = [
@@ -71,6 +70,15 @@ function BotaoCompartilhar() {
 export default function Header() {
   const pathname = usePathname()
   const [menuAberto, setMenuAberto] = useState(false)
+  // Selos-Campanha dos produtos (ex.: Black Friday, Camiseta): um item do menu para cada selo existente
+  const [opcoes, setOpcoes] = useState([])
+
+  useEffect(() => {
+    fetch('/api/selos')
+      .then((r) => (r.ok ? r.json() : { selos: [] }))
+      .then((d) => setOpcoes((d.selos ?? []).map((s) => ({ label: s.nome, href: `/selo/${s.slug}` }))))
+      .catch(() => setOpcoes([]))
+  }, [])
   const { quantidadeTotal } = useCarrinho()
   const botaoRef = useRef(null)
   const drawerRef = useRef(null)
@@ -167,7 +175,8 @@ export default function Header() {
         aria-label="Menu"
         inert={!menuAberto}
       >
-        <nav className="header__drawer-nav">
+        <nav className="header__drawer-nav" aria-label="Campanhas">
+          {opcoes.length > 0 && <span className="header__drawer-titulo">Campanhas</span>}
           {opcoes.map(renderLinkMenu)}
         </nav>
         <nav className="header__drawer-rodape" aria-label="Mais opções">
