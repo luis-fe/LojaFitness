@@ -9,12 +9,15 @@ import { formatarPreco } from '@/lib/produtos'
 import IconeWhatsApp from '@/components/IconeWhatsApp'
 import { useErro } from '@/context/Erro'
 import DadosCliente, { useDadosCliente } from '@/components/DadosCliente'
+import FormaEnvio from '@/components/FormaEnvio'
+import { FRETE_PADRAO, descricaoFrete } from '@/lib/frete'
 
 export default function Carrinho() {
   const { carregado, itens, total, quantidadeTotal, alterarQuantidade, remover, estoqueDe, removidos, dispensarRemovidos } = useCarrinho()
   const [enviando, setEnviando] = useState(false)
   const { mostrarErro } = useErro()
   const { cliente, setCliente, dados: dadosCliente, completo, lembrar } = useDadosCliente()
+  const [frete, setFrete] = useState(FRETE_PADRAO)
 
   // Envia o pedido ao backend, que confere estoque, recalcula o total
   // e devolve o link do WhatsApp com a mensagem pronta.
@@ -29,6 +32,7 @@ export default function Carrinho() {
         body: JSON.stringify({
           itens: itens.map(({ slug, cor, tamanho, quantidade }) => ({ slug, cor, tamanho, quantidade })),
           cliente: dadosCliente,
+          frete,
         }),
       })
       const dados = await resposta.json()
@@ -146,7 +150,7 @@ export default function Carrinho() {
             </div>
             <div>
               <dt>Frete</dt>
-              <dd>Combinar no WhatsApp</dd>
+              <dd>{frete === FRETE_PADRAO ? 'Combinar no WhatsApp' : descricaoFrete(frete)}</dd>
             </div>
             <div className="resumo__total">
               <dt>Total</dt>
@@ -154,6 +158,7 @@ export default function Carrinho() {
             </div>
           </dl>
 
+          <FormaEnvio valor={frete} aoMudar={setFrete} idBase="carrinho-envio" />
           <DadosCliente cliente={cliente} setCliente={setCliente} idBase="carrinho-cliente" />
 
           <button

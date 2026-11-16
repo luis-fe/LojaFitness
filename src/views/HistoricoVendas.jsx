@@ -52,6 +52,12 @@ function ExtratoVenda({ id }) {
             {pedido.bairro}, {pedido.cidade} - {pedido.estado} · CEP {formatarCep(pedido.cliente_cep)}
           </dd>
         </div>
+        {pedido.frete && (
+          <div>
+            <dt>Forma de envio</dt>
+            <dd>{pedido.frete}</dd>
+          </div>
+        )}
         <div>
           <dt>Venda</dt>
           <dd>

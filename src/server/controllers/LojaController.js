@@ -33,7 +33,7 @@ export class LojaController {
         return Response.json({ erros: ['Corpo da requisição inválido (JSON esperado).'] }, { status: 400 })
       }
       try {
-        return Response.json(await pedidoServico.validar(corpo?.itens, corpo?.cliente))
+        return Response.json(await pedidoServico.validar(corpo?.itens, corpo?.cliente, corpo?.frete))
       } catch (erro) {
         if (erro instanceof ErroValidacao) return Response.json({ erros: erro.listaErros ?? [erro.message] }, { status: 422 })
         console.error('[POST /api/pedidos]', erro)

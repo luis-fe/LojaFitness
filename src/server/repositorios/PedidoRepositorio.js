@@ -13,13 +13,13 @@ export class PedidoRepositorio {
   // Numa transação: grava/atualiza o cliente, cria o pedido como Rascunho (0), os itens e as
   // linhas de vendas_cor_tam.
   // itens: [{ codigoProduto, codigoCor, nome, cor, tamanho, quantidade, preco }]
-  async criarRascunho({ cliente, itens, total }) {
+  async criarRascunho({ cliente, itens, total, frete = null }) {
     return this.banco.transacao(async (db) => {
       await this.clientes.salvar(cliente, db)
       const { rows } = await db.query(
-        `INSERT INTO pedidos (situacao, cliente_cep, cliente_nome, total) VALUES ($1, $2, $3, $4)
+        `INSERT INTO pedidos (situacao, cliente_cep, cliente_nome, total, frete) VALUES ($1, $2, $3, $4, $5)
          RETURNING id_pedido, codigo, data_emissao, situacao`,
-        [SITUACAO.RASCUNHO, cliente.cep, cliente.nome, total]
+        [SITUACAO.RASCUNHO, cliente.cep, cliente.nome, total, frete]
       )
       const pedido = rows[0]
       for (const i of itens) {

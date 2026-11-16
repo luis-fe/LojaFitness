@@ -62,10 +62,12 @@ export class VendaRepositorio {
   async buscarExtrato(idPedido) {
     const { rows } = await this.banco.consultar(
       `SELECT p.id_pedido, p.codigo, p.data_emissao, p.situacao, p.total, p.aprovado_em, p.origem,
-              p.cliente_nome, p.cliente_cep, c.bairro, c.cidade, c.estado, c.cpf_cnpj, va.nome AS aprovado_por
+              p.cliente_nome, p.cliente_cep, c.bairro, c.cidade, c.estado, c.cpf_cnpj, va.nome AS aprovado_por,
+              fr.descricao AS frete
        FROM pedidos p
        JOIN clientes c ON c.cep = p.cliente_cep AND c.nome = p.cliente_nome
        LEFT JOIN vendedores va ON va.id = p.aprovado_por
+       LEFT JOIN frete fr ON fr.id = p.frete
        WHERE p.id_pedido = $1`,
       [idPedido]
     )

@@ -8,6 +8,8 @@ import Preco from '@/components/Preco'
 import { useCarrinho } from '@/context/Carrinho'
 import IconeWhatsApp from '@/components/IconeWhatsApp'
 import DadosCliente, { useDadosCliente } from '@/components/DadosCliente'
+import FormaEnvio from '@/components/FormaEnvio'
+import { FRETE_PADRAO } from '@/lib/frete'
 import { useErro } from '@/context/Erro'
 
 // Junta as peças escolhidas por cor + tamanho: [{ cor, tamanho, quantidade }]
@@ -31,6 +33,7 @@ export default function Produto({ produto }) {
   const carrinho = useCarrinho()
   const { mostrarErro } = useErro()
   const { cliente, setCliente, dados: dadosCliente, completo, lembrar } = useDadosCliente()
+  const [frete, setFrete] = useState(FRETE_PADRAO)
   const [comprandoDireto, setComprandoDireto] = useState(false)
   const [enviando, setEnviando] = useState(false)
 
@@ -87,7 +90,7 @@ export default function Produto({ produto }) {
       const resposta = await fetch('/api/pedidos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ itens: grupos.map((g) => ({ slug: produto.slug, ...g })), cliente: dadosCliente }),
+        body: JSON.stringify({ itens: grupos.map((g) => ({ slug: produto.slug, ...g })), cliente: dadosCliente, frete }),
       })
       const dados = await resposta.json()
       if (!resposta.ok) {
@@ -280,6 +283,7 @@ export default function Produto({ produto }) {
               )}
               {completo_ && comprandoDireto && (
                 <div className="produto__direto">
+                  <FormaEnvio valor={frete} aoMudar={setFrete} idBase="produto-envio" />
                   <DadosCliente cliente={cliente} setCliente={setCliente} idBase="produto-cliente" />
                   <button type="button" className="produto__btn produto__btn--whats" onClick={comprarDireto} disabled={!completo || enviando}>
                     <IconeWhatsApp className="produto__whats-icone" />

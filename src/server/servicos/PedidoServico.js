@@ -5,6 +5,7 @@ import 'server-only'
 import { ErroValidacao } from '@/server/erros'
 import { linkWhatsApp, mensagemPedido } from '@/lib/whatsapp'
 import { validarCliente } from '@/lib/cliente'
+import { normalizarFrete } from '@/lib/frete'
 
 export class PedidoServico {
   static MAX_ITENS = 50
@@ -15,13 +16,15 @@ export class PedidoServico {
     this.pedidos = pedidoRepositorio
   }
 
-  async validar(entrada, clienteEntrada) {
+  async validar(entrada, clienteEntrada, freteEntrada) {
     if (!Array.isArray(entrada) || entrada.length === 0) throw new ErroValidacao({ itens: 'O pedido está vazio.' }, 'O pedido está vazio.')
     if (entrada.length > PedidoServico.MAX_ITENS) throw new ErroValidacao({ itens: `Máximo de ${PedidoServico.MAX_ITENS} itens por pedido.` })
 
     const { dados: cliente, erros: errosCliente } = validarCliente(clienteEntrada ?? {})
     const catalogo = await this.catalogo.listar()
     const erros = Object.values(errosCliente)
+    const frete = normalizarFrete(freteEntrada) // vazio = Combinar Frete
+    if (frete === null) erros.push('Forma de envio inválida.')
     const itens = []
     for (const [n, item] of entrada.entries()) {
       const produto = catalogo.find((p) => p.slug === item?.slug)
@@ -69,11 +72,11 @@ export class PedidoServico {
     }
 
     const total = Math.round(itens.reduce((s, i) => s + i.subtotal, 0) * 100) / 100
-    const pedido = await this.pedidos.criarRascunho({ cliente, itens, total })
+    const pedido = await this.pedidos.criarRascunho({ cliente, itens, total, frete })
     this.#limparRascunhosSeNecessario()
-    const mensagem = mensagemPedido(itens, cliente, pedido.codigo)
+    const mensagem = mensagemPedido(itens, cliente, pedido.codigo, frete)
     const publicos = itens.map(({ codigoProduto, codigoCor, ...resto }) => resto) // códigos internos ficam no servidor
-    return { pedido: { codigo: pedido.codigo, situacao: pedido.situacao }, itens: publicos, total, mensagem, whatsappUrl: linkWhatsApp(mensagem) }
+    return { pedido: { codigo: pedido.codigo, situacao: pedido.situacao, frete }, itens: publicos, total, mensagem, whatsappUrl: linkWhatsApp(mensagem) }
   }
 
   // Rascunhos com mais de 15 dias saem sozinhos (não trava o pedido do cliente se falhar)
