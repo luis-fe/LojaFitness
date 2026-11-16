@@ -10,11 +10,11 @@ import { useAutenticacao } from '@/context/Autenticacao'
 import { useErro } from '@/context/Erro'
 import { AmostraCor } from '@/views/Cores'
 
-const TRILHA = [{ href: '/area-do-vendedor/produtos', rotulo: 'Produtos' }]
+const TRILHA = [{ href: '/area-do-vendedor/estoques', rotulo: 'Estoques' }]
 const chave = (v) => `${v.cor}|${v.tamanho}`
 const comSinal = (n) => (n > 0 ? `+${n}` : n < 0 ? `−${Math.abs(n)}` : '0')
 
-// Produtos → Inventário: conta as peças e ajusta o estoque para a contagem.
+// Estoques → Inventário: conta as peças e ajusta o estoque para a contagem.
 // A diferença (positiva ou negativa) fica registrada em mov_produto como 'inventario'.
 export default function Inventario() {
   const { api } = useAutenticacao()

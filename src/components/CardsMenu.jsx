@@ -4,7 +4,7 @@ import { IconeCadeado, IconeSeta } from '@/components/Icones'
 
 // Menu em cards grandes.
 //   itens: [{ titulo, href, Icone, bloqueado?, motivo?, selo?, cor? }]
-//   cor = 'azul' | 'dourado' | 'roxo' | 'verde' pinta o fundo do ícone do card
+//   cor = 'azul' | 'dourado' | 'roxo' | 'verde' | 'marrom' pinta o fundo do ícone do card
 //   bloqueado = card apagado com cadeado; o motivo aparece ao passar o mouse e para leitores de tela
 export default function CardsMenu({ itens, rotulo }) {
   return (

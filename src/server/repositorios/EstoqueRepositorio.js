@@ -1,4 +1,4 @@
-// Estoque: entradas (Produtos → Entradas) e consulta da movimentação (mov_produto).
+// Estoque: entradas (Estoques → Entradas) e consulta da movimentação (mov_produto).
 import 'server-only'
 
 export class EstoqueRepositorio {

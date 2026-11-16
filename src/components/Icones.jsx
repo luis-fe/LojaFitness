@@ -289,3 +289,13 @@ export const IconeLixeira = () => (
     <path d="M9 7V4.5h6V7" />
   </Svg>
 )
+
+// Caixas empilhadas (estoques)
+export const IconeEstoque = () => (
+  <Svg>
+    <rect x="3" y="12" width="8" height="8" rx="1" />
+    <rect x="13" y="12" width="8" height="8" rx="1" />
+    <rect x="8" y="3" width="8" height="8" rx="1" />
+    <path d="M7 12v2.5M17 12v2.5M12 3v2.5" />
+  </Svg>
+)
