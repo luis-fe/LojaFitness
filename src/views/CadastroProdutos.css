@@ -66,6 +66,10 @@
 }
 
 /* Formulário */
+.form-produto[hidden] {
+  display: none;
+}
+
 .form-produto {
   display: flex;
   flex-direction: column;
@@ -190,6 +194,9 @@
 }
 
 .gerador legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 6px;
   font-size: 12px;
   font-weight: 800;
@@ -199,6 +206,42 @@
 
 .gerador .botao {
   align-self: flex-start;
+}
+
+/* "+" ao lado de Cores/Tamanhos: atalho para cadastrar sem sair do produto */
+.gerador__novo {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  background: var(--dourado);
+  color: var(--branco);
+  border: none;
+  border-radius: 50%;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.gerador__novo:focus-visible {
+  outline: 2px solid var(--preto);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) {
+  .gerador__novo:hover {
+    background: #96701f;
+  }
+}
+
+.atalho-cadastro__titulo {
+  margin: 8px 0 16px;
+  font-size: 16px;
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
 /* Tabela de variações */

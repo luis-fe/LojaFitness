@@ -12,7 +12,7 @@ import { useAutenticacao } from '@/context/Autenticacao'
 const TRILHA = [{ href: '/area-do-vendedor/produtos', rotulo: 'Produtos' }]
 const mascaraCodigo = (v) => v.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6)
 
-function FormTamanho({ tamanho, aoSalvar, aoCancelar }) {
+export function FormTamanho({ tamanho, aoSalvar, aoCancelar }) {
   const { api } = useAutenticacao()
   const [form, setForm] = useState({ codigo: tamanho?.codigo ?? '', nome: tamanho?.nome ?? '', sequencia: tamanho?.sequencia ?? '' })
   const [erros, setErros] = useState({})

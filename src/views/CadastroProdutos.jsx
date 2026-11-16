@@ -10,7 +10,8 @@ import Campo from '@/components/Campo'
 import Modal from '@/components/Modal'
 import ConfirmarExclusao from '@/components/ConfirmarExclusao'
 import SeletorImagens from '@/components/SeletorImagens'
-import { AmostraCor } from '@/views/Cores'
+import { AmostraCor, FormCor } from '@/views/Cores'
+import { FormTamanho } from '@/views/Tamanhos'
 import { useAutenticacao } from '@/context/Autenticacao'
 import { formatarDataHora } from '@/lib/formatos'
 
@@ -25,25 +26,27 @@ const mascaraCodigo = (v) =>
     .replace(/\s/g, '-')
     .replace(/[^A-Z0-9._-]/g, '')
     .slice(0, 60)
-const mascaraPreco = (v) => v.replace(/[^\d,]/g, '').replace(/,(?=.*,)/g, '').replace(/(,\d{2})\d+$/, '$1')
+const mascaraPreco = (v) =>
+  v
+    .replace(/[^\d,]/g, '')
+    .replace(/,(?=.*,)/g, '')
+    .replace(/(,\d{2})\d+$/, '$1')
 
 // ---------------------------------------------------------------------------
 // Variações (produtos filho)
 // ---------------------------------------------------------------------------
-function Variacoes({ filhos, setFilhos, cores, tamanhos, erro }) {
-  const [gerador, setGerador] = useState(false)
-  const [marcadas, setMarcadas] = useState({ cores: [], tamanhos: [] })
-
+// gerador/marcadas ficam no formulário do produto para não se perderem ao cadastrar uma cor ou um tamanho
+function Variacoes({ filhos, setFilhos, cores, tamanhos, erro, gerador, setGerador, marcadas, setMarcadas, aoNovo }) {
   const atualizar = (i, campo, v) => setFilhos(filhos.map((f, n) => (n === i ? { ...f, [campo]: v } : f)))
-  const marcar = (grupo, codigo) =>
-    setMarcadas((m) => ({ ...m, [grupo]: m[grupo].includes(codigo) ? m[grupo].filter((c) => c !== codigo) : [...m[grupo], codigo] }))
+  const marcar = (grupo, codigo) => setMarcadas((m) => ({ ...m, [grupo]: m[grupo].includes(codigo) ? m[grupo].filter((c) => c !== codigo) : [...m[grupo], codigo] }))
 
   const gerar = () => {
     const existentes = new Set(filhos.map((f) => `${f.cor}|${f.tamanho}`))
     const novas = []
-    for (const cor of marcadas.cores) for (const tamanho of tamanhos.map((t) => t.codigo).filter((t) => marcadas.tamanhos.includes(t))) {
-      if (!existentes.has(`${cor}|${tamanho}`)) novas.push({ cor, tamanho, estoque: 0 })
-    }
+    for (const cor of marcadas.cores)
+      for (const tamanho of tamanhos.map((t) => t.codigo).filter((t) => marcadas.tamanhos.includes(t))) {
+        if (!existentes.has(`${cor}|${tamanho}`)) novas.push({ cor, tamanho, estoque: 0 })
+      }
     setFilhos([...filhos, ...novas])
     setGerador(false)
     setMarcadas({ cores: [], tamanhos: [] })
@@ -55,7 +58,10 @@ function Variacoes({ filhos, setFilhos, cores, tamanhos, erro }) {
     <section className="secao-form" aria-labelledby="variacoes-titulo">
       <div className="secao-form__topo">
         <h3 id="variacoes-titulo">
-          Variações <span>({filhos.length} · {totalEstoque} peças)</span>
+          Variações{' '}
+          <span>
+            ({filhos.length} · {totalEstoque} peças)
+          </span>
         </h3>
         <div className="secao-form__acoes">
           <button type="button" className="botao botao--secundario botao--pequeno" onClick={() => setGerador((g) => !g)} aria-expanded={gerador}>
@@ -71,7 +77,12 @@ function Variacoes({ filhos, setFilhos, cores, tamanhos, erro }) {
         <div className="gerador">
           <p className="campo__dica">Marque as cores e os tamanhos: todas as combinações que ainda não existem são adicionadas com estoque 0.</p>
           <fieldset>
-            <legend>Cores</legend>
+            <legend>
+              Cores
+              <button type="button" className="gerador__novo" onClick={() => aoNovo('cor')} aria-label="Cadastrar nova cor" title="Cadastrar nova cor">
+                +
+              </button>
+            </legend>
             {cores.map((c) => (
               <label key={c.codigo} className="opcao">
                 <input type="checkbox" checked={marcadas.cores.includes(c.codigo)} onChange={() => marcar('cores', c.codigo)} />
@@ -80,7 +91,12 @@ function Variacoes({ filhos, setFilhos, cores, tamanhos, erro }) {
             ))}
           </fieldset>
           <fieldset>
-            <legend>Tamanhos</legend>
+            <legend>
+              Tamanhos
+              <button type="button" className="gerador__novo" onClick={() => aoNovo('tamanho')} aria-label="Cadastrar novo tamanho" title="Cadastrar novo tamanho">
+                +
+              </button>
+            </legend>
             {tamanhos.map((t) => (
               <label key={t.codigo} className="opcao">
                 <input type="checkbox" checked={marcadas.tamanhos.includes(t.codigo)} onChange={() => marcar('tamanhos', t.codigo)} />
@@ -94,7 +110,11 @@ function Variacoes({ filhos, setFilhos, cores, tamanhos, erro }) {
         </div>
       )}
 
-      {erro && <p className="campo__erro" role="alert">{erro}</p>}
+      {erro && (
+        <p className="campo__erro" role="alert">
+          {erro}
+        </p>
+      )}
 
       {filhos.length === 0 ? (
         <p className="variacoes__vazio">Nenhuma variação. Use “Gerar grade” ou “+ Variação”.</p>
@@ -157,7 +177,7 @@ function Variacoes({ filhos, setFilhos, cores, tamanhos, erro }) {
 // ---------------------------------------------------------------------------
 // Formulário do produto
 // ---------------------------------------------------------------------------
-function FormProduto({ produto, cores, tamanhos, campanhas, aoSalvar, aoCancelar }) {
+function FormProduto({ produto, cores, tamanhos, campanhas, aoSalvar, aoCancelar, aoCriarApoio }) {
   const { api } = useAutenticacao()
   const [form, setForm] = useState({
     codigo: produto?.codigo ?? '',
@@ -170,6 +190,9 @@ function FormProduto({ produto, cores, tamanhos, campanhas, aoSalvar, aoCancelar
   })
   const [filhos, setFilhos] = useState(() => (produto?.filhos ?? []).map(({ id, cor, tamanho, estoque }) => ({ id, cor, tamanho, estoque })))
   const [escolhendoImagem, setEscolhendoImagem] = useState(false)
+  const [cadastrando, setCadastrando] = useState(null) // 'cor' | 'tamanho' — atalho do "+" na grade
+  const [gerador, setGerador] = useState(false)
+  const [marcadas, setMarcadas] = useState({ cores: [], tamanhos: [] })
   const [erros, setErros] = useState({})
   const [erroGeral, setErroGeral] = useState('')
   const [salvando, setSalvando] = useState(false)
@@ -188,9 +211,7 @@ function FormProduto({ produto, cores, tamanhos, campanhas, aoSalvar, aoCancelar
       campanha_id: form.campanha_id === '' ? null : Number(form.campanha_id),
       filhos: filhos.map(({ cor, tamanho, estoque }) => ({ cor, tamanho, estoque: Number(estoque) || 0 })),
     }
-    const { ok, dados } = produto
-      ? await api(`/api/cadastro/produtos/${encodeURIComponent(produto.codigo)}`, { metodo: 'PATCH', corpo })
-      : await api('/api/cadastro/produtos', { metodo: 'POST', corpo })
+    const { ok, dados } = produto ? await api(`/api/cadastro/produtos/${encodeURIComponent(produto.codigo)}`, { metodo: 'PATCH', corpo }) : await api('/api/cadastro/produtos', { metodo: 'POST', corpo })
     setSalvando(false)
     if (ok) return aoSalvar(dados.produto)
     setErros(dados?.campos || {})
@@ -215,80 +236,110 @@ function FormProduto({ produto, cores, tamanhos, campanhas, aoSalvar, aoCancelar
     )
   }
 
+  // Cor ou tamanho criado pelo atalho: entra na lista, já fica marcado na grade e volta ao produto
+  const criado = (tipo, item) => {
+    aoCriarApoio(tipo, item)
+    const grupo = tipo === 'cor' ? 'cores' : 'tamanhos'
+    setMarcadas((m) => ({ ...m, [grupo]: [...m[grupo], item.codigo] }))
+    setCadastrando(null)
+  }
+
   return (
-    <form onSubmit={salvar} noValidate className="form-produto">
-      <section className="secao-form" aria-labelledby="dados-titulo">
-        <h3 id="dados-titulo">Dados do produto</h3>
-        <div className="form-produto__dados">
-          <div className="form-produto__imagem">
-            {form.caminho ? <img src={form.caminho} alt="" /> : <div className="form-produto__sem-imagem">Sem imagem</div>}
-            <button type="button" className="botao botao--secundario botao--pequeno" onClick={() => setEscolhendoImagem(true)}>
-              {form.caminho ? 'Trocar imagem' : 'Escolher imagem'}
-            </button>
-            {form.caminho && (
-              <button type="button" className="link-voltar" onClick={() => alterar('caminho')(null)}>
-                Remover imagem
-              </button>
-            )}
-            {erros.caminho && <span className="campo__erro">{erros.caminho}</span>}
-          </div>
-          <div className="grade-campos">
-            <Campo rotulo="Código do produto" valor={form.codigo} aoMudar={alterar('codigo')} mascara={mascaraCodigo} erro={erros.codigo} placeholder="Ex.: CONJ-CALCA-AZUL" autoFocus={!produto} />
-            <Campo rotulo="Preço atual (R$)" valor={form.preco_atual} aoMudar={alterar('preco_atual')} mascara={mascaraPreco} erro={erros.preco_atual} inputMode="decimal" placeholder="159,90" />
-            <div className="largo">
-              <Campo rotulo="Nome" valor={form.nome} aoMudar={alterar('nome')} erro={erros.nome} maxLength={120} placeholder="Ex.: Conjunto Calça Azul" />
-            </div>
-            <div className="campo largo">
-              <label htmlFor="produto-descricao">
-                Descrição <span className="campo__opcional">(opcional)</span>
-              </label>
-              <textarea id="produto-descricao" rows={3} maxLength={2000} value={form.descricao} onChange={(e) => alterar('descricao')(e.target.value)} />
-              {erros.descricao && <span className="campo__erro">{erros.descricao}</span>}
-            </div>
-            <div className="campo">
-              <label htmlFor="produto-campanha">
-                Campanha <span className="campo__opcional">(opcional)</span>
-              </label>
-              <select id="produto-campanha" value={form.campanha_id} onChange={(e) => alterar('campanha_id')(e.target.value)}>
-                <option value="">Sem campanha</option>
-                {campanhas.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nome} (−{Number(c.desconto_percentual)}%){c.vigente ? '' : ' · fora do período'}
-                  </option>
-                ))}
-              </select>
-              {erros.campanha_id ? <span className="campo__erro">{erros.campanha_id}</span> : !campanhas.length && <span className="campo__dica">Nenhuma campanha cadastrada ainda.</span>}
-            </div>
-            <label className="opcao opcao--alinhada">
-              <input type="checkbox" checked={form.ativo} onChange={(e) => alterar('ativo')(e.target.checked)} />
-              Visível na loja
-            </label>
-          </div>
+    <>
+      {cadastrando && (
+        <div className="atalho-cadastro">
+          <button type="button" className="link-voltar" onClick={() => setCadastrando(null)}>
+            ← Voltar ao produto
+          </button>
+          <h3 className="atalho-cadastro__titulo">{cadastrando === 'cor' ? 'Nova cor' : 'Novo tamanho'}</h3>
+          {cadastrando === 'cor' ? <FormCor aoSalvar={(c) => criado('cor', c)} aoCancelar={() => setCadastrando(null)} /> : <FormTamanho aoSalvar={(t) => criado('tamanho', t)} aoCancelar={() => setCadastrando(null)} />}
         </div>
-      </section>
-
-      <Variacoes filhos={filhos} setFilhos={setFilhos} cores={cores} tamanhos={tamanhos} erro={erros.filhos} />
-
-      {produto && (
-        <p className="campo__dica">
-          Criado em {formatarDataHora(produto.criado_em)}
-          {produto.criado_por_nome ? ` por ${produto.criado_por_nome}` : ''}.
-        </p>
       )}
-      {erroGeral && (
-        <p className="aviso aviso--erro" role="alert" style={{ marginTop: 12 }}>
-          {erroGeral}
-        </p>
-      )}
-      <div className="acoes-form">
-        <button type="button" className="botao botao--secundario" onClick={aoCancelar}>
-          Cancelar
-        </button>
-        <button type="submit" className="botao" disabled={salvando}>
-          {salvando ? 'Salvando…' : produto ? 'Salvar produto' : 'Cadastrar produto'}
-        </button>
-      </div>
-    </form>
+      <form onSubmit={salvar} noValidate className="form-produto" hidden={Boolean(cadastrando)}>
+        <section className="secao-form" aria-labelledby="dados-titulo">
+          <h3 id="dados-titulo">Dados do produto</h3>
+          <div className="form-produto__dados">
+            <div className="form-produto__imagem">
+              {form.caminho ? <img src={form.caminho} alt="" /> : <div className="form-produto__sem-imagem">Sem imagem</div>}
+              <button type="button" className="botao botao--secundario botao--pequeno" onClick={() => setEscolhendoImagem(true)}>
+                {form.caminho ? 'Trocar imagem' : 'Escolher imagem'}
+              </button>
+              {form.caminho && (
+                <button type="button" className="link-voltar" onClick={() => alterar('caminho')(null)}>
+                  Remover imagem
+                </button>
+              )}
+              {erros.caminho && <span className="campo__erro">{erros.caminho}</span>}
+            </div>
+            <div className="grade-campos">
+              <Campo rotulo="Código do produto" valor={form.codigo} aoMudar={alterar('codigo')} mascara={mascaraCodigo} erro={erros.codigo} placeholder="Ex.: CONJ-CALCA-AZUL" autoFocus={!produto} />
+              <Campo rotulo="Preço atual (R$)" valor={form.preco_atual} aoMudar={alterar('preco_atual')} mascara={mascaraPreco} erro={erros.preco_atual} inputMode="decimal" placeholder="159,90" />
+              <div className="largo">
+                <Campo rotulo="Nome" valor={form.nome} aoMudar={alterar('nome')} erro={erros.nome} maxLength={120} placeholder="Ex.: Conjunto Calça Azul" />
+              </div>
+              <div className="campo largo">
+                <label htmlFor="produto-descricao">
+                  Descrição <span className="campo__opcional">(opcional)</span>
+                </label>
+                <textarea id="produto-descricao" rows={3} maxLength={2000} value={form.descricao} onChange={(e) => alterar('descricao')(e.target.value)} />
+                {erros.descricao && <span className="campo__erro">{erros.descricao}</span>}
+              </div>
+              <div className="campo">
+                <label htmlFor="produto-campanha">
+                  Campanha <span className="campo__opcional">(opcional)</span>
+                </label>
+                <select id="produto-campanha" value={form.campanha_id} onChange={(e) => alterar('campanha_id')(e.target.value)}>
+                  <option value="">Sem campanha</option>
+                  {campanhas.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.nome} (−{Number(c.desconto_percentual)}%){c.vigente ? '' : ' · fora do período'}
+                    </option>
+                  ))}
+                </select>
+                {erros.campanha_id ? <span className="campo__erro">{erros.campanha_id}</span> : !campanhas.length && <span className="campo__dica">Nenhuma campanha cadastrada ainda.</span>}
+              </div>
+              <label className="opcao opcao--alinhada">
+                <input type="checkbox" checked={form.ativo} onChange={(e) => alterar('ativo')(e.target.checked)} />
+                Visível na loja
+              </label>
+            </div>
+          </div>
+        </section>
+
+        <Variacoes
+          filhos={filhos}
+          setFilhos={setFilhos}
+          cores={cores}
+          tamanhos={tamanhos}
+          erro={erros.filhos}
+          gerador={gerador}
+          setGerador={setGerador}
+          marcadas={marcadas}
+          setMarcadas={setMarcadas}
+          aoNovo={setCadastrando}
+        />
+
+        {produto && (
+          <p className="campo__dica">
+            Criado em {formatarDataHora(produto.criado_em)}
+            {produto.criado_por_nome ? ` por ${produto.criado_por_nome}` : ''}.
+          </p>
+        )}
+        {erroGeral && (
+          <p className="aviso aviso--erro" role="alert" style={{ marginTop: 12 }}>
+            {erroGeral}
+          </p>
+        )}
+        <div className="acoes-form">
+          <button type="button" className="botao botao--secundario" onClick={aoCancelar}>
+            Cancelar
+          </button>
+          <button type="submit" className="botao" disabled={salvando}>
+            {salvando ? 'Salvando…' : produto ? 'Salvar produto' : 'Cadastrar produto'}
+          </button>
+        </div>
+      </form>
+    </>
   )
 }
 
@@ -312,9 +363,7 @@ export default function CadastroProdutos() {
 
   useEffect(() => {
     carregar()
-    Promise.all([api('/api/cores'), api('/api/tamanhos'), api('/api/campanhas')]).then(([c, t, k]) =>
-      setApoio({ cores: c.dados?.cores ?? [], tamanhos: t.dados?.tamanhos ?? [], campanhas: k.dados?.campanhas ?? [] })
-    )
+    Promise.all([api('/api/cores'), api('/api/tamanhos'), api('/api/campanhas')]).then(([c, t, k]) => setApoio({ cores: c.dados?.cores ?? [], tamanhos: t.dados?.tamanhos ?? [], campanhas: k.dados?.campanhas ?? [] }))
   }, [api, carregar])
 
   useEffect(() => {
@@ -394,12 +443,18 @@ export default function CadastroProdutos() {
               valor: (p) => p.caminho,
               exibir: (p) => (p.caminho ? <img src={p.caminho} alt="" className="miniatura" loading="lazy" /> : <span className="miniatura miniatura--vazia" />),
             },
-            { id: 'nome', titulo: 'Produto', valor: (p) => p.nome, destaque: true, exibir: (p) => (
-              <span className="produto-nome">
-                {p.nome}
-                {!p.ativo && <span className="selo-inativo">Oculto</span>}
-              </span>
-            ) },
+            {
+              id: 'nome',
+              titulo: 'Produto',
+              valor: (p) => p.nome,
+              destaque: true,
+              exibir: (p) => (
+                <span className="produto-nome">
+                  {p.nome}
+                  {!p.ativo && <span className="selo-inativo">Oculto</span>}
+                </span>
+              ),
+            },
             { id: 'codigo', titulo: 'Código', valor: (p) => p.codigo },
             { id: 'preco', titulo: 'Preço atual', valor: (p) => Number(p.preco_atual), exibir: (p) => reais(p.preco_atual), alinhar: 'direita' },
             { id: 'campanha', titulo: 'Campanha', valor: (p) => p.campanha_nome, exibir: (p) => p.campanha_nome ?? '—' },
@@ -433,6 +488,11 @@ export default function CadastroProdutos() {
             cores={apoio.cores}
             tamanhos={apoio.tamanhos}
             campanhas={apoio.campanhas}
+            aoCriarApoio={(tipo, item) =>
+              setApoio((a) =>
+                tipo === 'cor' ? { ...a, cores: [...a.cores, item].sort((x, y) => x.nome.localeCompare(y.nome, 'pt-BR')) } : { ...a, tamanhos: [...a.tamanhos, item].sort((x, y) => x.sequencia - y.sequencia) },
+              )
+            }
             aoCancelar={() => setModal(null)}
             aoSalvar={(p) => concluir(modal.tipo === 'novo' ? `Produto ${p.codigo} cadastrado.` : `Produto ${p.codigo} atualizado.`)}
           />

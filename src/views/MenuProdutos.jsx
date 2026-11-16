@@ -10,9 +10,9 @@ export default function MenuProdutos() {
       <CardsMenu
         rotulo="Opções de produtos"
         itens={[
-          { titulo: 'Tamanhos', href: '/area-do-vendedor/tamanhos', Icone: IconeTamanhos },
-          { titulo: 'Cores', href: '/area-do-vendedor/cores', Icone: IconeCores },
-          { titulo: 'Produtos', href: '/area-do-vendedor/cadastro-produtos', Icone: IconeCaixa },
+          { titulo: 'Tamanhos', href: '/area-do-vendedor/tamanhos', Icone: IconeTamanhos, cor: 'dourado' },
+          { titulo: 'Cores', href: '/area-do-vendedor/cores', Icone: IconeCores, cor: 'dourado' },
+          { titulo: 'Produtos', href: '/area-do-vendedor/cadastro-produtos', Icone: IconeCaixa, cor: 'dourado' },
         ]}
       />
     </PaginaVendedor>

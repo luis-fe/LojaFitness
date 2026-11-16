@@ -26,7 +26,7 @@ export function AmostraCor({ rgb, tamanho = 22 }) {
   return <span className="amostra-cor" style={{ background: rgb, width: tamanho, height: tamanho }} aria-hidden="true" />
 }
 
-function FormCor({ cor, aoSalvar, aoCancelar }) {
+export function FormCor({ cor, aoSalvar, aoCancelar }) {
   const { api } = useAutenticacao()
   const [form, setForm] = useState({ nome: cor?.nome ?? '', codigo: cor?.codigo ?? '', rgb: cor?.rgb ?? '#000000' })
   const [codigoEditado, setCodigoEditado] = useState(Boolean(cor))
