@@ -36,6 +36,15 @@ html {
 body {
   background: var(--branco);
   color: var(--preto);
+  /* rodapé sempre no fim da tela, mesmo em páginas curtas */
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+body > main {
+  flex: 1 0 auto;
 }
 
 body.menu-aberto {
