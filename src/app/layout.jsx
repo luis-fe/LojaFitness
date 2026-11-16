@@ -14,6 +14,15 @@ export const metadata = {
   },
   description:
     'Moda fitness e casual: conjuntos com conforto para treinar e estilo para o dia a dia. Compre pelo WhatsApp.',
+  // Prévia ao compartilhar o link (WhatsApp, Instagram, Facebook…). A imagem vem de src/app/opengraph-image.png
+  openGraph: {
+    type: 'website',
+    locale: 'pt_BR',
+    siteName: NOME_LOJA,
+    title: NOME_LOJA,
+    description: 'Conjuntos fitness com conforto para treinar e estilo para o dia a dia.',
+  },
+  appleWebApp: { title: 'JLK' },
 }
 
 export const viewport = {

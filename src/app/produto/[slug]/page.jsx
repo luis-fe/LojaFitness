@@ -15,6 +15,9 @@ export async function generateMetadata({ params }) {
     title: produto.nome,
     description: produto.descricao,
     openGraph: {
+      type: 'website',
+      locale: 'pt_BR',
+      siteName: 'JLK Fitness e Casual',
       title: produto.nome,
       description: produto.descricao,
       images: [produto.imagem.src],
