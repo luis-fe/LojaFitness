@@ -234,3 +234,21 @@ export const IconeHistorico = () => (
     <path d="M12 7v5l3 2" />
   </Svg>
 )
+
+// Caixa com seta para dentro (entrada de estoque)
+export const IconeEntrada = () => (
+  <Svg>
+    <path d="M3 8l9-5 9 5v8l-9 5-9-5V8Z" />
+    <path d="M12 21v-9M3 8l9 4 9-4" />
+    <path d="M16 3.5v5M13.8 6.5 16 8.7l2.2-2.2" />
+  </Svg>
+)
+
+// Prancheta com visto (inventário)
+export const IconeInventario = () => (
+  <Svg>
+    <path d="M9 4h6v3H9z" />
+    <path d="M15 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2" />
+    <path d="m9 14 2 2 4-4" />
+  </Svg>
+)

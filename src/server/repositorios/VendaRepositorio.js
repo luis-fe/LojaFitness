@@ -3,9 +3,9 @@ import 'server-only'
 import { SITUACAO } from '@/server/repositorios/PedidoRepositorio'
 import { ErroConflito } from '@/server/erros'
 
-// Baixa o estoque das linhas (vendas_cor_tam) dentro da transação. Se faltar peça ou a variação não
+// Baixa o estoque das linhas (vendas_cor_tam) dentro da transação e grava a SAÍDA em mov_produto. Se faltar peça ou a variação não
 // existir mais no cadastro, lança erro — a transação inteira é desfeita (nada é gravado).
-async function baixarEstoque(db, linhas) {
+async function baixarEstoque(db, linhas, { idPedido, vendedorId }) {
   const faltas = []
   for (const l of linhas) {
     const { rows } = await db.query(
@@ -14,7 +14,13 @@ async function baixarEstoque(db, linhas) {
        RETURNING estoque`,
       [l.codigo, l.cor, l.tamanho, l.quant]
     )
-    if (rows[0]) continue
+    if (rows[0]) {
+      await db.query(
+        `INSERT INTO mov_produto (codigo_produto, tam, cor, usuario, movimento, qtd, id_pedido) VALUES ($1, $2, $3, $4, 'saida', $5, $6)`,
+        [l.codigo, l.tamanho, l.cor, vendedorId, l.quant, idPedido]
+      )
+      continue
+    }
     const atual = await db.query('SELECT estoque FROM produtos_filho WHERE codigo_produto = $1 AND cor = $2 AND tamanho = $3', [l.codigo, l.cor, l.tamanho])
     const sku = `${l.codigo}-${l.cor}-${l.tamanho}`
     faltas.push(
@@ -100,7 +106,7 @@ export class VendaRepositorio {
 
       // baixa o estoque das linhas finais (sem estoque → erro e nada é gravado)
       const { rows: finais } = await db.query('SELECT codigo_produto AS codigo, cor, tam AS tamanho, quant FROM vendas_cor_tam WHERE id_pedido = $1', [idPedido])
-      await baixarEstoque(db, finais)
+      await baixarEstoque(db, finais, { idPedido, vendedorId })
 
       // pedido_itens acompanha o extrato final
       await db.query('DELETE FROM pedido_itens WHERE pedido_id = $1', [idPedido])
@@ -155,7 +161,6 @@ export class VendaRepositorio {
   // linhas de vendas_cor_tam e pedido_itens. itens: [{ codigo, cor, tamanho, quant, preco }]
   async criarManual({ cliente, itens, vendedorId }) {
     return this.banco.transacao(async (db) => {
-      await baixarEstoque(db, itens) // sem estoque → erro e nada é gravado
       await this.clientes.salvar(cliente, db)
       const total = Math.round(itens.reduce((s, i) => s + i.quant * i.preco, 0) * 100) / 100
       const { rows } = await db.query(
@@ -165,6 +170,7 @@ export class VendaRepositorio {
         [SITUACAO.PAGO, cliente.cep, cliente.nome, total, vendedorId]
       )
       const pedido = rows[0]
+      await baixarEstoque(db, itens, { idPedido: pedido.id_pedido, vendedorId }) // sem estoque → erro e nada é gravado
       for (const i of itens) {
         await db.query(`INSERT INTO vendas_cor_tam (id_pedido, codigo_produto, cor, tam, quant, preco) VALUES ($1, $2, $3, $4, $5, $6)`, [
           pedido.id_pedido,

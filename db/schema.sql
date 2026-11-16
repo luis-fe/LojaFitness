@@ -717,6 +717,42 @@ COMMENT ON TABLE visitantes_log IS 'Visitas à loja; mantém apenas os últimos 
 
 
 -- ---------------------------------------------------------------------
+-- MOVIMENTAÇÃO DE ESTOQUE (mov_produto)
+--   uma linha por entrada (Produtos → Entradas) ou saída (venda aprovada / lançamento manual)
+--   cor / tam guardam os CÓDIGOS; id_pedido liga a saída à venda
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS mov_produto (
+  id              bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  codigo_produto  text        NOT NULL,
+  tam             text        NOT NULL,
+  cor             text        NOT NULL,
+  data_hora       timestamptz NOT NULL DEFAULT now(),
+  usuario         bigint      REFERENCES vendedores (id) ON DELETE SET NULL,
+  movimento       text        NOT NULL,
+  qtd             integer     NOT NULL,
+  id_pedido       bigint      REFERENCES pedidos (id_pedido) ON DELETE SET NULL
+);
+
+-- movimento: entrada | saida (qtd > 0) · inventario (qtd = diferença da contagem, positiva ou negativa)
+ALTER TABLE mov_produto DROP CONSTRAINT IF EXISTS mov_produto_movimento_check;
+ALTER TABLE mov_produto DROP CONSTRAINT IF EXISTS mov_produto_qtd_check;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'mov_produto_movimento_qtd_check') THEN
+    ALTER TABLE mov_produto ADD CONSTRAINT mov_produto_movimento_qtd_check CHECK (
+      (movimento IN ('entrada', 'saida') AND qtd > 0) OR (movimento = 'inventario' AND qtd <> 0)
+    );
+  END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS mov_produto_produto_idx ON mov_produto (codigo_produto, data_hora DESC);
+CREATE INDEX IF NOT EXISTS mov_produto_pedido_idx  ON mov_produto (id_pedido) WHERE id_pedido IS NOT NULL;
+
+COMMENT ON TABLE mov_produto IS 'Movimentação de estoque por produto/tamanho/cor: entradas e saídas (vendas)';
+COMMENT ON COLUMN mov_produto.movimento IS 'entrada (aumenta), saida (venda) ou inventario (ajuste da contagem: qtd positiva ou negativa)';
+
+
+-- ---------------------------------------------------------------------
 -- VIEW: produto com o preço final (preco_atual com o desconto da campanha, se estiver ativa e no período)
 -- ---------------------------------------------------------------------
 CREATE VIEW produtos_com_preco AS

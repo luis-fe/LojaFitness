@@ -1,0 +1,261 @@
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.entradas__produto {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 480px;
+  margin-bottom: 20px;
+}
+
+.entradas__produto label {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.entradas__produto select {
+  height: 44px;
+  padding: 0 10px;
+  border: 1px solid #b5b5b5;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 15px;
+  background: var(--branco);
+}
+
+.entradas__tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.entradas__tabela th {
+  padding: 8px 10px;
+  border-bottom: 2px solid var(--preto);
+  text-align: left;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.entradas__tabela td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--borda);
+}
+
+.entradas__tabela tr.is-preenchida td {
+  background: #fdf6e7;
+}
+
+.entradas__num {
+  text-align: right !important;
+  white-space: nowrap;
+}
+
+.entradas__tabela input {
+  width: 96px;
+  height: 38px;
+  padding: 0 8px;
+  border: 1px solid #b5b5b5;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 14px;
+  text-align: right;
+}
+
+.entradas__tabela input[aria-invalid='true'] {
+  border-color: #b00020;
+  outline: 1px solid #b00020;
+}
+
+.entradas__tabela input:focus {
+  outline: 2px solid var(--preto);
+  outline-offset: 1px;
+}
+
+.entradas__novo {
+  font-weight: 800;
+}
+
+.entradas__cor {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.entradas__rodape {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin-top: 14px;
+  padding: 12px 16px;
+  background: var(--cinza-claro);
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.entradas__rodape .acoes-form {
+  margin-top: 0;
+}
+
+.entradas__historico {
+  margin-top: 28px;
+}
+
+.entradas__historico h2 {
+  margin-bottom: 10px;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.entradas__movs {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.entradas__movs li {
+  display: grid;
+  grid-template-columns: 80px 56px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--borda);
+  font-size: 14px;
+}
+
+.entradas__tipo {
+  justify-self: start;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.entradas__tipo--entrada {
+  background: #e6f4ea;
+  color: #116632;
+}
+
+.entradas__tipo--saida {
+  background: #fdecee;
+  color: #b00020;
+}
+
+.entradas__mov-info {
+  font-size: 12px;
+  color: var(--cinza-neutro);
+  text-align: right;
+}
+
+@media (max-width: 640px) {
+  .entradas__tabela thead {
+    display: none;
+  }
+
+  .entradas__tabela,
+  .entradas__tabela tbody,
+  .entradas__tabela tr,
+  .entradas__tabela td {
+    display: block;
+  }
+
+  .entradas__tabela tbody {
+    display: grid;
+    gap: 10px;
+  }
+
+  .entradas__tabela tr {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 12px;
+    padding: 12px;
+    background: var(--cinza-claro);
+    border-radius: 12px;
+  }
+
+  .entradas__tabela tr.is-preenchida td {
+    background: none;
+  }
+
+  .entradas__tabela td {
+    padding: 0;
+    border: none;
+    text-align: left !important;
+  }
+
+  .entradas__tabela td::before {
+    content: attr(data-rotulo);
+    display: block;
+    font-size: 11px;
+    color: var(--cinza-neutro);
+  }
+
+  .entradas__tabela input {
+    width: 100%;
+  }
+
+  .entradas__movs li {
+    grid-template-columns: auto auto 1fr;
+  }
+
+  .entradas__mov-info {
+    grid-column: 1 / -1;
+    text-align: left;
+  }
+}
+
+.entradas__tipo--inventario {
+  background: #efe8fd;
+  color: #5b21b6;
+}
+
+.entradas__movs strong.is-negativo {
+  color: #b00020;
+}
+
+.entradas__movs strong.is-positivo {
+  color: #116632;
+}
+
+.inventario__dica {
+  margin-bottom: 10px;
+}
+
+.inventario__dif {
+  font-weight: 800;
+}
+
+.inventario__dif.is-positivo {
+  color: #116632;
+}
+
+.inventario__dif.is-negativo {
+  color: #b00020;
+}
+
+.inventario__dica .link-acao {
+  padding: 4px 0;
+  background: none;
+  border: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--preto);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
