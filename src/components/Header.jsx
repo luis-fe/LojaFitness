@@ -5,16 +5,20 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { TIPOS_SELO, TIPO_SELO_PADRAO } from '@/lib/selos'
+import { WHATSAPP_NUMERO } from '@/lib/config'
+import IconeWhatsApp from '@/components/IconeWhatsApp'
 import './Header.css'
 import logo from '@/assets/logo-jlk.png'
 import { useCarrinho } from '@/context/Carrinho'
 import { IconeLoja } from '@/components/Icones'
 
 
-// Opções fixadas no rodapé do menu lateral
-const opcoesRodape = [
-  { label: 'Área do Vendedor', href: '/area-do-vendedor', Icone: IconeLoja },
-  { label: 'Política de Privacidade', href: '/politica-de-privacidade' },
+// Menu lateral no formato de loja:
+//   1) atalhos (Início, Novidades)  2) Categorias  3) Campanhas  4) carrinho e atendimento
+//   5) rodapé discreto (Área do Vendedor e Política de Privacidade)
+const opcoesInicio = [
+  { label: 'Início', href: '/', exato: true },
+  { label: 'Novidades', href: '/#novidades' },
 ]
 
 // Abre o menu de compartilhamento nativo do celular (WhatsApp, Instagram, etc.).
@@ -81,7 +85,7 @@ export default function Header() {
     let ativo = true
     fetch('/api/selos', { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => d && ativo && setOpcoes((d.selos ?? []).map((s) => ({ label: s.nome, href: `/selo/${s.slug}`, tipo: s.tipo }))))
+      .then((d) => d && ativo && setOpcoes((d.selos ?? []).map((s) => ({ label: s.nome, href: `/selo/${s.slug}`, tipo: s.tipo, quantidade: s.quantidade }))))
       .catch(() => {})
     return () => {
       ativo = false
@@ -115,22 +119,23 @@ export default function Header() {
     setMenuAberto(false)
   }, [pathname])
 
-  const ativo = (href) => !href.includes('#') && pathname.startsWith(href)
+  const ativo = (op) => !op.href.includes('#') && (op.exato ? pathname === op.href : pathname.startsWith(op.href))
 
+  // Linha do menu: nome à esquerda; à direita, a quantidade de produtos (quando houver) e a seta
   const renderLinkMenu = (op) => (
     <Link
       key={op.label}
       href={op.href}
       className="header__drawer-link"
-      aria-current={ativo(op.href) ? 'page' : undefined}
+      aria-current={ativo(op) ? 'page' : undefined}
       onClick={() => setMenuAberto(false)}
     >
-      {op.Icone && (
-        <span className="header__drawer-icone">
-          <op.Icone />
+      <span className="header__drawer-nome">{op.label}</span>
+      {op.quantidade > 0 && (
+        <span className="header__drawer-qtd" aria-label={`${op.quantidade} ${op.quantidade === 1 ? 'produto' : 'produtos'}`}>
+          {op.quantidade}
         </span>
       )}
-      {op.label}
     </Link>
   )
 
@@ -183,20 +188,43 @@ export default function Header() {
         aria-label="Menu"
         inert={!menuAberto}
       >
-        <nav className="header__drawer-nav" aria-label="Categorias e campanhas">
+        <nav className="header__drawer-nav" aria-label="Loja">
+          <div className="header__drawer-grupo">{opcoesInicio.map(renderLinkMenu)}</div>
           {TIPOS_SELO.map((tipo) => {
             const doTipo = opcoes.filter((op) => (op.tipo ?? TIPO_SELO_PADRAO) === tipo.id)
             if (!doTipo.length) return null
             return (
-              <div key={tipo.id} role="group" aria-label={tipo.plural}>
+              <div key={tipo.id} className="header__drawer-grupo" role="group" aria-label={tipo.plural}>
                 <span className="header__drawer-titulo">{tipo.plural}</span>
                 {doTipo.map(renderLinkMenu)}
               </div>
             )
           })}
+          <div className="header__drawer-grupo">
+            <Link href="/carrinho" className="header__drawer-link" aria-current={pathname === '/carrinho' ? 'page' : undefined} onClick={() => setMenuAberto(false)}>
+              <span className="header__drawer-nome">Meu carrinho</span>
+              {quantidadeTotal > 0 && (
+                <span className="header__drawer-qtd header__drawer-qtd--destaque" aria-label={`${quantidadeTotal} ${quantidadeTotal === 1 ? 'item' : 'itens'}`}>
+                  {quantidadeTotal}
+                </span>
+              )}
+            </Link>
+            {WHATSAPP_NUMERO && (
+              <a href={`https://wa.me/${WHATSAPP_NUMERO}`} target="_blank" rel="noopener noreferrer" className="header__drawer-link header__drawer-link--whats" onClick={() => setMenuAberto(false)}>
+                <IconeWhatsApp className="header__drawer-whats" />
+                <span className="header__drawer-nome">Falar no WhatsApp</span>
+              </a>
+            )}
+          </div>
         </nav>
         <nav className="header__drawer-rodape" aria-label="Mais opções">
-          {opcoesRodape.map(renderLinkMenu)}
+          <Link href="/area-do-vendedor" onClick={() => setMenuAberto(false)}>
+            <IconeLoja />
+            Área do Vendedor
+          </Link>
+          <Link href="/politica-de-privacidade" className="header__drawer-politica" onClick={() => setMenuAberto(false)}>
+            Política de Privacidade
+          </Link>
         </nav>
       </aside>
     </header>
