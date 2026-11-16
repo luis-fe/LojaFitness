@@ -4,6 +4,7 @@ import Rodape from '@/components/Rodape'
 import RegistroVisita from '@/components/RegistroVisita'
 import { CarrinhoProvider } from '@/context/Carrinho'
 import { AutenticacaoProvider } from '@/context/Autenticacao'
+import { ErroProvider } from '@/context/Erro'
 import { NOME_LOJA } from '@/lib/config'
 
 export const metadata = {
@@ -33,6 +34,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR" data-scroll-behavior="smooth">
       <body>
+        <ErroProvider>
         <AutenticacaoProvider>
         <CarrinhoProvider>
           <a href="#conteudo" className="pular-conteudo">
@@ -46,6 +48,7 @@ export default function RootLayout({ children }) {
           <Rodape />
         </CarrinhoProvider>
         </AutenticacaoProvider>
+        </ErroProvider>
       </body>
     </html>
   )

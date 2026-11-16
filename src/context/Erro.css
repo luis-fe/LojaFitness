@@ -1,0 +1,91 @@
+/* Modal padrão de erro */
+.modal-erro {
+  width: min(420px, calc(100vw - 32px));
+  margin: auto;
+  padding: 0;
+  border: none;
+  border-radius: 16px;
+  background: var(--branco);
+  color: var(--preto);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.modal-erro::backdrop {
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.modal-erro__caixa {
+  padding: 22px 24px 20px;
+}
+
+.modal-erro__titulo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--borda); /* a linha "________" abaixo do título */
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.modal-erro__icone {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #fdecee;
+  color: #b00020;
+}
+
+.modal-erro__icone svg {
+  width: 22px;
+  height: 22px;
+}
+
+.modal-erro__mensagem {
+  padding: 16px 0 20px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--cinza);
+  overflow-wrap: anywhere;
+}
+
+.modal-erro__mensagem ul {
+  padding-left: 18px;
+}
+
+.modal-erro__mensagem li + li {
+  margin-top: 6px;
+}
+
+.modal-erro__acoes {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.modal-erro__ok {
+  min-width: 96px;
+  min-height: 40px;
+  padding: 0 20px;
+  background: var(--preto);
+  color: var(--branco);
+  border: none;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+
+.modal-erro__ok:focus-visible {
+  outline: 2px solid var(--preto);
+  outline-offset: 3px;
+}
+
+@media (hover: hover) {
+  .modal-erro__ok:hover {
+    background: var(--cinza);
+  }
+}

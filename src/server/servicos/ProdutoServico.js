@@ -4,8 +4,10 @@
 //   • preco_atual com 2 casas (aceita "159,90"); campanha opcional; caminho = imagem do site/volume.
 //   • Variações: cor x tamanho únicos por produto, estoque inteiro ≥ 0; salvas junto com o produto.
 //   • criado_por = vendedor logado.
+//   • Não exclui produto que está no layout do site (link /produto/<slug> no rascunho ou no publicado).
 import 'server-only'
-import { ErroNaoEncontrado, ErroRequisicao, validarOuFalhar } from '@/server/erros'
+import { ErroConflito, ErroNaoEncontrado, ErroRequisicao, validarOuFalhar } from '@/server/erros'
+import { MODELOS } from '@/lib/layoutModelos'
 
 const semAcento = (v) =>
   String(v ?? '')
@@ -16,8 +18,23 @@ const caminhoValido = (u) =>
   /^\/arquivos\/[0-9a-f-]{36}\.(jpg|png|webp)$/.test(u) || /^\/images\/[A-Za-z0-9._-]+\.(jpg|jpeg|png|webp)$/.test(u)
 
 export class ProdutoServico {
-  constructor({ produtoRepositorio }) {
+  constructor({ produtoRepositorio, layoutRepositorio }) {
     this.repo = produtoRepositorio
+    this.layout = layoutRepositorio
+  }
+
+  // Onde o produto aparece no layout: ["camada 1 (Imagem destacada), botão 1", …]
+  static usosNoLayout(camadas, slug) {
+    const alvo = new RegExp(`(^|[^a-z0-9-])/produto/${slug}(?![a-z0-9-])`, 'i')
+    const usos = []
+    ;(Array.isArray(camadas) ? camadas : []).forEach((c, i) => {
+      const onde = `camada ${i + 1} (${MODELOS[c?.tipo]?.nome ?? c?.tipo})`
+      const d = c?.dados ?? {}
+      if (alvo.test(d.botaoLink ?? '')) usos.push(`${onde}, botão 1`)
+      if (alvo.test(d.botao2Link ?? '')) usos.push(`${onde}, botão 2`)
+      ;(d.imagens ?? []).forEach((img, n) => alvo.test(img?.link ?? '') && usos.push(`${onde}, imagem ${n + 1}`))
+    })
+    return usos
   }
 
   static normalizarCodigo(v) {
@@ -138,6 +155,22 @@ export class ProdutoServico {
   }
 
   async excluir(codigo) {
+    const produto = await this.repo.buscar(codigo)
+    if (!produto) throw new ErroNaoEncontrado('Produto não encontrado.')
+
+    const pagina = await this.layout.buscarEditor('inicio')
+    if (pagina) {
+      const usos = [
+        ...ProdutoServico.usosNoLayout(pagina.publicado, produto.slug).map((u) => `site publicado — ${u}`),
+        ...ProdutoServico.usosNoLayout(pagina.rascunho, produto.slug).map((u) => `rascunho — ${u}`),
+      ]
+      if (usos.length) {
+        throw new ErroConflito(
+          `O produto ${produto.codigo} está no layout do site e não pode ser excluído. ` +
+            `Remova o link em Meu Site (${[...new Set(usos)].join('; ')}) e tente de novo.`
+        )
+      }
+    }
     if (!(await this.repo.excluir(codigo))) throw new ErroNaoEncontrado('Produto não encontrado.')
   }
 }

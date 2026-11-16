@@ -13,6 +13,7 @@ import SeletorImagens from '@/components/SeletorImagens'
 import { AmostraCor, FormCor } from '@/views/Cores'
 import { FormTamanho } from '@/views/Tamanhos'
 import { useAutenticacao } from '@/context/Autenticacao'
+import { useErro } from '@/context/Erro'
 import { formatarDataHora } from '@/lib/formatos'
 
 const TRILHA = [{ href: '/area-do-vendedor/produtos', rotulo: 'Produtos' }]
@@ -194,7 +195,7 @@ function FormProduto({ produto, cores, tamanhos, campanhas, aoSalvar, aoCancelar
   const [gerador, setGerador] = useState(false)
   const [marcadas, setMarcadas] = useState({ cores: [], tamanhos: [] })
   const [erros, setErros] = useState({})
-  const [erroGeral, setErroGeral] = useState('')
+  const { mostrarErro } = useErro()
   const [salvando, setSalvando] = useState(false)
 
   const alterar = (c) => (v) => {
@@ -205,7 +206,6 @@ function FormProduto({ produto, cores, tamanhos, campanhas, aoSalvar, aoCancelar
   const salvar = async (e) => {
     e.preventDefault()
     setSalvando(true)
-    setErroGeral('')
     const corpo = {
       ...form,
       campanha_id: form.campanha_id === '' ? null : Number(form.campanha_id),
@@ -215,7 +215,7 @@ function FormProduto({ produto, cores, tamanhos, campanhas, aoSalvar, aoCancelar
     setSalvando(false)
     if (ok) return aoSalvar(dados.produto)
     setErros(dados?.campos || {})
-    setErroGeral(dados?.erro || 'Não foi possível salvar.')
+    mostrarErro(dados?.erro || 'Não foi possível salvar.')
   }
 
   // A escolha da imagem acontece dentro da mesma janela (o formulário fica guardado)
@@ -325,11 +325,6 @@ function FormProduto({ produto, cores, tamanhos, campanhas, aoSalvar, aoCancelar
             {produto.criado_por_nome ? ` por ${produto.criado_por_nome}` : ''}.
           </p>
         )}
-        {erroGeral && (
-          <p className="aviso aviso--erro" role="alert" style={{ marginTop: 12 }}>
-            {erroGeral}
-          </p>
-        )}
         <div className="acoes-form">
           <button type="button" className="botao botao--secundario" onClick={aoCancelar}>
             Cancelar
@@ -352,13 +347,18 @@ export default function CadastroProdutos() {
   const [apoio, setApoio] = useState({ cores: [], tamanhos: [], campanhas: [] })
   const [busca, setBusca] = useState('')
   const [erro, setErro] = useState('')
+  const { mostrarErro } = useErro()
+  const falhar = (mensagem) => {
+    setErro(mensagem)
+    mostrarErro(mensagem)
+  }
   const [aviso, setAviso] = useState('')
   const [modal, setModal] = useState(null) // { tipo: 'novo' | 'editar' | 'excluir', item }
 
   const carregar = useCallback(async () => {
     const { ok, dados } = await api('/api/cadastro/produtos')
     if (ok) setProdutos(dados.produtos)
-    else setErro(dados?.erro || 'Não foi possível carregar os produtos.')
+    else falhar(dados?.erro || 'Não foi possível carregar os produtos.')
   }, [api])
 
   useEffect(() => {
@@ -375,7 +375,7 @@ export default function CadastroProdutos() {
   const editar = async (p) => {
     const { ok, dados } = await api(`/api/cadastro/produtos/${encodeURIComponent(p.codigo)}`)
     if (ok) setModal({ tipo: 'editar', item: dados.produto })
-    else setErro(dados?.erro || 'Não foi possível abrir o produto.')
+    else falhar(dados?.erro || 'Não foi possível abrir o produto.')
   }
 
   const concluir = (msg) => {
@@ -410,11 +410,6 @@ export default function CadastroProdutos() {
         </p>
       )}
       <div aria-live="polite">{aviso && <p className="aviso aviso--sucesso cadastro__aviso">{aviso}</p>}</div>
-      {erro && (
-        <p className="aviso aviso--erro cadastro__aviso" role="alert">
-          {erro}
-        </p>
-      )}
 
       {produtos && produtos.length > 0 && (
         <div className="campo cadastro__busca">

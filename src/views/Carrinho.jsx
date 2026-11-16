@@ -7,16 +7,16 @@ import './Carrinho.css'
 import { useCarrinho, estoqueDe } from '@/context/Carrinho'
 import { formatarPreco } from '@/lib/produtos'
 import IconeWhatsApp from '@/components/IconeWhatsApp'
+import { useErro } from '@/context/Erro'
 
 export default function Carrinho() {
   const { carregado, itens, total, quantidadeTotal, alterarQuantidade, remover } = useCarrinho()
   const [enviando, setEnviando] = useState(false)
-  const [erros, setErros] = useState([])
+  const { mostrarErro } = useErro()
 
   // Envia o pedido ao backend, que confere estoque, recalcula o total
   // e devolve o link do WhatsApp com a mensagem pronta.
   const finalizar = async () => {
-    setErros([])
     setEnviando(true)
     // Abre a aba já no clique (senão o navegador bloqueia como pop-up)
     const aba = window.open('', '_blank')
@@ -31,14 +31,14 @@ export default function Carrinho() {
       const dados = await resposta.json()
       if (!resposta.ok) {
         aba?.close()
-        setErros(dados.erros || ['Não foi possível finalizar o pedido.'])
+        mostrarErro(dados.erros || ['Não foi possível finalizar o pedido.'])
         return
       }
       if (aba) aba.location.href = dados.whatsappUrl
       else window.location.href = dados.whatsappUrl
     } catch {
       aba?.close()
-      setErros(['Sem conexão. Verifique sua internet e tente de novo.'])
+      mostrarErro('Sem conexão. Verifique sua internet e tente de novo.')
     } finally {
       setEnviando(false)
     }
@@ -133,14 +133,6 @@ export default function Carrinho() {
               <dd>{formatarPreco(total)}</dd>
             </div>
           </dl>
-
-          {erros.length > 0 && (
-            <div className="resumo__erros" role="alert">
-              {erros.map((e) => (
-                <p key={e}>{e}</p>
-              ))}
-            </div>
-          )}
 
           <button
             type="button"

@@ -6,6 +6,7 @@ import PaginaVendedor from '@/components/PaginaVendedor'
 import Campo from '@/components/Campo'
 import Modal from '@/components/Modal'
 import { useAutenticacao } from '@/context/Autenticacao'
+import { useErro } from '@/context/Erro'
 import { formatarDataHora } from '@/lib/formatos'
 import { TIPOS_ACEITOS, TAMANHO_MAX, codigoDoNome, mascaraCodigo } from '@/lib/imagens'
 
@@ -47,7 +48,7 @@ function AreaEnvio({ aoEnviar }) {
   const [fila, setFila] = useState([]) // { id, arquivo, previa, codigo, descricao, estado, progresso, erros }
   const [arrastando, setArrastando] = useState(false)
   const [enviando, setEnviando] = useState(false)
-  const [avisoSelecao, setAvisoSelecao] = useState('')
+  const { mostrarErro } = useErro()
   const entrada = useRef(null)
 
   // Libera as prévias da memória ao sair
@@ -72,7 +73,7 @@ function AreaEnvio({ aoEnviar }) {
         })
     }
     setFila((f) => [...f, ...novos])
-    setAvisoSelecao(recusados.length ? `Não adicionadas — ${recusados.join('; ')}. Aceitos: JPG, PNG ou WEBP até 5 MB.` : '')
+    if (recusados.length) mostrarErro([...recusados, 'Aceitos: JPG, PNG ou WEBP até 5 MB.'], { titulo: 'Erro' })
   }
 
   const atualizar = (id, mudancas) => setFila((f) => f.map((item) => (item.id === id ? { ...item, ...mudancas } : item)))
@@ -172,12 +173,6 @@ function AreaEnvio({ aoEnviar }) {
         </span>
       </label>
 
-      {avisoSelecao && (
-        <p className="aviso aviso--erro" role="alert" style={{ marginTop: 12 }}>
-          {avisoSelecao}
-        </p>
-      )}
-
       {fila.length > 0 && (
         <>
           <ul className="fila">
@@ -248,7 +243,7 @@ function FormEditarImagem({ imagem, aoSalvar, aoCancelar }) {
   const [codigo, setCodigo] = useState(imagem.codigo)
   const [descricao, setDescricao] = useState(imagem.descricao)
   const [erros, setErros] = useState({})
-  const [erroGeral, setErroGeral] = useState('')
+  const { mostrarErro } = useErro()
   const [salvando, setSalvando] = useState(false)
 
   const salvar = async (e) => {
@@ -262,7 +257,7 @@ function FormEditarImagem({ imagem, aoSalvar, aoCancelar }) {
     setSalvando(false)
     if (ok) return aoSalvar(dados.imagem)
     setErros(dados?.campos || {})
-    setErroGeral(dados?.campos ? '' : dados?.erro || 'Não foi possível salvar.')
+    if (!dados?.campos) mostrarErro(dados?.erro || 'Não foi possível salvar.')
   }
 
   return (
@@ -272,11 +267,6 @@ function FormEditarImagem({ imagem, aoSalvar, aoCancelar }) {
         <Campo rotulo="Código" valor={codigo} aoMudar={(v) => { setCodigo(v); setErros({}) }} mascara={mascaraCodigo} erro={erros.codigo} />
         <Campo rotulo="Descrição" valor={descricao} aoMudar={(v) => { setDescricao(v); setErros({}) }} erro={erros.descricao} />
       </div>
-      {erroGeral && (
-        <p className="aviso aviso--erro" role="alert" style={{ marginTop: 16 }}>
-          {erroGeral}
-        </p>
-      )}
       <div className="acoes-form">
         <button type="button" className="botao botao--secundario" onClick={aoCancelar}>
           Cancelar
@@ -292,13 +282,18 @@ function FormEditarImagem({ imagem, aoSalvar, aoCancelar }) {
 function ConfirmarExclusao({ imagem, aoExcluir, aoCancelar }) {
   const { api } = useAutenticacao()
   const [erro, setErro] = useState('')
+  const { mostrarErro } = useErro()
+  const falhar = (mensagem) => {
+    setErro(mensagem)
+    mostrarErro(mensagem)
+  }
   const [excluindo, setExcluindo] = useState(false)
   const excluir = async () => {
     setExcluindo(true)
     const { ok, dados } = await api(`/api/imagens/${imagem.id}`, { metodo: 'DELETE' })
     setExcluindo(false)
     if (ok) return aoExcluir()
-    setErro(dados?.erro || 'Não foi possível excluir.')
+    falhar(dados?.erro || 'Não foi possível excluir.')
   }
   return (
     <>
@@ -307,11 +302,6 @@ function ConfirmarExclusao({ imagem, aoExcluir, aoCancelar }) {
         A imagem <strong>{imagem.codigo}</strong> será apagada definitivamente do servidor. Páginas que usam este endereço vão parar de
         mostrá-la.
       </p>
-      {erro && (
-        <p className="aviso aviso--erro" role="alert">
-          {erro}
-        </p>
-      )}
       <div className="acoes-form">
         <button type="button" className="botao botao--secundario" onClick={aoCancelar}>
           Cancelar
@@ -334,6 +324,11 @@ export default function CarregarImagens() {
   const [pagina, setPagina] = useState(1)
   const [resultado, setResultado] = useState(null)
   const [erro, setErro] = useState('')
+  const { mostrarErro } = useErro()
+  const falhar = (mensagem) => {
+    setErro(mensagem)
+    mostrarErro(mensagem)
+  }
   const [aviso, setAviso] = useState('')
   const [modal, setModal] = useState(null) // { tipo: 'editar' | 'excluir', imagem }
 
@@ -352,7 +347,7 @@ export default function CarregarImagens() {
     if (ok) {
       setResultado(dados)
       setErro('')
-    } else setErro(dados?.erro || 'Não foi possível carregar as imagens.')
+    } else falhar(dados?.erro || 'Não foi possível carregar as imagens.')
   }, [api, pagina, buscaAplicada])
 
   useEffect(() => {
@@ -408,11 +403,6 @@ export default function CarregarImagens() {
             </p>
           )}
         </div>
-        {erro && (
-          <p className="aviso aviso--erro" role="alert">
-            {erro}
-          </p>
-        )}
 
         {!resultado && !erro && <div className="galeria__carregando" aria-busy="true" aria-label="Carregando imagens" />}
 

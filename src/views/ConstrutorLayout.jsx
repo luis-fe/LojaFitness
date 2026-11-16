@@ -7,6 +7,7 @@ import '@/components/Formulario.css'
 import Campo from '@/components/Campo'
 import Modal from '@/components/Modal'
 import { useAutenticacao } from '@/context/Autenticacao'
+import { useErro } from '@/context/Erro'
 import { formatarDataHora } from '@/lib/formatos'
 import SeletorImagens from '@/components/SeletorImagens'
 import { LAYOUT_PADRAO, MAX_CAMADAS, MAX_IMAGENS_POR_CAMADA, MODELOS, novaCamada, novoId } from '@/lib/layoutModelos'
@@ -212,6 +213,7 @@ function EditorCamada({ camada, aoMudar, abrirSeletor }) {
 // ---------------------------------------------------------------------------
 export default function ConstrutorLayout() {
   const { api, vendedor } = useAutenticacao()
+  const { mostrarErro } = useErro()
   const [estado, setEstado] = useState(null) // resposta do GET /api/layout
   const [camadas, setCamadas] = useState([])
   const [selecionada, setSelecionada] = useState(null)
@@ -232,9 +234,9 @@ export default function ConstrutorLayout() {
     if (!ehAdmin) return
     api('/api/layout').then(({ ok, dados }) => {
       if (ok) aplicarEstado(dados)
-      else setAviso({ tipo: 'erro', texto: dados?.erro || 'Não foi possível carregar o layout.' })
+      else mostrarErro(dados?.erro || 'Não foi possível carregar o layout.')
     })
-  }, [api, ehAdmin, aplicarEstado])
+  }, [api, ehAdmin, aplicarEstado, mostrarErro])
 
   const json = JSON.stringify(camadas)
   const alterado = estado && json !== JSON.stringify(estado.rascunho)
@@ -319,7 +321,7 @@ export default function ConstrutorLayout() {
       aplicarEstado(dados)
       setAviso({ tipo: 'sucesso', texto: mensagem })
     } else {
-      setAviso({ tipo: 'erro', texto: dados?.erro || 'Não foi possível salvar.', lista: dados?.campos?.camadas })
+      mostrarErro(dados?.campos?.camadas?.length > 1 ? dados.campos.camadas : dados?.erro || 'Não foi possível salvar.')
     }
   }
 

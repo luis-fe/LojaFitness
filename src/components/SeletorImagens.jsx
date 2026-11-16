@@ -4,12 +4,14 @@ import { useEffect, useState } from 'react'
 import './SeletorImagens.css'
 import Campo from '@/components/Campo'
 import { useAutenticacao } from '@/context/Autenticacao'
+import { useErro } from '@/context/Erro'
 import { IMAGENS_PADRAO } from '@/lib/layoutModelos'
 import { TIPOS_ACEITOS, TAMANHO_MAX, codigoDoNome, descricaoDoNome, mascaraCodigo } from '@/lib/imagens'
 
 // Envio de uma imagem nova direto do seletor (sem sair do cadastro)
 function EnvioImagem({ arquivo, aoEnviar, aoCancelar }) {
   const { fetchAutenticado } = useAutenticacao()
+  const { mostrarErro } = useErro()
   const [previa] = useState(() => URL.createObjectURL(arquivo))
   const [codigo, setCodigo] = useState(() => codigoDoNome(arquivo.name))
   const [descricao, setDescricao] = useState(() => descricaoDoNome(arquivo.name))
@@ -34,9 +36,12 @@ function EnvioImagem({ arquivo, aoEnviar, aoCancelar }) {
       const resposta = await fetchAutenticado('/api/imagens', { method: 'POST', body: dados })
       const corpo = await resposta.json().catch(() => null)
       if (resposta.ok) return aoEnviar(corpo.imagem)
-      setErros({ geral: corpo?.erro || 'Não foi possível enviar a imagem.', ...(corpo?.campos ?? {}) })
+      // erro de um campo (ex.: código repetido) aparece no campo; os demais, no modal de erro
+      const campos = corpo?.campos ?? {}
+      setErros(campos)
+      if (!campos.codigo && !campos.descricao) mostrarErro(campos.arquivo || corpo?.erro || 'Não foi possível enviar a imagem.')
     } catch {
-      setErros({ geral: 'Sem conexão com o servidor.' })
+      mostrarErro('Sem conexão com o servidor.')
     }
     setEnviando(false)
   }
@@ -45,16 +50,6 @@ function EnvioImagem({ arquivo, aoEnviar, aoCancelar }) {
     <form className="seletor__envio" onSubmit={enviar} noValidate aria-label="Enviar nova imagem">
       <img src={previa} alt="Prévia da imagem escolhida" className="seletor__envio-previa" />
       <div className="seletor__envio-campos">
-        {erros.geral && (
-          <p className="aviso aviso--erro" role="alert">
-            {erros.geral}
-          </p>
-        )}
-        {erros.arquivo && (
-          <p className="aviso aviso--erro" role="alert">
-            {erros.arquivo}
-          </p>
-        )}
         <Campo rotulo="Código" valor={codigo} aoMudar={setCodigo} mascara={mascaraCodigo} erro={erros.codigo} />
         <Campo rotulo="Descrição" valor={descricao} aoMudar={setDescricao} erro={erros.descricao} maxLength={200} />
         <div className="acoes-form">
@@ -74,8 +69,8 @@ function EnvioImagem({ arquivo, aoEnviar, aoCancelar }) {
 //   multiplo: escolher várias (com limite) · aoEscolher([{ url, alt, codigo }])
 export default function SeletorImagens({ multiplo, limite, aoEscolher, aoCancelar }) {
   const { api } = useAutenticacao()
+  const { mostrarErro } = useErro()
   const [arquivoNovo, setArquivoNovo] = useState(null)
-  const [avisoArquivo, setAvisoArquivo] = useState('')
   const [aba, setAba] = useState('enviadas')
   const [busca, setBusca] = useState('')
   const [enviadas, setEnviadas] = useState(null)
@@ -100,9 +95,8 @@ export default function SeletorImagens({ multiplo, limite, aoEscolher, aoCancela
     const arquivo = e.target.files?.[0]
     e.target.value = '' // permite escolher o mesmo arquivo de novo
     if (!arquivo) return
-    if (!TIPOS_ACEITOS.includes(arquivo.type)) return setAvisoArquivo('Formato não aceito. Envie JPG, PNG ou WEBP.')
-    if (arquivo.size > TAMANHO_MAX) return setAvisoArquivo('A imagem passa de 5 MB.')
-    setAvisoArquivo('')
+    if (!TIPOS_ACEITOS.includes(arquivo.type)) return mostrarErro('Formato não aceito. Envie JPG, PNG ou WEBP.')
+    if (arquivo.size > TAMANHO_MAX) return mostrarErro('A imagem passa de 5 MB.')
     setArquivoNovo(arquivo)
   }
 
@@ -149,12 +143,6 @@ export default function SeletorImagens({ multiplo, limite, aoEscolher, aoCancela
           <input type="file" accept={TIPOS_ACEITOS.join(',')} onChange={aoSelecionarArquivo} className="sr-only" />
         </label>
       </div>
-
-      {avisoArquivo && (
-        <p className="aviso aviso--erro" role="alert">
-          {avisoArquivo}
-        </p>
-      )}
 
       {arquivoNovo && <EnvioImagem key={arquivoNovo.name + arquivoNovo.size} arquivo={arquivoNovo} aoEnviar={aoEnviar} aoCancelar={() => setArquivoNovo(null)} />}
 

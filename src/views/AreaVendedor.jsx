@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import './AreaVendedor.css'
 import { useAutenticacao } from '@/context/Autenticacao'
+import { useErro } from '@/context/Erro'
 import CardsMenu from '@/components/CardsMenu'
 import { IconeRosto, IconeProdutos, IconeSite, IconeVisitantes, IconeVariacoes } from '@/components/Icones'
 
@@ -65,21 +66,14 @@ function CardUsuario() {
 function Indicadores() {
   const { api } = useAutenticacao()
   const [dados, setDados] = useState(null)
-  const [erro, setErro] = useState('')
+  const { mostrarErro } = useErro()
 
   useEffect(() => {
     api('/api/vendedor/resumo').then(({ ok, dados: d }) => {
       if (ok) setDados(d)
-      else setErro(d?.erro || 'Não foi possível carregar os indicadores.')
+      else mostrarErro(d?.erro || 'Não foi possível carregar os indicadores.')
     })
-  }, [api])
-
-  if (erro)
-    return (
-      <p className="aviso aviso--erro" role="alert">
-        {erro}
-      </p>
-    )
+  }, [api, mostrarErro])
 
   const itens = [
     { rotulo: 'Produtos em anúncio', valor: dados?.produtosEmAnuncio, Icone: IconeProdutos },

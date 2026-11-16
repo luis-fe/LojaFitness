@@ -6,6 +6,7 @@ import Link from 'next/link'
 import '@/components/Formulario.css'
 import './Login.css'
 import { useAutenticacao } from '@/context/Autenticacao'
+import { useErro } from '@/context/Erro'
 import { IconeOlho, IconeOlhoFechado } from '@/components/Icones'
 
 export default function Login() {
@@ -19,7 +20,8 @@ export default function Login() {
   const [login, setLogin] = useState('')
   const [senha, setSenha] = useState('')
   const [mostrarSenha, setMostrarSenha] = useState(false)
-  const [erro, setErro] = useState('')
+  const [erro, setErro] = useState('') // marca os campos como inválidos
+  const { mostrarErro } = useErro()
   const [enviando, setEnviando] = useState(false)
 
   // Já está logado? Vai direto para a área
@@ -36,6 +38,7 @@ export default function Login() {
       router.replace(destino)
     } catch (falha) {
       setErro(falha.message)
+      mostrarErro(falha.message)
       setSenha('')
     } finally {
       setEnviando(false)
@@ -76,7 +79,6 @@ export default function Login() {
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
                 aria-invalid={Boolean(erro) || undefined}
-                aria-describedby={erro ? 'login-erro' : undefined}
               />
               <button
                 type="button"
@@ -90,12 +92,6 @@ export default function Login() {
               </button>
             </div>
           </div>
-
-          {erro && (
-            <p id="login-erro" className="login__erro" role="alert">
-              {erro}
-            </p>
-          )}
 
           <button type="submit" className="login__btn" disabled={enviando || !login || !senha}>
             {enviando ? 'Entrando…' : 'Entrar'}

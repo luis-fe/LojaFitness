@@ -8,6 +8,7 @@ import Campo from '@/components/Campo'
 import Modal from '@/components/Modal'
 import ConfirmarExclusao from '@/components/ConfirmarExclusao'
 import { useAutenticacao } from '@/context/Autenticacao'
+import { useErro } from '@/context/Erro'
 
 const TRILHA = [{ href: '/area-do-vendedor/produtos', rotulo: 'Produtos' }]
 
@@ -31,7 +32,7 @@ export function FormCor({ cor, aoSalvar, aoCancelar }) {
   const [form, setForm] = useState({ nome: cor?.nome ?? '', codigo: cor?.codigo ?? '', rgb: cor?.rgb ?? '#000000' })
   const [codigoEditado, setCodigoEditado] = useState(Boolean(cor))
   const [erros, setErros] = useState({})
-  const [erroGeral, setErroGeral] = useState('')
+  const { mostrarErro } = useErro()
   const [salvando, setSalvando] = useState(false)
 
   const alterar = (c) => (v) => {
@@ -55,7 +56,7 @@ export function FormCor({ cor, aoSalvar, aoCancelar }) {
     setSalvando(false)
     if (ok) return aoSalvar(dados.cor)
     setErros(dados?.campos || {})
-    setErroGeral(dados?.campos ? '' : dados?.erro || 'Não foi possível salvar.')
+    if (!dados?.campos) mostrarErro(dados?.erro || 'Não foi possível salvar.')
   }
 
   return (
@@ -92,11 +93,6 @@ export function FormCor({ cor, aoSalvar, aoCancelar }) {
           {erros.rgb ? <span className="campo__erro">{erros.rgb}</span> : <span className="campo__dica">Clique no quadrado para escolher ou digite o código #RRGGBB.</span>}
         </div>
       </div>
-      {erroGeral && (
-        <p className="aviso aviso--erro" role="alert" style={{ marginTop: 16 }}>
-          {erroGeral}
-        </p>
-      )}
       <div className="acoes-form">
         <button type="button" className="botao botao--secundario" onClick={aoCancelar}>
           Cancelar
@@ -113,6 +109,11 @@ export default function Cores() {
   const { api } = useAutenticacao()
   const [cores, setCores] = useState(null)
   const [erro, setErro] = useState('')
+  const { mostrarErro } = useErro()
+  const falhar = (mensagem) => {
+    setErro(mensagem)
+    mostrarErro(mensagem)
+  }
   const [aviso, setAviso] = useState('')
   const [modal, setModal] = useState(null)
   const [busca, setBusca] = useState('')
@@ -126,7 +127,7 @@ export default function Cores() {
   const carregar = useCallback(async () => {
     const { ok, dados } = await api('/api/cores')
     if (ok) setCores(dados.cores)
-    else setErro(dados?.erro || 'Não foi possível carregar as cores.')
+    else falhar(dados?.erro || 'Não foi possível carregar as cores.')
   }, [api])
 
   useEffect(() => {
@@ -158,11 +159,6 @@ export default function Cores() {
       }
     >
       <div aria-live="polite">{aviso && <p className="aviso aviso--sucesso cadastro__aviso">{aviso}</p>}</div>
-      {erro && (
-        <p className="aviso aviso--erro cadastro__aviso" role="alert">
-          {erro}
-        </p>
-      )}
 
       {cores && cores.length > 0 && (
         <div className="campo cadastro__busca">

@@ -8,6 +8,7 @@ import Campo from '@/components/Campo'
 import Modal from '@/components/Modal'
 import { IconeEditar } from '@/components/Icones'
 import { useAutenticacao } from '@/context/Autenticacao'
+import { useErro } from '@/context/Erro'
 import { formatarCpfCnpj, formatarDataHora, formatarTelefone, mascaraCpfCnpj, mascaraTelefone } from '@/lib/formatos'
 
 const POR_PAGINA = 10
@@ -30,13 +31,12 @@ function FormVendedor({ vendedor, ehVoceMesmo, aoSalvar, aoCancelar }) {
   }
   const [form, setForm] = useState(inicial)
   const [erros, setErros] = useState({})
-  const [erroGeral, setErroGeral] = useState('')
+  const { mostrarErro } = useErro()
   const [salvando, setSalvando] = useState(false)
 
   const alterar = (campo) => (valor) => {
     setForm((f) => ({ ...f, [campo]: valor }))
     setErros((e) => ({ ...e, [campo]: undefined }))
-    setErroGeral('')
   }
 
   const salvar = async (e) => {
@@ -60,7 +60,7 @@ function FormVendedor({ vendedor, ehVoceMesmo, aoSalvar, aoCancelar }) {
     setSalvando(false)
     if (ok) return aoSalvar(dados.vendedor)
     setErros(dados?.campos || {})
-    setErroGeral(dados?.campos ? '' : dados?.erro || 'Não foi possível salvar.')
+    if (!dados?.campos) mostrarErro(dados?.erro || 'Não foi possível salvar.')
   }
 
   return (
@@ -148,12 +148,6 @@ function FormVendedor({ vendedor, ehVoceMesmo, aoSalvar, aoCancelar }) {
         )}
       </div>
 
-      {erroGeral && (
-        <p className="aviso aviso--erro" role="alert" style={{ marginTop: 16 }}>
-          {erroGeral}
-        </p>
-      )}
-
       <div className="acoes-form">
         <button type="button" className="botao botao--secundario" onClick={aoCancelar}>
           Cancelar
@@ -174,7 +168,7 @@ function FormRedefinirSenha({ vendedor, aoSalvar, aoCancelar }) {
   const [senha, setSenha] = useState('')
   const [confirmar, setConfirmar] = useState('')
   const [erros, setErros] = useState({})
-  const [erroGeral, setErroGeral] = useState('')
+  const { mostrarErro } = useErro()
   const [salvando, setSalvando] = useState(false)
 
   const salvar = async (e) => {
@@ -185,7 +179,7 @@ function FormRedefinirSenha({ vendedor, aoSalvar, aoCancelar }) {
     setSalvando(false)
     if (ok) return aoSalvar()
     setErros({ senha: dados?.campos?.novaSenha })
-    setErroGeral(dados?.campos ? '' : dados?.erro || 'Não foi possível redefinir a senha.')
+    if (!dados?.campos) mostrarErro(dados?.erro || 'Não foi possível redefinir a senha.')
   }
 
   return (
@@ -219,11 +213,6 @@ function FormRedefinirSenha({ vendedor, aoSalvar, aoCancelar }) {
           autoComplete="new-password"
         />
       </div>
-      {erroGeral && (
-        <p className="aviso aviso--erro" role="alert" style={{ marginTop: 16 }}>
-          {erroGeral}
-        </p>
-      )}
       <div className="acoes-form">
         <button type="button" className="botao botao--secundario" onClick={aoCancelar}>
           Cancelar
@@ -241,7 +230,7 @@ function FormRedefinirSenha({ vendedor, aoSalvar, aoCancelar }) {
 // ---------------------------------------------------------------------------
 function ConfirmarSituacao({ vendedor, aoSalvar, aoCancelar }) {
   const { api } = useAutenticacao()
-  const [erro, setErro] = useState('')
+  const { mostrarErro } = useErro()
   const [salvando, setSalvando] = useState(false)
   const desativar = vendedor.ativo
 
@@ -252,7 +241,8 @@ function ConfirmarSituacao({ vendedor, aoSalvar, aoCancelar }) {
       : await api(`/api/vendedores/${vendedor.id}`, { metodo: 'PATCH', corpo: { ativo: true } })
     setSalvando(false)
     if (ok) return aoSalvar(dados.vendedor)
-    setErro(dados?.erro || 'Não foi possível concluir.')
+    aoCancelar() // fecha a confirmação e mostra só o erro
+    mostrarErro(dados?.erro || 'Não foi possível concluir.')
   }
 
   return (
@@ -269,11 +259,6 @@ function ConfirmarSituacao({ vendedor, aoSalvar, aoCancelar }) {
           </>
         )}
       </p>
-      {erro && (
-        <p className="aviso aviso--erro" role="alert" style={{ marginTop: 16 }}>
-          {erro}
-        </p>
-      )}
       <div className="acoes-form">
         <button type="button" className="botao botao--secundario" onClick={aoCancelar}>
           Cancelar
@@ -356,6 +341,11 @@ export default function Vendedores() {
   const [pagina, setPagina] = useState(1)
   const [resultado, setResultado] = useState(null)
   const [erro, setErro] = useState('')
+  const { mostrarErro } = useErro()
+  const falhar = (mensagem) => {
+    setErro(mensagem)
+    mostrarErro(mensagem)
+  }
   const [aviso, setAviso] = useState('')
   const [modal, setModal] = useState(null) // { tipo, vendedor }
 
@@ -377,7 +367,7 @@ export default function Vendedores() {
       setResultado(dados)
       setErro('')
     } else {
-      setErro(dados?.erro || 'Não foi possível carregar os vendedores.')
+      falhar(dados?.erro || 'Não foi possível carregar os vendedores.')
     }
   }, [api, pagina, buscaAplicada, situacao])
 
@@ -461,11 +451,6 @@ export default function Vendedores() {
       {aviso && (
         <p className="aviso aviso--sucesso" role="status" style={{ marginBottom: 16 }}>
           {aviso}
-        </p>
-      )}
-      {erro && (
-        <p className="aviso aviso--erro" role="alert" style={{ marginBottom: 16 }}>
-          {erro}
         </p>
       )}
 

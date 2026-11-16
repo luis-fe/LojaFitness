@@ -4,8 +4,10 @@ import { useState } from 'react'
 import PaginaVendedor from '@/components/PaginaVendedor'
 import Campo from '@/components/Campo'
 import { useAutenticacao } from '@/context/Autenticacao'
+import { useErro } from '@/context/Erro'
 
 function TrocarSenha() {
+  const { mostrarErro } = useErro()
   const { api, entrar, vendedor } = useAutenticacao()
   const [form, setForm] = useState({ senhaAtual: '', novaSenha: '', confirmar: '' })
   const [erros, setErros] = useState({})
@@ -32,7 +34,7 @@ function TrocarSenha() {
     if (!ok) {
       setSalvando(false)
       setErros(dados?.campos || {})
-      setAviso({ tipo: 'erro', texto: dados?.erro || 'Não foi possível trocar a senha.' })
+      if (!dados?.campos) mostrarErro(dados?.erro || 'Não foi possível trocar a senha.')
       return
     }
     // A troca encerra as sessões antigas: entramos de novo com a nova senha, sem a pessoa perceber

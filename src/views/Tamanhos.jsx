@@ -8,6 +8,7 @@ import Campo from '@/components/Campo'
 import Modal from '@/components/Modal'
 import ConfirmarExclusao from '@/components/ConfirmarExclusao'
 import { useAutenticacao } from '@/context/Autenticacao'
+import { useErro } from '@/context/Erro'
 
 const TRILHA = [{ href: '/area-do-vendedor/produtos', rotulo: 'Produtos' }]
 const mascaraCodigo = (v) => v.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6)
@@ -16,7 +17,7 @@ export function FormTamanho({ tamanho, aoSalvar, aoCancelar }) {
   const { api } = useAutenticacao()
   const [form, setForm] = useState({ codigo: tamanho?.codigo ?? '', nome: tamanho?.nome ?? '', sequencia: tamanho?.sequencia ?? '' })
   const [erros, setErros] = useState({})
-  const [erroGeral, setErroGeral] = useState('')
+  const { mostrarErro } = useErro()
   const [salvando, setSalvando] = useState(false)
   const alterar = (c) => (v) => {
     setForm((f) => ({ ...f, [c]: v }))
@@ -34,7 +35,7 @@ export function FormTamanho({ tamanho, aoSalvar, aoCancelar }) {
     setSalvando(false)
     if (ok) return aoSalvar(dados.tamanho)
     setErros(dados?.campos || {})
-    setErroGeral(dados?.campos ? '' : dados?.erro || 'Não foi possível salvar.')
+    if (!dados?.campos) mostrarErro(dados?.erro || 'Não foi possível salvar.')
   }
 
   return (
@@ -55,11 +56,6 @@ export function FormTamanho({ tamanho, aoSalvar, aoCancelar }) {
         />
       </div>
       {tamanho?.em_uso > 0 && <p className="campo__dica" style={{ marginTop: 12 }}>Usado em {tamanho.em_uso} variação(ões): mudar o código atualiza todas automaticamente.</p>}
-      {erroGeral && (
-        <p className="aviso aviso--erro" role="alert" style={{ marginTop: 16 }}>
-          {erroGeral}
-        </p>
-      )}
       <div className="acoes-form">
         <button type="button" className="botao botao--secundario" onClick={aoCancelar}>
           Cancelar
@@ -76,6 +72,11 @@ export default function Tamanhos() {
   const { api } = useAutenticacao()
   const [tamanhos, setTamanhos] = useState(null)
   const [erro, setErro] = useState('')
+  const { mostrarErro } = useErro()
+  const falhar = (mensagem) => {
+    setErro(mensagem)
+    mostrarErro(mensagem)
+  }
   const [aviso, setAviso] = useState('')
   const [modal, setModal] = useState(null) // { tipo: 'novo' | 'editar' | 'excluir', item }
   const [busca, setBusca] = useState('')
@@ -89,7 +90,7 @@ export default function Tamanhos() {
   const carregar = useCallback(async () => {
     const { ok, dados } = await api('/api/tamanhos')
     if (ok) setTamanhos(dados.tamanhos)
-    else setErro(dados?.erro || 'Não foi possível carregar os tamanhos.')
+    else falhar(dados?.erro || 'Não foi possível carregar os tamanhos.')
   }, [api])
 
   useEffect(() => {
@@ -111,7 +112,7 @@ export default function Tamanhos() {
     ;[ordem[i], ordem[j]] = [ordem[j], ordem[i]]
     const { ok, dados } = await api('/api/tamanhos/ordem', { metodo: 'PUT', corpo: { codigos: ordem } })
     if (ok) setTamanhos(dados.tamanhos)
-    else setErro(dados?.erro || 'Não foi possível reordenar.')
+    else falhar(dados?.erro || 'Não foi possível reordenar.')
   }
 
   const concluir = (msg) => {
@@ -133,11 +134,6 @@ export default function Tamanhos() {
       }
     >
       <div aria-live="polite">{aviso && <p className="aviso aviso--sucesso cadastro__aviso">{aviso}</p>}</div>
-      {erro && (
-        <p className="aviso aviso--erro cadastro__aviso" role="alert">
-          {erro}
-        </p>
-      )}
 
       {tamanhos && tamanhos.length > 0 && (
         <div className="campo cadastro__busca">
