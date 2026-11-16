@@ -130,10 +130,71 @@
   line-height: 1;
 }
 
+/* Compartilhar (só no celular): abre o menu de compartilhamento do aparelho */
+.header__compartilhar {
+  display: none;
+  position: relative;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-left: auto;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--branco);
+  cursor: pointer;
+}
+
+.header__compartilhar svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.header__compartilhar:focus-visible,
+.header__carrinho:focus-visible {
+  outline: 2px solid var(--branco);
+  outline-offset: -2px;
+  border-radius: 8px;
+}
+
+/* Aviso "Link copiado" quando o aparelho não tem menu de compartilhar */
+.header__aviso[hidden] {
+  display: none;
+}
+
+.header__aviso {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 16px;
+  padding: 6px 10px;
+  background: var(--branco);
+  color: var(--preto);
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
 /* No celular, as opções ficam só no menu lateral para não brigar com a logo */
 @media (max-width: 640px) {
   .header__nav {
     display: none;
+  }
+
+  .header__compartilhar {
+    display: grid;
+    margin-right: -20px; /* fica colado ao carrinho (o header tem gap de 24px) */
+  }
+
+  .header__carrinho {
+    margin-left: 0;
   }
 }
 
