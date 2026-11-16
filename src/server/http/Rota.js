@@ -21,6 +21,7 @@ function paraResposta(erro, rotulo) {
     const corpo = { erro: erro.message }
     if (erro.campos) corpo.campos = erro.campos
     if (erro.codigo) corpo.codigo = erro.codigo
+    if (erro.listaErros) corpo.erros = erro.listaErros // várias mensagens (ex.: linhas do extrato)
     return Response.json(corpo, { status: erro.status, headers: erro.cabecalhos })
   }
   console.error(`[${rotulo}]`, erro)

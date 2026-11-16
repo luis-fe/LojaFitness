@@ -210,6 +210,28 @@
   }
 }
 
+/* Verde (Registro de Vendas): texto branco, contraste 5,0:1 */
+.botao.botao--verde {
+  background: var(--verde);
+  border-color: var(--verde);
+  color: var(--branco);
+  border-radius: 8px;
+}
+
+@media (hover: hover) {
+  .botao.botao--verde:hover:not(:disabled) {
+    background: #116632;
+    border-color: #116632;
+    color: var(--branco);
+  }
+}
+
+.botao.botao--verde:disabled {
+  background: var(--cinza-claro);
+  border-color: var(--borda);
+  color: var(--cinza-neutro);
+}
+
 /* Ícone dentro de botão */
 .botao svg {
   width: 16px;

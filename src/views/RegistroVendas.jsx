@@ -1,20 +1,17 @@
 'use client'
 
 import PaginaVendedor from '@/components/PaginaVendedor'
-import { IconeVendas } from '@/components/Icones'
-import './RegistroVendas.css'
+import CardsMenu from '@/components/CardsMenu'
+import { IconeAprovar } from '@/components/Icones'
 
-// Registro de Vendas — tela criada no menu; o cadastro das vendas será construído aqui.
+// Registro de Vendas — submenu
 export default function RegistroVendas() {
   return (
     <PaginaVendedor titulo="Registro de Vendas" largura={960}>
-      <div className="vendas-vazio">
-        <span className="vendas-vazio__icone" aria-hidden="true">
-          <IconeVendas />
-        </span>
-        <h2>Nenhuma venda registrada ainda</h2>
-        <p>Esta tela está em construção. Em breve você poderá registrar e consultar as vendas da loja por aqui.</p>
-      </div>
+      <CardsMenu
+        rotulo="Opções de registro de vendas"
+        itens={[{ titulo: 'Aprovar Pagamento', href: '/area-do-vendedor/aprovar-pagamento', Icone: IconeAprovar, cor: 'verde' }]}
+      />
     </PaginaVendedor>
   )
 }

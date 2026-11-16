@@ -206,3 +206,12 @@ export const IconeVendas = () => (
     <path d="M12 5.8V7M12 15v1.2" />
   </Svg>
 )
+
+// Cartão com visto (aprovar pagamento)
+export const IconeAprovar = () => (
+  <Svg>
+    <rect x="2.5" y="5" width="19" height="14" rx="2" />
+    <path d="M2.5 9.5h19" />
+    <path d="m9 15 2 2 4-4" />
+  </Svg>
+)

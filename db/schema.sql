@@ -280,6 +280,10 @@ BEGIN
   END IF;
 END $$;
 
+-- Aprovação do pagamento (situação 0 → 1): quando e por quem
+ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS aprovado_em  timestamptz;
+ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS aprovado_por bigint REFERENCES vendedores (id) ON DELETE SET NULL;
+
 CREATE INDEX IF NOT EXISTS pedidos_situacao_idx ON pedidos (situacao, data_emissao DESC);
 CREATE INDEX IF NOT EXISTS pedidos_cliente_idx  ON pedidos (cliente_cep, cliente_nome);
 
