@@ -257,19 +257,17 @@
   flex-direction: column;
 }
 
-/* Empurra a Área do Vendedor para o fim do menu */
-.header__drawer-rodape {
-  margin-top: auto;
-  border-top: 1px solid var(--cinza);
-}
-
-.header__drawer-rodape .header__drawer-link:last-child {
-  border-bottom: none;
+/* Grupos do menu: atalhos, Categorias, Campanhas, carrinho/atendimento */
+.header__drawer-grupo {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--cinza);
 }
 
 .header__drawer-titulo {
   display: block;
-  padding: 18px 24px 6px;
+  padding: 10px 24px 4px;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 1.5px;
@@ -280,17 +278,59 @@
 .header__drawer-link {
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-height: 56px;
-  padding: 0 24px;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 20px 0 21px;
   color: var(--branco);
   text-decoration: none;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  border-bottom: 1px solid var(--cinza);
+  font-size: 15px;
+  font-weight: 600;
   border-left: 3px solid transparent;
   transition: background 0.15s ease;
+}
+
+.header__drawer-nome {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* seta à direita: mostra que a linha leva a uma página */
+.header__drawer-link::after {
+  content: '';
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-top: 1.5px solid #8a8a8a;
+  border-right: 1.5px solid #8a8a8a;
+  transform: rotate(45deg);
+}
+
+/* quantidade de produtos do selo / itens no carrinho */
+.header__drawer-qtd {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 400;
+  color: #a3a3a3;
+}
+
+.header__drawer-qtd--destaque {
+  min-width: 22px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: var(--branco);
+  color: var(--preto);
+  font-weight: 800;
+  text-align: center;
+}
+
+.header__drawer-whats {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  fill: var(--whatsapp);
 }
 
 .header__drawer-link:hover {
@@ -304,6 +344,42 @@
 
 .header__drawer-link:focus-visible {
   outline-offset: -3px !important;
+}
+
+/* Rodapé discreto, no fim do menu: Área do Vendedor e Política de Privacidade (letra menor) */
+.header__drawer-rodape {
+  margin-top: auto;
+  gap: 2px;
+  padding: 14px 24px 18px;
+}
+
+.header__drawer-rodape a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  color: #d4d4d4;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.header__drawer-rodape a:hover {
+  color: var(--branco);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.header__drawer-rodape svg {
+  width: 18px;
+  height: 18px;
+}
+
+.header__drawer-rodape .header__drawer-politica {
+  min-height: 32px;
+  font-size: 11px;
+  font-weight: 400;
+  color: #a3a3a3; /* contraste 8:1 sobre preto */
 }
 
 @media (prefers-reduced-motion: reduce) {

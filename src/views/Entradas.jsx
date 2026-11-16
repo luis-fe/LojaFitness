@@ -10,10 +10,10 @@ import { useErro } from '@/context/Erro'
 import { AmostraCor } from '@/views/Cores'
 import MovimentosEstoque from '@/components/MovimentosEstoque'
 
-const TRILHA = [{ href: '/area-do-vendedor/produtos', rotulo: 'Produtos' }]
+const TRILHA = [{ href: '/area-do-vendedor/estoques', rotulo: 'Estoques' }]
 const chave = (v) => `${v.cor}|${v.tamanho}`
 
-// Produtos → Entradas: escolhe o produto, vê as variações com o estoque atual e informa a entrada
+// Estoques → Entradas: escolhe o produto, vê as variações com o estoque atual e informa a entrada
 export default function Entradas() {
   const { api } = useAutenticacao()
   const { mostrarErro } = useErro()

@@ -2,6 +2,7 @@
 //   GET  /api/produtos               catálogo público
 //   GET  /api/produtos/:slug         um produto
 //   GET  /api/selos                  Selos-Campanha (itens do menu lateral)
+//   GET  /api/retirada               locais de retirada (endereço dos vendedores ativos)
 //   POST /api/pedidos                confere o pedido e devolve o link do WhatsApp
 //   GET  /api/saude                  status do servidor e do banco
 //   GET  /api/vendedor/resumo        números da loja (login)
@@ -10,10 +11,12 @@ import 'server-only'
 import { ErroNaoEncontrado, ErroValidacao } from '@/server/erros'
 
 export class LojaController {
-  constructor({ rota, pedidoServico, painelServico, catalogoServico }) {
+  constructor({ rota, pedidoServico, painelServico, catalogoServico, vendedorServico }) {
     this.catalogo = rota(async () => ({ produtos: await catalogoServico.listar() }), { rotulo: 'GET /api/produtos' })
 
     this.selos = rota(async () => ({ selos: await catalogoServico.listarSelos() }), { rotulo: 'GET /api/selos' })
+
+    this.retirada = rota(async () => ({ locais: await vendedorServico.locaisRetirada() }), { rotulo: 'GET /api/retirada' })
 
     this.produto = rota(
       async ({ params }) => {

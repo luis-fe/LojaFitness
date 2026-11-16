@@ -194,64 +194,48 @@ export default function Produto({ produto }) {
               </p>
             )}
 
-            <div className="grade" role="region" aria-label="Cores, tamanhos e quantidade disponível" tabIndex={0}>
-              <table>
-                <thead>
-                  <tr>
-                    <th scope="col" className="grade__canto">
-                      Cor
-                    </th>
-                    {TAMANHOS.map((t) => (
-                      <th key={t} scope="col">
-                        {t}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {produto.cores.map((cor) => (
-                    <tr key={cor.nome}>
-                      <th scope="row" className="grade__cor">
-                        <span className="grade__amostra" style={{ background: cor.hex }} aria-hidden="true" />
-                        <span>
-                          {cor.nome}
-                          <small>
-                            {totalCor(cor.nome)} <span>disponíveis</span>
-                          </small>
-                        </span>
-                      </th>
-                      {TAMANHOS.map((tam) => {
+            {/* Cada cor é uma linha; os botões são os tamanhos que ela tem. Riscado = esgotado. */}
+            <div className="grade" role="group" aria-label="Cores e tamanhos disponíveis">
+              {produto.cores.map((cor) => {
+                const tamanhosDaCor = TAMANHOS.filter((t) => situacaoVariacao(produto, cor.nome, t).situacao !== 'nao-possui')
+                if (!tamanhosDaCor.length) return null // cor sem nenhum tamanho no cadastro
+                const corEsgotada = totalCor(cor.nome) === 0
+                return (
+                  <div key={cor.nome} className={`grade__linha ${corEsgotada ? 'is-esgotada' : ''}`} role="group" aria-label={`Cor ${cor.nome}`}>
+                    <div className="grade__cor">
+                      <span className="grade__amostra" style={{ background: cor.hex }} aria-hidden="true" />
+                      <span className="grade__cor-nome">{cor.nome}</span>
+                      {corEsgotada && <small>Esgotada</small>}
+                    </div>
+                    <div className="grade__tamanhos">
+                      {tamanhosDaCor.map((tam) => {
                         const { situacao, quantidade: q } = situacaoVariacao(produto, cor.nome, tam)
-                        const naoPossui = situacao === 'nao-possui' // a cor não tem este tamanho no cadastro
                         const esgotado = situacao === 'esgotado'
                         const baixo = situacao === 'baixo'
                         const escolhidas = escolhidasDe(cor.nome, tam)
-                        const semMais = escolhidas >= q // já escolheu todo o estoque desta célula
+                        const semMais = escolhidas >= q // já escolheu todo o estoque deste tamanho
                         const travada = quantidade > 1 && completo_ // todas as peças já escolhidas
-                        const descricao = naoPossui ? 'não possui' : esgotado ? 'esgotado' : `${q} ${q === 1 ? 'disponível' : 'disponíveis'}`
+                        const descricao = esgotado ? 'esgotado' : `${q} ${q === 1 ? 'disponível' : 'disponíveis'}`
                         return (
-                          <td key={tam}>
-                            <button
-                              type="button"
-                              className={`grade__celula ${escolhidas ? 'is-ativo' : ''} ${baixo ? 'is-baixo' : ''} ${naoPossui ? 'is-nao-possui' : ''}`}
-                              disabled={naoPossui || esgotado || (quantidade > 1 && (semMais || travada))}
-                              aria-pressed={escolhidas > 0}
-                              aria-label={`${cor.nome}, tamanho ${tam}: ${descricao}${escolhidas ? `, ${escolhidas} escolhida${escolhidas > 1 ? 's' : ''}` : ''}`}
-                              onClick={() => escolher(cor.nome, tam)}
-                            >
-                              <span className="grade__qtd">{naoPossui || esgotado ? '—' : q}</span>
-                              <span className="grade__rotulo">
-                                {naoPossui ? 'Não possui' : esgotado ? 'Esgotado' : baixo ? 'Últimas' : q === 1 ? 'Disponível' : 'Disponíveis'}
-                              </span>
-                              {escolhidas > 0 && quantidade > 1 && <span className="grade__escolhidas">×{escolhidas}</span>}
-                            </button>
-                          </td>
+                          <button
+                            key={tam}
+                            type="button"
+                            className={`grade__celula ${escolhidas ? 'is-ativo' : ''} ${esgotado ? 'is-esgotado' : ''}`}
+                            disabled={esgotado || (quantidade > 1 && (semMais || travada))}
+                            aria-pressed={escolhidas > 0}
+                            aria-label={`${cor.nome}, tamanho ${tam}: ${descricao}${escolhidas ? `, ${escolhidas} escolhida${escolhidas > 1 ? 's' : ''}` : ''}`}
+                            onClick={() => escolher(cor.nome, tam)}
+                          >
+                            <span className="grade__tam">{tam}</span>
+                            {baixo && <span className="grade__aviso">{q === 1 ? 'Resta 1' : `Restam ${q}`}</span>}
+                            {escolhidas > 0 && quantidade > 1 && <span className="grade__escolhidas">×{escolhidas}</span>}
+                          </button>
                         )
                       })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
 
             {escolhas.length > 0 && (

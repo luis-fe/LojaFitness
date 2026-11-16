@@ -5,8 +5,9 @@ import '@/components/blocos/Blocos.css'
 import './Selo.css'
 import AnuncioProduto from '@/components/blocos/AnuncioProduto'
 import { catalogoServico } from '@/server/container'
+import { TIPOS_SELO } from '@/lib/selos'
 
-// Produtos de um Selo-Campanha (ex.: /selo/black-friday) — item do menu lateral
+// Produtos de um selo — Categoria ou Campanha (ex.: /selo/black-friday) — item do menu lateral
 async function carregar(slug) {
   await connection()
   return catalogoServico.listarPorSelo(slug)
@@ -24,12 +25,19 @@ export default async function PaginaSelo({ params }) {
   const produtos = await carregar(slug)
   if (!produtos.length) notFound()
   const nome = produtos[0].selo
+  const tipo = TIPOS_SELO.find((t) => t.id === produtos[0].seloTipo)
 
   return (
     <section className="bloco selo-pagina" aria-labelledby="selo-titulo">
       <nav className="selo-pagina__trilha" aria-label="Você está em">
         <Link href="/">Início</Link>
         <span aria-hidden="true">/</span>
+        {tipo && (
+          <>
+            <span>{tipo.plural}</span>
+            <span aria-hidden="true">/</span>
+          </>
+        )}
         <span aria-current="page">{nome}</span>
       </nav>
       <header className="bloco__cabecalho">

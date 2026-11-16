@@ -1,4 +1,4 @@
-// Estoque — Produtos → Entradas
+// Estoque — Estoques → Entradas
 //   • Entrada: soma a quantidade no estoque da variação e registra em mov_produto (movimento 'entrada')
 //   • As vendas registram a saída (veja VendaRepositorio)
 //   • Inventário: ajusta o estoque para a contagem e registra a diferença (tipo 'inventario', + ou −)

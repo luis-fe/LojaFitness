@@ -55,6 +55,8 @@ COPY --from=build --chown=nextjs:nodejs /app/package.json ./package.json
 COPY --from=build --chown=nextjs:nodejs /app/db ./db
 COPY --from=build --chown=nextjs:nodejs /app/scripts ./scripts
 COPY --from=build --chown=nextjs:nodejs /app/src/server/utils/senha.js /app/src/server/utils/validacao.js ./src/server/utils/
+# validacao.js importa ../../lib/retirada.js (UFs e localização do vendedor)
+COPY --from=build --chown=nextjs:nodejs /app/src/lib/retirada.js ./src/lib/
 
 USER nextjs
 EXPOSE 3000

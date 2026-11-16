@@ -1,7 +1,8 @@
 // Regras de negócio dos vendedores.
 //
 //   • Senha sempre criptografada; nunca sai nas respostas.
-//   • Admin gerencia todos; vendedor só o próprio cadastro (nome, telefone, CPF/CNPJ, nome fantasia).
+//   • Admin gerencia todos; vendedor só o próprio cadastro (nome, telefone, CPF/CNPJ, nome fantasia, endereço).
+//   • O endereço/localização do vendedor ativo é público: é o local de retirada do pedido.
 //   • Vendedor não é apagado: é desativado (preserva o histórico).
 //   • Sempre existe pelo menos 1 administrador ativo; ninguém remove o próprio acesso de admin.
 //   • Trocar a senha ou desativar derruba as sessões (tokens) existentes.
@@ -10,7 +11,8 @@ import { ErroConflito, ErroNaoEncontrado, ErroPermissao, ErroRequisicao, ErroVal
 import { gerarHashSenha, conferirSenha } from '@/server/utils/senha'
 import { validarVendedor, validarSenha } from '@/server/utils/validacao'
 
-const CAMPOS_PROPRIO = ['nome', 'telefone', 'cpf_cnpj', 'nome_fantasia']
+const CAMPOS_PROPRIO = ['nome', 'telefone', 'cpf_cnpj', 'nome_fantasia', 'cep', 'endereco', 'uf', 'cidade', 'localizacao']
+const MAX_LOCAIS_RETIRADA = 5
 const CAMPOS_ADMIN = [...CAMPOS_PROPRIO, 'login', 'papel', 'ativo']
 
 export class VendedorServico {
@@ -24,6 +26,11 @@ export class VendedorServico {
     porPagina = Math.min(100, Math.max(1, Number.parseInt(porPagina, 10) || 20))
     const { linhas, total } = await this.repo.listar({ busca, ativo, pagina, porPagina })
     return { vendedores: linhas, paginacao: { pagina, porPagina, total, totalPaginas: Math.ceil(total / porPagina) } }
+  }
+
+  // Site público: onde o cliente retira o pedido ("Retirar c/ vendedor")
+  locaisRetirada() {
+    return this.repo.listarLocaisRetirada(MAX_LOCAIS_RETIRADA)
   }
 
   async buscar(id) {

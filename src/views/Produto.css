@@ -78,96 +78,73 @@
   text-transform: uppercase;
 }
 
-/* Grade: cores nas linhas, tamanhos nas colunas */
+/* Grade de disponibilidade: uma linha por cor, um botão por tamanho */
 .grade {
-  overflow-x: auto;
+  border-bottom: 1px solid var(--borda);
 }
 
-.grade:focus-visible {
-  outline: 2px solid var(--preto);
-  outline-offset: 2px;
-}
-
-.grade table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 6px;
-  margin: -6px;
-  width: calc(100% + 12px);
-  table-layout: fixed;
-}
-
-.grade__canto {
-  width: 25%;
-}
-
-.grade thead th {
-  padding-bottom: 2px;
-  font-size: 14px;
-  font-weight: 800;
-  text-align: center;
-}
-
-.grade__canto {
-  text-align: left !important;
-  font-size: 12px !important;
-  font-weight: 700 !important;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--cinza-texto);
+.grade__linha {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px 16px;
+  padding: 14px 0;
+  border-top: 1px solid var(--borda);
 }
 
 .grade__cor {
-  white-space: nowrap;
-  text-align: left;
-  font-weight: 700;
-  font-size: 14px;
-  padding-right: 6px;
-}
-
-.grade__cor,
-.grade__cor > span:last-child {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-}
-
-.grade__cor > span:last-child {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
+  gap: 4px 10px;
+  font-size: 15px;
+  font-weight: 700;
 }
 
 .grade__cor small {
-  font-size: 11px;
+  flex-basis: 100%;
+  font-size: 12px;
   font-weight: 400;
   color: var(--cinza-neutro);
 }
 
 .grade__amostra {
   flex-shrink: 0;
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
-  border: 1px solid var(--borda);
-  box-shadow: inset 0 0 0 2px var(--branco);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+}
+
+.grade__linha.is-esgotada .grade__amostra {
+  opacity: 0.45;
+}
+
+.grade__linha.is-esgotada .grade__cor-nome {
+  color: var(--cinza-neutro);
+}
+
+.grade__tamanhos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  gap: 8px;
 }
 
 .grade__celula {
-  width: 100%;
-  min-width: 52px;
-  min-height: 56px;
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  padding: 6px 4px;
+  gap: 3px;
+  min-height: 52px;
+  padding: 4px;
   background: var(--branco);
-  border: 1px solid var(--borda);
+  border: 1.5px solid #bdbdbd;
   color: var(--preto);
+  font-family: inherit;
   cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
 
 .grade__celula:hover:not(:disabled) {
@@ -179,57 +156,85 @@
   outline-offset: 2px;
 }
 
-.grade__qtd {
-  font-size: 12px;
-  font-weight: 400;
+.grade__tam {
+  font-size: 16px;
+  font-weight: 800;
   line-height: 1;
-  color: var(--cinza-neutro);
 }
 
-.grade__rotulo {
-  font-size: 9px;
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
-  color: var(--cinza-neutro);
+/* "Restam 2": só aparece quando o estoque está acabando */
+.grade__aviso {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  color: #b42318; /* contraste 6,5:1 sobre branco */
 }
 
-.grade__celula.is-baixo .grade__rotulo {
+.grade__escolhidas {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  min-width: 22px;
+  padding: 3px 5px;
+  background: var(--branco);
+  border: 1.5px solid var(--preto);
+  border-radius: 999px;
   color: var(--preto);
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
 }
 
-.grade__celula.is-ativo {
+/* Escolhido: preto cheio (continua assim mesmo com a grade travada) */
+.grade__celula.is-ativo,
+.grade__celula.is-ativo:disabled {
   background: var(--preto);
   border-color: var(--preto);
   color: var(--branco);
+  opacity: 1;
 }
 
-.grade__celula.is-ativo .grade__qtd,
-.grade__celula.is-ativo .grade__rotulo {
-  color: #d4d4d4;
+.grade__celula.is-ativo .grade__aviso {
+  color: var(--branco);
 }
 
+/* Todas as peças já escolhidas: os outros tamanhos ficam apagados, mas não riscados */
 .grade__celula:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+/* Esgotado: cinza e riscado na diagonal */
+.grade__celula.is-esgotado {
+  opacity: 1;
   cursor: not-allowed;
-  background: var(--cinza-claro);
-  color: #9a9a9a;
-  border-style: dashed;
+  border-color: var(--borda);
+  color: #8a8a8a;
+  background: linear-gradient(to top right, transparent calc(50% - 0.75px), #c9c9c9 calc(50% - 0.75px), #c9c9c9 calc(50% + 0.75px), transparent calc(50% + 0.75px)), var(--cinza-claro);
 }
 
-.grade__celula:disabled .grade__qtd,
-.grade__celula:disabled .grade__rotulo {
-  color: #a3a3a3;
+.grade__celula.is-esgotado .grade__tam {
+  font-weight: 600;
 }
 
-/* Tamanho que a cor não tem no cadastro: listras, para não confundir com "Esgotado" */
-.grade__celula.is-nao-possui {
-  background: repeating-linear-gradient(-45deg, var(--cinza-claro) 0 6px, #ebebeb 6px 12px);
-  border-color: transparent;
+@media (max-width: 768px) {
+  .grade__linha {
+    grid-template-columns: 1fr;
+  }
+
+  .grade__cor small {
+    flex-basis: auto;
+  }
+
+  .grade__tamanhos {
+    grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+  }
 }
 
-.grade__celula.is-nao-possui .grade__rotulo {
-  color: var(--cinza-neutro); /* contraste 4,7:1 */
-  font-weight: 700;
+@media (prefers-reduced-motion: reduce) {
+  .grade__celula {
+    transition: none;
+  }
 }
 
 .produto__selecao {
@@ -419,40 +424,6 @@
 
 /* Celular: imagem em cima, opções embaixo */
 @media (max-width: 768px) {
-  .grade__canto {
-    width: 27%;
-  }
-
-  .grade__cor {
-    white-space: normal;
-    gap: 6px;
-    padding-right: 0;
-  }
-
-  .grade__amostra {
-    width: 18px;
-    height: 18px;
-  }
-
-  .grade__cor small {
-    font-size: 10px;
-    line-height: 1.25;
-  }
-
-  .grade__cor small span {
-    display: block;
-  }
-
-  .grade__celula {
-    min-width: 0;
-    padding: 6px 2px;
-  }
-
-  .grade__rotulo {
-    font-size: 8px;
-    letter-spacing: 0;
-  }
-
   .produto {
     grid-template-columns: 1fr;
     gap: 24px;
@@ -503,18 +474,6 @@
   color: #0f5132;
 }
 
-.grade__celula {
-  position: relative;
-}
-
-.grade__escolhidas {
-  position: absolute;
-  top: 3px;
-  right: 4px;
-  font-size: 11px;
-  font-weight: 800;
-}
-
 .produto__escolhas {
   list-style: none;
   display: flex;
@@ -550,17 +509,3 @@
   margin-top: 16px;
 }
 
-/* Peça escolhida continua destacada mesmo com a célula travada (todas as peças já escolhidas) */
-.grade__celula.is-ativo:disabled {
-  background: var(--preto);
-  border-style: solid;
-  border-color: var(--preto);
-  color: var(--branco);
-  cursor: default;
-}
-
-.grade__celula.is-ativo:disabled .grade__qtd,
-.grade__celula.is-ativo:disabled .grade__rotulo,
-.grade__celula.is-ativo:disabled .grade__escolhidas {
-  color: var(--branco);
-}

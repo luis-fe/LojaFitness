@@ -10,6 +10,7 @@ import { IconeEditar } from '@/components/Icones'
 import { useAutenticacao } from '@/context/Autenticacao'
 import { useErro } from '@/context/Erro'
 import { formatarCpfCnpj, formatarDataHora, formatarTelefone, mascaraCpfCnpj, mascaraTelefone } from '@/lib/formatos'
+import { UFS, enderecoCompleto, formatarCep, linkMapa, mascaraCep } from '@/lib/retirada'
 
 const POR_PAGINA = 10
 
@@ -25,6 +26,11 @@ function FormVendedor({ vendedor, ehVoceMesmo, aoSalvar, aoCancelar }) {
     telefone: vendedor ? formatarTelefone(vendedor.telefone) : '',
     cpf_cnpj: vendedor?.cpf_cnpj ? formatarCpfCnpj(vendedor.cpf_cnpj) : '',
     nome_fantasia: vendedor?.nome_fantasia ?? '',
+    cep: vendedor?.cep ? formatarCep(vendedor.cep) : '',
+    endereco: vendedor?.endereco ?? '',
+    cidade: vendedor?.cidade ?? '',
+    uf: vendedor?.uf ?? '',
+    localizacao: vendedor?.localizacao ?? '',
     papel: vendedor?.papel ?? 'vendedor',
     senha: '',
     confirmar: '',
@@ -41,7 +47,7 @@ function FormVendedor({ vendedor, ehVoceMesmo, aoSalvar, aoCancelar }) {
 
   const salvar = async (e) => {
     e.preventDefault()
-    const campos = ['login', 'nome', 'telefone', 'cpf_cnpj', 'nome_fantasia', 'papel']
+    const campos = ['login', 'nome', 'telefone', 'cpf_cnpj', 'nome_fantasia', 'cep', 'endereco', 'cidade', 'uf', 'localizacao', 'papel']
     let corpo
     if (editando) {
       // Envia só o que mudou
@@ -106,6 +112,46 @@ function FormVendedor({ vendedor, ehVoceMesmo, aoSalvar, aoCancelar }) {
           aoMudar={alterar('nome_fantasia')}
           erro={erros.nome_fantasia}
         />
+        <div className="largo form-secao">
+          <h3>Endereço para retirada</h3>
+          <p>Opcional. Aparece no site, com o mapa, para o cliente que escolher “Retirar c/ vendedor”.</p>
+        </div>
+        <Campo rotulo="CEP" opcional valor={form.cep} aoMudar={alterar('cep')} mascara={mascaraCep} erro={erros.cep} inputMode="numeric" placeholder="00000-000" autoComplete="postal-code" />
+        <div className="campo">
+          <label htmlFor="uf">
+            UF <span className="campo__opcional">(opcional)</span>
+          </label>
+          <select id="uf" value={form.uf} onChange={(e) => alterar('uf')(e.target.value)} aria-invalid={erros.uf ? true : undefined}>
+            <option value="">—</option>
+            {UFS.map((uf) => (
+              <option key={uf} value={uf}>
+                {uf}
+              </option>
+            ))}
+          </select>
+          {erros.uf && <span className="campo__erro">{erros.uf}</span>}
+        </div>
+        <div className="largo">
+          <Campo rotulo="Endereço" opcional valor={form.endereco} aoMudar={alterar('endereco')} erro={erros.endereco} placeholder="Rua, número, complemento e bairro" maxLength={200} autoComplete="street-address" />
+        </div>
+        <div className="largo">
+          <Campo rotulo="Cidade" opcional valor={form.cidade} aoMudar={alterar('cidade')} erro={erros.cidade} maxLength={100} />
+        </div>
+        <div className="largo">
+          <Campo
+            rotulo="Localização no Google Maps"
+            opcional
+            valor={form.localizacao}
+            aoMudar={alterar('localizacao')}
+            erro={erros.localizacao}
+            dica="No Google Maps, toque em Compartilhar → Copiar link e cole aqui. Também aceita coordenadas, ex.: -23.5505, -46.6333."
+            placeholder="https://maps.app.goo.gl/…"
+            maxLength={500}
+            inputMode="url"
+            autoCapitalize="none"
+            spellCheck={false}
+          />
+        </div>
         <div className="campo largo">
           <label htmlFor="papel">Perfil de acesso</label>
           <select
@@ -303,6 +349,18 @@ function LinhaVendedor({ v, ehVoceMesmo, abrir }) {
         <div>
           <dt>{v.tipo_documento ? v.tipo_documento.toUpperCase() : 'CPF/CNPJ'}</dt>
           <dd>{v.cpf_cnpj ? formatarCpfCnpj(v.cpf_cnpj) : '—'}</dd>
+        </div>
+        <div>
+          <dt>Retirada</dt>
+          <dd>
+            {linkMapa(v) ? (
+              <a href={linkMapa(v)} target="_blank" rel="noopener noreferrer">
+                {enderecoCompleto(v) || 'Ver no Google Maps'}
+              </a>
+            ) : (
+              '—'
+            )}
+          </dd>
         </div>
         <div>
           <dt>Último acesso</dt>

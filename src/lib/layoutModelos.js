@@ -29,7 +29,7 @@ export const MODELOS = {
   },
   produtos: {
     nome: 'Vitrine de produtos',
-    descricao: 'Carrossel com passagem automática: você escolhe os produtos e o preço vem do cadastro.',
+    descricao: 'Prateleira de produtos com foto, nome e preço em destaque: você escolhe os produtos, o cliente passa para o lado e o preço vem do cadastro.',
     novo: () => ({ selo: 'Lançamentos', titulo: 'Novidades', imagens: [] }),
   },
   cascata: {

@@ -4,6 +4,7 @@ import { ErroConflito } from '@/server/erros'
 
 // Colunas públicas (nunca inclui senha_hash)
 const CAMPOS = `id, login, nome, telefone, cpf_cnpj, tipo_documento, nome_fantasia,
+                cep, endereco, uf, cidade, localizacao,
                 papel, ativo, ultimo_login_em, criado_em, atualizado_em`
 
 export class VendedorRepositorio {
@@ -53,6 +54,20 @@ export class VendedorRepositorio {
     return rows[0] ?? null
   }
 
+  // Locais de retirada (site público): vendedores ativos com endereço ou localização.
+  // Só sai o que o cliente precisa para chegar lá — nunca login, telefone ou documento.
+  async listarLocaisRetirada(limite) {
+    const { rows } = await this.banco.consultar(
+      `SELECT COALESCE(nome_fantasia, nome) AS nome, cep, endereco, uf, cidade, localizacao
+       FROM vendedores
+       WHERE ativo AND (endereco IS NOT NULL OR localizacao IS NOT NULL)
+       ORDER BY (papel = 'admin') DESC, id
+       LIMIT $1`,
+      [limite]
+    )
+    return rows
+  }
+
   async buscarParaLogin(login) {
     const { rows } = await this.banco.consultar(
       'SELECT id, login, nome, nome_fantasia, papel, ativo, senha_hash FROM vendedores WHERE login = $1',
@@ -81,10 +96,23 @@ export class VendedorRepositorio {
   async inserir(dados, senhaHash) {
     try {
       const { rows } = await this.banco.consultar(
-        `INSERT INTO vendedores (login, nome, senha_hash, telefone, cpf_cnpj, nome_fantasia, papel)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `INSERT INTO vendedores (login, nome, senha_hash, telefone, cpf_cnpj, nome_fantasia, papel, cep, endereco, uf, cidade, localizacao)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
          RETURNING ${CAMPOS}`,
-        [dados.login, dados.nome, senhaHash, dados.telefone, dados.cpf_cnpj ?? null, dados.nome_fantasia ?? null, dados.papel ?? 'vendedor']
+        [
+          dados.login,
+          dados.nome,
+          senhaHash,
+          dados.telefone,
+          dados.cpf_cnpj ?? null,
+          dados.nome_fantasia ?? null,
+          dados.papel ?? 'vendedor',
+          dados.cep ?? null,
+          dados.endereco ?? null,
+          dados.uf ?? null,
+          dados.cidade ?? null,
+          dados.localizacao ?? null,
+        ]
       )
       return rows[0]
     } catch (erro) {

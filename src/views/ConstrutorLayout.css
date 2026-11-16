@@ -215,6 +215,79 @@
   outline-offset: -2px;
 }
 
+/* Miniatura: foto do primeiro produto, com o número da camada no canto */
+.camada__miniatura {
+  position: relative;
+  flex-shrink: 0;
+  width: 42px;
+  height: 54px;
+  background: var(--cinza-claro);
+}
+
+/* mais de um produto: uma segunda "foto" aparece atrás */
+.camada__miniatura.tem-varias {
+  margin-right: 5px;
+  box-shadow: 4px 4px 0 -1px var(--branco), 5px 5px 0 -1px #bdbdbd;
+}
+
+.camada__miniatura img,
+.camada__miniatura svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  object-fit: cover;
+  object-position: center top;
+}
+
+.camada.is-oculta .camada__miniatura img,
+.camada.is-oculta .camada__miniatura svg {
+  opacity: 0.35;
+}
+
+.camada__numero {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  background: var(--preto);
+  color: var(--branco);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.camada__textos {
+  opacity: 0.5;
+}
+
+.camada__cabecalho {
+  display: flex;
+  align-items: center;
+}
+
+.camada__titulo {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px;
+  background: none;
+  border: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.camada__titulo:focus-visible {
+  outline: 2px solid var(--preto);
+  outline-offset: -2px;
+}
+
 .camada__numero {
   flex-shrink: 0;
   display: grid;
@@ -254,17 +327,22 @@
 .camada__acoes button {
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 34px;
+  width: 34px;
+  height: 40px;
   background: none;
   border: none;
-  font-size: 14px;
   cursor: pointer;
-  color: var(--preto);
+  color: var(--cinza-texto);
+}
+
+.camada__acoes svg {
+  width: 18px;
+  height: 18px;
 }
 
 .camada__acoes button:hover:not(:disabled) {
   background: var(--cinza-claro);
+  color: var(--preto);
 }
 
 .camada__acoes button:disabled {
@@ -275,6 +353,87 @@
 .camada__acoes button:focus-visible {
   outline: 2px solid var(--preto);
   outline-offset: -2px;
+}
+
+.camada__acoes button[aria-pressed='true'],
+.camada__acoes button[aria-expanded='true'] {
+  color: var(--preto);
+  background: var(--cinza-claro);
+}
+
+/* Menu "mais ações" (duplicar, remover) */
+.camada__menu {
+  position: relative;
+}
+
+.camada__menu-lista {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 5;
+  min-width: 150px;
+  padding: 4px;
+  background: var(--branco);
+  border: 1px solid var(--borda);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+}
+
+.camada__acoes .camada__menu-lista button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  width: 100%;
+  height: 40px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--preto);
+}
+
+.camada__acoes .camada__menu-lista button.is-perigo {
+  color: #b42318;
+}
+
+/* Aviso "Camada removida — Desfazer", acima da barra de salvar */
+.construtor__desfazer {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: max-content;
+  max-width: 100%;
+  padding: 10px 14px;
+  background: var(--preto);
+  color: var(--branco);
+  font-size: 13px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.construtor__desfazer:empty {
+  display: none;
+}
+
+.construtor__desfazer button {
+  flex-shrink: 0;
+  padding: 4px 0;
+  background: none;
+  border: none;
+  font: inherit;
+  font-weight: 800;
+  color: var(--branco);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.construtor__desfazer button:focus-visible {
+  outline: 2px solid var(--branco);
+  outline-offset: 3px;
 }
 
 /* Editor da camada */

@@ -49,6 +49,7 @@ a.card-menu:focus-visible {
 .card-menu--dourado { --cor-card: var(--dourado); }
 .card-menu--roxo { --cor-card: var(--roxo); }
 .card-menu--verde { --cor-card: var(--verde); }
+.card-menu--marrom { --cor-card: var(--marrom); }
 
 .card-menu[class*='card-menu--'] .card-menu__icone {
   background: var(--cor-card);

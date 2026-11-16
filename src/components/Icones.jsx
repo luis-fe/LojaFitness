@@ -252,3 +252,50 @@ export const IconeInventario = () => (
     <path d="m9 14 2 2 4-4" />
   </Svg>
 )
+
+// Ações das camadas no construtor de layout
+export const IconeSetaCima = () => (
+  <Svg>
+    <path d="M12 19V5M6 11l6-6 6 6" />
+  </Svg>
+)
+
+export const IconeSetaBaixo = () => (
+  <Svg>
+    <path d="M12 5v14M6 13l6 6 6-6" />
+  </Svg>
+)
+
+// Três pontos (mais ações)
+export const IconeMais = () => (
+  <Svg>
+    <circle cx="5" cy="12" r="1.2" />
+    <circle cx="12" cy="12" r="1.2" />
+    <circle cx="19" cy="12" r="1.2" />
+  </Svg>
+)
+
+export const IconeDuplicar = () => (
+  <Svg>
+    <rect x="9" y="9" width="11" height="11" rx="1.5" />
+    <path d="M15 9V5.5A1.5 1.5 0 0 0 13.5 4h-8A1.5 1.5 0 0 0 4 5.5v8A1.5 1.5 0 0 0 5.5 15H9" />
+  </Svg>
+)
+
+export const IconeLixeira = () => (
+  <Svg>
+    <path d="M4 7h16M10 11v6M14 11v6" />
+    <path d="M6 7l1 12a1.5 1.5 0 0 0 1.5 1.4h7a1.5 1.5 0 0 0 1.5-1.4L18 7" />
+    <path d="M9 7V4.5h6V7" />
+  </Svg>
+)
+
+// Caixas empilhadas (estoques)
+export const IconeEstoque = () => (
+  <Svg>
+    <rect x="3" y="12" width="8" height="8" rx="1" />
+    <rect x="13" y="12" width="8" height="8" rx="1" />
+    <rect x="8" y="3" width="8" height="8" rx="1" />
+    <path d="M7 12v2.5M17 12v2.5M12 3v2.5" />
+  </Svg>
+)
