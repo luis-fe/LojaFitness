@@ -180,7 +180,7 @@ CREATE TRIGGER campanhas_atualizado_em
 -- CLIENTES
 -- ---------------------------------------------------------------------
 -- Chave: CEP + nome (o mesmo cliente que volta é atualizado, não duplicado).
--- "id" continua único para ligar com "pedidos".
+-- "id" continua único (identificador interno).
 CREATE TABLE IF NOT EXISTS clientes (
   id             bigint GENERATED ALWAYS AS IDENTITY UNIQUE,
   cep            char(8)     NOT NULL CHECK (cep ~ '^[0-9]{8}$'),
@@ -223,7 +223,6 @@ BEGIN
       ADD CONSTRAINT clientes_cidade_check CHECK (length(cidade) BETWEEN 2 AND 80),
       ADD CONSTRAINT clientes_estado_check CHECK (estado ~ '^[A-Z]{2}$'),
       ADD CONSTRAINT clientes_pedidos_check CHECK (pedidos >= 0);
-    ALTER TABLE pedidos ADD CONSTRAINT pedidos_cliente_id_fkey FOREIGN KEY (cliente_id) REFERENCES clientes (id) ON DELETE SET NULL;
   END IF;
 END $$;
 
@@ -239,23 +238,55 @@ COMMENT ON COLUMN clientes.pedidos IS 'Quantas vezes o cliente enviou pedido pel
 -- ---------------------------------------------------------------------
 -- PEDIDOS
 -- ---------------------------------------------------------------------
+--   id_pedido     número do pedido (índice/chave); codigo = JLK-000042 (aparece na mensagem)
+--   data_emissao  quando o pedido foi emitido
+--   situacao      0 = Rascunho (enviado pelo WhatsApp, aguardando pagamento) · 1 = Pago (aprovado)
+--   cliente       chave estrangeira para clientes (cep + nome)
 CREATE TABLE IF NOT EXISTS pedidos (
-  id             bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  codigo         text GENERATED ALWAYS AS ('JLK-' || lpad(id::text, 6, '0')) STORED UNIQUE,  -- ex.: JLK-000042
-  cliente_id     bigint REFERENCES clientes (id) ON DELETE SET NULL,
-  canal          text          NOT NULL DEFAULT 'whatsapp'
-                 CHECK (canal IN ('whatsapp', 'site')),
-  status         text          NOT NULL DEFAULT 'aguardando_pagamento'
-                 CHECK (status IN ('aguardando_pagamento', 'pago', 'enviado', 'entregue', 'cancelado', 'expirado')),
+  id_pedido      bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  codigo         text GENERATED ALWAYS AS ('JLK-' || lpad(id_pedido::text, 6, '0')) STORED UNIQUE,
+  data_emissao   timestamptz   NOT NULL DEFAULT now(),
+  situacao       smallint      NOT NULL DEFAULT 0 CHECK (situacao IN (0, 1)),
+  cliente_cep    char(8)       NOT NULL,
+  cliente_nome   text          NOT NULL,
   total          numeric(10,2) NOT NULL CHECK (total >= 0),
-  observacao     text,
-  pago_em        timestamptz,
-  criado_em      timestamptz   NOT NULL DEFAULT now(),
-  atualizado_em  timestamptz   NOT NULL DEFAULT now()
+  atualizado_em  timestamptz   NOT NULL DEFAULT now(),
+  CONSTRAINT pedidos_cliente_fkey FOREIGN KEY (cliente_cep, cliente_nome)
+    REFERENCES clientes (cep, nome) ON UPDATE CASCADE
 );
 
-CREATE INDEX IF NOT EXISTS pedidos_status_idx ON pedidos (status, criado_em DESC);
-CREATE INDEX IF NOT EXISTS pedidos_cliente_idx ON pedidos (cliente_id);
+-- Bancos criados antes: a tabela antiga (id, status, canal, cliente_id…) nunca foi usada pelo site.
+-- Converte para o formato novo; se houver pedidos, guarda cópias em pedidos_legado/pedido_itens_legado.
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'pedidos' AND column_name = 'status') THEN
+    IF EXISTS (SELECT 1 FROM pedidos) THEN
+      CREATE TABLE IF NOT EXISTS pedidos_legado AS SELECT * FROM pedidos;
+      CREATE TABLE IF NOT EXISTS pedido_itens_legado AS SELECT * FROM pedido_itens;
+      RAISE NOTICE 'pedidos antigos copiados para pedidos_legado';
+      DELETE FROM pedidos; -- itens e pagamentos saem junto (ON DELETE CASCADE)
+    END IF;
+    DROP INDEX IF EXISTS pedidos_status_idx;
+    DROP INDEX IF EXISTS pedidos_cliente_idx;
+    ALTER TABLE pedidos RENAME COLUMN id TO id_pedido;
+    ALTER TABLE pedidos RENAME COLUMN criado_em TO data_emissao;
+    ALTER TABLE pedidos DROP COLUMN cliente_id, DROP COLUMN canal, DROP COLUMN status, DROP COLUMN observacao, DROP COLUMN pago_em;
+    ALTER TABLE pedidos
+      ADD COLUMN situacao smallint NOT NULL DEFAULT 0 CONSTRAINT pedidos_situacao_check CHECK (situacao IN (0, 1)),
+      ADD COLUMN cliente_cep char(8) NOT NULL,
+      ADD COLUMN cliente_nome text NOT NULL;
+    ALTER TABLE pedidos ADD CONSTRAINT pedidos_cliente_fkey FOREIGN KEY (cliente_cep, cliente_nome)
+      REFERENCES clientes (cep, nome) ON UPDATE CASCADE;
+  END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS pedidos_situacao_idx ON pedidos (situacao, data_emissao DESC);
+CREATE INDEX IF NOT EXISTS pedidos_cliente_idx  ON pedidos (cliente_cep, cliente_nome);
+
+COMMENT ON TABLE pedidos IS 'Pedidos enviados pelo WhatsApp';
+COMMENT ON COLUMN pedidos.id_pedido IS 'Número do pedido (chave)';
+COMMENT ON COLUMN pedidos.data_emissao IS 'Data de emissão do pedido';
+COMMENT ON COLUMN pedidos.situacao IS '0 = Rascunho · 1 = Pago (aprovado)';
 
 DROP TRIGGER IF EXISTS pedidos_atualizado_em ON pedidos;
 CREATE TRIGGER pedidos_atualizado_em
@@ -266,7 +297,7 @@ CREATE TRIGGER pedidos_atualizado_em
 -- (se o preço mudar depois, o pedido antigo não muda)
 CREATE TABLE IF NOT EXISTS pedido_itens (
   id              bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  pedido_id       bigint        NOT NULL REFERENCES pedidos (id) ON DELETE CASCADE,
+  pedido_id       bigint        NOT NULL REFERENCES pedidos (id_pedido) ON DELETE CASCADE,
   produto_filho_id bigint,                                  -- variação vendida (ligada a produtos_filho mais abaixo)
   produto_nome    text          NOT NULL,
   cor             text          NOT NULL,
@@ -284,7 +315,7 @@ CREATE INDEX IF NOT EXISTS pedido_itens_pedido_idx ON pedido_itens (pedido_id);
 -- ---------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS pagamentos (
   id             bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  pedido_id      bigint        NOT NULL REFERENCES pedidos (id) ON DELETE CASCADE,
+  pedido_id      bigint        NOT NULL REFERENCES pedidos (id_pedido) ON DELETE CASCADE,
   metodo         text          NOT NULL DEFAULT 'pix' CHECK (metodo IN ('pix')),
   provedor       text,                                   -- ex.: 'mercadopago', 'asaas', 'efi'
   txid           text UNIQUE,                            -- identificador da cobrança no provedor

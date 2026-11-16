@@ -1,6 +1,6 @@
 // Regras de pedido: confere itens e estoque e recalcula o total com os preços do servidor
-// (nunca confia em preços enviados pelo navegador), confere e grava o cliente (tabela clientes)
-// e devolve a mensagem e o link do WhatsApp.
+// (nunca confia em preços enviados pelo navegador), confere o cliente e grava cliente + pedido
+// (situação 0 = Rascunho) + itens numa transação. Devolve o número, a mensagem e o link do WhatsApp.
 import 'server-only'
 import { ErroValidacao } from '@/server/erros'
 import { linkWhatsApp, mensagemPedido } from '@/lib/whatsapp'
@@ -9,9 +9,9 @@ import { validarCliente } from '@/lib/cliente'
 export class PedidoServico {
   static MAX_ITENS = 50
 
-  constructor({ catalogoServico, clienteRepositorio }) {
+  constructor({ catalogoServico, pedidoRepositorio }) {
     this.catalogo = catalogoServico
-    this.clientes = clienteRepositorio
+    this.pedidos = pedidoRepositorio
   }
 
   async validar(entrada, clienteEntrada) {
@@ -49,6 +49,8 @@ export class PedidoServico {
         continue
       }
       itens.push({
+        codigoProduto: produto.codigo,
+        codigoCor: produto.cores.find((c) => c.nome === item.cor)?.codigo,
         slug: produto.slug,
         nome: produto.nome,
         cor: item.cor,
@@ -65,9 +67,10 @@ export class PedidoServico {
       throw e
     }
 
-    await this.clientes.salvar(cliente)
     const total = Math.round(itens.reduce((s, i) => s + i.subtotal, 0) * 100) / 100
-    const mensagem = mensagemPedido(itens, cliente)
-    return { itens, total, mensagem, whatsappUrl: linkWhatsApp(mensagem) }
+    const pedido = await this.pedidos.criarRascunho({ cliente, itens, total })
+    const mensagem = mensagemPedido(itens, cliente, pedido.codigo)
+    const publicos = itens.map(({ codigoProduto, codigoCor, ...resto }) => resto) // códigos internos ficam no servidor
+    return { pedido: { codigo: pedido.codigo, situacao: pedido.situacao }, itens: publicos, total, mensagem, whatsappUrl: linkWhatsApp(mensagem) }
   }
 }

@@ -30,7 +30,7 @@ config/BancoDeDados.js        conexão (pool), consultas e transações
 | `config/` | `BancoDeDados` — pool do PostgreSQL, `consultar()`, `transacao()` |
 | `erros/` | `ErroAplicacao` e filhas (`ErroValidacao` 422, `ErroConflito` 409, `ErroNaoEncontrado` 404, `ErroPermissao` 403, `ErroNaoAutenticado` 401…) |
 | `http/` | `Rota` (login, leitura do corpo, erros → JSON) e `Autenticador` (token Bearer) |
-| `repositorios/` | `VendedorRepositorio`, `ImagemRepositorio`, `LayoutRepositorio`, `TamanhoRepositorio`, `CorRepositorio`, `ProdutoRepositorio`, `CampanhaRepositorio`, `PainelRepositorio`, `VisitaRepositorio`, `ClienteRepositorio` |
+| `repositorios/` | `VendedorRepositorio`, `ImagemRepositorio`, `LayoutRepositorio`, `TamanhoRepositorio`, `CorRepositorio`, `ProdutoRepositorio`, `CampanhaRepositorio`, `PainelRepositorio`, `VisitaRepositorio`, `ClienteRepositorio`, `PedidoRepositorio` |
 | `servicos/` | `AuthServico`, `VendedorServico`, `ImagemServico`, `ArmazenamentoServico`, `LayoutServico`, `TamanhoServico`, `CorServico`, `ProdutoServico`, `PedidoServico`, `PainelServico`, `VisitaServico`, `CatalogoServico` |
 | `controllers/` | `AuthController`, `VendedorController`, `ImagemController`, `LayoutController`, `TamanhoController`, `CorController`, `ProdutoController`, `LojaController`, `VisitaController` |
 | `utils/` | `LimiteTentativas`, `senha` (hash scrypt) e `validacao` (também usados pelos scripts de terminal) |

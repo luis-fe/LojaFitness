@@ -7,14 +7,14 @@ export function linkWhatsApp(mensagem) {
 }
 
 // Monta a mensagem do pedido com um ou mais itens (e os dados do cliente para a entrega)
-export function mensagemPedido(itens, cliente) {
+export function mensagemPedido(itens, cliente, codigoPedido) {
   const total = itens.reduce((s, i) => s + i.preco * i.quantidade, 0)
   const linhas = itens.map(
     (i, n) =>
       `${n + 1}. *${i.nome}*\n   Cor: ${i.cor} | Tamanho: ${i.tamanho} | Qtd: ${i.quantidade}\n   ${formatarPreco(i.preco)} cada — subtotal ${formatarPreco(i.preco * i.quantidade)}`
   )
   return [
-    `Olá! Quero finalizar meu pedido na ${NOME_LOJA}:`,
+    codigoPedido ? `Olá! Quero finalizar meu pedido *${codigoPedido}* na ${NOME_LOJA}:` : `Olá! Quero finalizar meu pedido na ${NOME_LOJA}:`,
     '',
     ...linhas,
     '',
