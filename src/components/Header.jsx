@@ -137,18 +137,6 @@ export default function Header() {
         <Image src={logo} alt="JLK" priority sizes="110px" />
       </Link>
 
-      <nav className="header__nav" aria-label="Principal">
-        {opcoes.map((op) => (
-          <Link
-            key={op.label}
-            href={op.href}
-            className="header__link"
-            aria-current={ativo(op.href) ? 'page' : undefined}
-          >
-            {op.label}
-          </Link>
-        ))}
-      </nav>
 
       <BotaoCompartilhar />
 
