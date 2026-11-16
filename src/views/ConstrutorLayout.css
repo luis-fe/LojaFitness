@@ -47,9 +47,30 @@
 }
 
 .construtor__status {
-  margin-top: 4px;
   font-size: 13px;
   color: var(--cinza-texto);
+}
+
+/* Barra de controles fixa no rodapé da tela (acompanha a rolagem) */
+.construtor__controles {
+  position: sticky;
+  bottom: 12px;
+  z-index: 40;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 20px;
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: var(--branco);
+  border: 1px solid var(--borda);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+}
+
+.construtor__controles .botao {
+  border-radius: 8px;
 }
 
 .construtor__acoes {

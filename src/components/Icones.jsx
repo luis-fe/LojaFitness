@@ -171,3 +171,29 @@ export const IconeEditar = () => (
     <path d="m13.5 6.5 4 4" />
   </Svg>
 )
+
+// Seta voltando (descartar alterações)
+export const IconeDesfazer = () => (
+  <Svg>
+    <path d="M9 14 4 9l5-5" />
+    <path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" />
+  </Svg>
+)
+
+// Disquete (salvar rascunho)
+export const IconeSalvar = () => (
+  <Svg>
+    <path d="M5 3h11l3 3v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" />
+    <path d="M7 3v5h8V3" />
+    <path d="M7 21v-7h10v7" />
+  </Svg>
+)
+
+// Globo com seta (publicar no site)
+export const IconePublicar = () => (
+  <Svg>
+    <path d="M21 12a9 9 0 1 1-9-9" />
+    <path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 4 9M12 21c-2.5-2.7-3.8-5.7-4-9 .2-3.3 1.5-6.3 4-9" />
+    <path d="M16 3h5v5M21 3l-6 6" />
+  </Svg>
+)

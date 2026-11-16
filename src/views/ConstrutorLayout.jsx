@@ -7,6 +7,7 @@ import '@/components/Formulario.css'
 import Campo from '@/components/Campo'
 import Modal from '@/components/Modal'
 import { useAutenticacao } from '@/context/Autenticacao'
+import { IconeDesfazer, IconeSalvar, IconePublicar } from '@/components/Icones'
 import { useErro } from '@/context/Erro'
 import { formatarDataHora } from '@/lib/formatos'
 import SeletorImagens from '@/components/SeletorImagens'
@@ -346,28 +347,6 @@ export default function ConstrutorLayout() {
             <Link href="/area-do-vendedor">Início</Link> / <span aria-current="page">Meu Site</span>
           </nav>
           <h1 id="construtor-titulo">Construção Layout Site</h1>
-          <p className="construtor__status" aria-live="polite">
-            {!estado
-              ? 'Carregando…'
-              : alterado
-                ? '● Alterações não salvas'
-                : naoPublicado
-                  ? '● Rascunho salvo, ainda não publicado'
-                  : estado.publicadoEm
-                    ? `✓ Publicado em ${formatarDataHora(estado.publicadoEm)}${estado.publicadoPor ? ` por ${estado.publicadoPor}` : ''}`
-                    : '✓ Usando o layout padrão do site'}
-          </p>
-        </div>
-        <div className="construtor__acoes">
-          <button type="button" className="botao botao--secundario botao--pequeno" disabled={!alterado || ocupado} onClick={() => setModal({ tipo: 'descartar' })}>
-            Descartar
-          </button>
-          <button type="button" className="botao botao--secundario botao--pequeno" disabled={!alterado || ocupado} onClick={() => enviar('/api/layout', 'PUT', 'Rascunho salvo. O site ainda não mudou.')}>
-            Salvar rascunho
-          </button>
-          <button type="button" className="botao botao--pequeno" disabled={!naoPublicado || ocupado} onClick={() => setModal({ tipo: 'publicar' })}>
-            Publicar no site
-          </button>
         </div>
       </header>
 
@@ -389,7 +368,7 @@ export default function ConstrutorLayout() {
         <aside className="painel" aria-label="Camadas da página">
           <div className="painel__topo">
             <h2>Camadas ({camadas.length})</h2>
-            <button type="button" className="botao botao--pequeno" disabled={camadas.length >= MAX_CAMADAS} onClick={() => setModal({ tipo: 'adicionar' })}>
+            <button type="button" className="botao botao--pequeno botao--roxo" disabled={camadas.length >= MAX_CAMADAS} onClick={() => setModal({ tipo: 'adicionar' })}>
               + Nova camada
             </button>
           </div>
@@ -398,8 +377,8 @@ export default function ConstrutorLayout() {
           {camadas.length === 0 && (
             <div className="painel__vazio">
               A página está vazia.
-              <button type="button" className="link-acao" onClick={() => setModal({ tipo: 'adicionar' })}>
-                Adicionar a primeira camada
+              <button type="button" className="botao botao--pequeno botao--roxo" onClick={() => setModal({ tipo: 'adicionar' })}>
+                + Adicionar a primeira camada
               </button>
             </div>
           )}
@@ -471,6 +450,35 @@ export default function ConstrutorLayout() {
           <div className={`previa__palco previa__palco--${dispositivo}`}>
             <iframe ref={quadro} src="/previa-layout" title="Prévia da página inicial" className="previa__quadro" onLoad={enviarParaPrevia} />
           </div>
+        </div>
+      </div>
+
+      {/* Barra de controles: fica sempre visível no rodapé da tela enquanto a página rola */}
+      <div className="construtor__controles" role="region" aria-label="Salvar e publicar">
+        <p className="construtor__status" aria-live="polite">
+          {!estado
+            ? 'Carregando…'
+            : alterado
+              ? '● Alterações não salvas'
+              : naoPublicado
+                ? '● Rascunho salvo, ainda não publicado'
+                : estado.publicadoEm
+                  ? `✓ Publicado em ${formatarDataHora(estado.publicadoEm)}${estado.publicadoPor ? ` por ${estado.publicadoPor}` : ''}`
+                  : '✓ Usando o layout padrão do site'}
+        </p>
+        <div className="construtor__acoes">
+          <button type="button" className="botao botao--secundario botao--pequeno" disabled={!alterado || ocupado} onClick={() => setModal({ tipo: 'descartar' })}>
+            <IconeDesfazer />
+            Descartar
+          </button>
+          <button type="button" className="botao botao--secundario botao--pequeno" disabled={!alterado || ocupado} onClick={() => enviar('/api/layout', 'PUT', 'Rascunho salvo. O site ainda não mudou.')}>
+            <IconeSalvar />
+            Salvar rascunho
+          </button>
+          <button type="button" className="botao botao--pequeno" disabled={!naoPublicado || ocupado} onClick={() => setModal({ tipo: 'publicar' })}>
+            <IconePublicar />
+            Publicar no site
+          </button>
         </div>
       </div>
 

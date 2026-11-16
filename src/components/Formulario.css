@@ -194,6 +194,29 @@
   }
 }
 
+/* Roxo (Meu Site): texto branco, contraste 5,7:1 */
+.botao.botao--roxo {
+  background: var(--roxo);
+  border-color: var(--roxo);
+  color: var(--branco);
+  border-radius: 8px;
+}
+
+@media (hover: hover) {
+  .botao.botao--roxo:hover:not(:disabled) {
+    background: #6527d1;
+    border-color: #6527d1;
+    color: var(--branco);
+  }
+}
+
+/* Ícone dentro de botão */
+.botao svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
 .botao:focus-visible {
   outline: 2px solid var(--preto);
   outline-offset: 3px;
