@@ -1,5 +1,6 @@
 import './globals.css'
 import Header from '@/components/Header'
+import Rodape from '@/components/Rodape'
 import RegistroVisita from '@/components/RegistroVisita'
 import { CarrinhoProvider } from '@/context/Carrinho'
 import { AutenticacaoProvider } from '@/context/Autenticacao'
@@ -33,6 +34,7 @@ export default function RootLayout({ children }) {
           <main id="conteudo" tabIndex={-1} style={{ outline: 'none' }}>
             {children}
           </main>
+          <Rodape />
         </CarrinhoProvider>
         </AutenticacaoProvider>
       </body>

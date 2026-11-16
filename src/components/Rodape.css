@@ -1,0 +1,35 @@
+.rodape {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 24px;
+  margin-top: 48px;
+  padding: 24px 16px;
+  background: var(--preto);
+  color: var(--branco);
+  font-size: 13px;
+}
+
+.rodape__links a {
+  color: var(--branco);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.rodape__links a:focus-visible {
+  outline: 2px solid var(--branco);
+  outline-offset: 3px;
+}
+
+.rodape__direitos {
+  color: #bdbdbd; /* contraste 10:1 sobre preto */
+}
+
+@media (max-width: 560px) {
+  .rodape {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

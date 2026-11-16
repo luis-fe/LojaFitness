@@ -1,0 +1,132 @@
+.politica {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 32px 16px 24px;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--cinza);
+}
+
+.politica__topo h1 {
+  font-size: clamp(26px, 5vw, 34px);
+  font-weight: 800;
+  text-transform: uppercase;
+  line-height: 1.1;
+  color: var(--preto);
+}
+
+.politica__data {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--cinza-neutro);
+}
+
+.politica__resumo {
+  margin: 24px 0 8px;
+  padding: 16px 20px;
+  background: var(--cinza-claro);
+  border-radius: 16px;
+}
+
+.politica section {
+  margin-top: 28px;
+}
+
+.politica h2 {
+  margin-bottom: 8px;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--preto);
+}
+
+.politica p + p,
+.politica p + ul,
+.politica ul + p,
+.politica table + p {
+  margin-top: 10px;
+}
+
+.politica ul {
+  padding-left: 20px;
+}
+
+.politica li + li {
+  margin-top: 6px;
+}
+
+.politica a {
+  color: var(--preto);
+  font-weight: 700;
+  text-underline-offset: 3px;
+}
+
+.politica a:focus-visible {
+  outline: 2px solid var(--preto);
+  outline-offset: 2px;
+}
+
+.politica__tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.politica__tabela th,
+.politica__tabela td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--borda);
+  text-align: left;
+  vertical-align: top;
+}
+
+.politica__tabela th {
+  background: var(--preto);
+  color: var(--branco);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.politica__voltar {
+  margin-top: 36px;
+}
+
+/* Celular: cada linha da tabela vira um card */
+@media (max-width: 640px) {
+  .politica__tabela thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .politica__tabela,
+  .politica__tabela tbody,
+  .politica__tabela tr,
+  .politica__tabela td {
+    display: block;
+  }
+
+  .politica__tabela tr {
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    background: var(--cinza-claro);
+    border-radius: 16px;
+  }
+
+  .politica__tabela td {
+    padding: 4px 0;
+    border: none;
+  }
+
+  .politica__tabela td::before {
+    content: attr(data-rotulo);
+    display: block;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--cinza-neutro);
+  }
+}
