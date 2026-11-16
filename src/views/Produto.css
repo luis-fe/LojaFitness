@@ -480,3 +480,79 @@
   flex-direction: column;
   gap: 8px;
 }
+
+/* Escolha das peças (depois do preço e da quantidade) */
+.produto__escolha {
+  margin-top: 20px;
+}
+
+.produto__proximo {
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  background: #e6f4ea;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #0f5132;
+}
+
+.grade__celula {
+  position: relative;
+}
+
+.grade__escolhidas {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.produto__escolhas {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.produto__escolhas li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 10px;
+  border: 1px solid var(--preto);
+  border-radius: 999px;
+  font-size: 13px;
+}
+
+.produto__escolhas button {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 50%;
+  background: var(--cinza-claro);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.produto__acoes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+/* Peça escolhida continua destacada mesmo com a célula travada (todas as peças já escolhidas) */
+.grade__celula.is-ativo:disabled {
+  background: var(--preto);
+  border-style: solid;
+  border-color: var(--preto);
+  color: var(--branco);
+  cursor: default;
+}
+
+.grade__celula.is-ativo:disabled .grade__qtd,
+.grade__celula.is-ativo:disabled .grade__rotulo,
+.grade__celula.is-ativo:disabled .grade__escolhidas {
+  color: var(--branco);
+}
