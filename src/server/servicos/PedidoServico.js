@@ -2,20 +2,24 @@
 // (nunca confia em preços enviados pelo navegador). Devolve a mensagem e o link do WhatsApp.
 import 'server-only'
 import { ErroValidacao } from '@/server/erros'
-import { buscarProduto, TAMANHOS } from '@/lib/produtos'
 import { linkWhatsApp, mensagemPedido } from '@/lib/whatsapp'
 
 export class PedidoServico {
   static MAX_ITENS = 50
 
-  validar(entrada) {
+  constructor({ catalogoServico }) {
+    this.catalogo = catalogoServico
+  }
+
+  async validar(entrada) {
     if (!Array.isArray(entrada) || entrada.length === 0) throw new ErroValidacao({ itens: 'O pedido está vazio.' }, 'O pedido está vazio.')
     if (entrada.length > PedidoServico.MAX_ITENS) throw new ErroValidacao({ itens: `Máximo de ${PedidoServico.MAX_ITENS} itens por pedido.` })
 
+    const catalogo = await this.catalogo.listar()
     const erros = []
     const itens = []
     for (const [n, item] of entrada.entries()) {
-      const produto = buscarProduto(item?.slug)
+      const produto = catalogo.find((p) => p.slug === item?.slug)
       const quantidade = Number(item?.quantidade)
       const rotulo = `Item ${n + 1}`
 
@@ -27,8 +31,8 @@ export class PedidoServico {
         erros.push(`${rotulo}: cor "${item.cor}" indisponível para ${produto.nome}.`)
         continue
       }
-      if (!TAMANHOS.includes(item.tamanho)) {
-        erros.push(`${rotulo}: tamanho "${item.tamanho}" inválido.`)
+      if (produto.estoque[item.cor]?.[item.tamanho] === undefined) {
+        erros.push(`${rotulo}: ${produto.nome} ${item.cor} não possui o tamanho "${item.tamanho}".`)
         continue
       }
       if (!Number.isInteger(quantidade) || quantidade < 1) {

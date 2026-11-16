@@ -218,6 +218,17 @@
   color: #a3a3a3;
 }
 
+/* Tamanho que a cor não tem no cadastro: listras, para não confundir com "Esgotado" */
+.grade__celula.is-nao-possui {
+  background: repeating-linear-gradient(-45deg, var(--cinza-claro) 0 6px, #ebebeb 6px 12px);
+  border-color: transparent;
+}
+
+.grade__celula.is-nao-possui .grade__rotulo {
+  color: var(--cinza-neutro); /* contraste 4,7:1 */
+  font-weight: 700;
+}
+
 .produto__selecao {
   margin-top: 14px;
   min-height: 22px;

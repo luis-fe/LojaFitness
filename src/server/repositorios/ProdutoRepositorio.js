@@ -51,6 +51,25 @@ export class ProdutoRepositorio {
     return rows
   }
 
+  // Catálogo da loja: produtos visíveis (preço já com campanha vigente) e as variações que existem
+  async listarCatalogo() {
+    const [produtos, variacoes] = await Promise.all([
+      this.banco.consultar(
+        `SELECT codigo, slug, nome, descricao, caminho, preco_atual, preco_final, desconto_percentual, campanha_nome
+         FROM produtos_com_preco WHERE ativo ORDER BY destaque DESC NULLS LAST, criado_em, id`
+      ),
+      this.banco.consultar(
+        `SELECT f.codigo_produto, c.codigo AS cor, c.nome AS cor_nome, c.rgb, t.codigo AS tamanho, t.sequencia, f.estoque
+         FROM produtos_filho f
+         JOIN produtos p ON p.codigo = f.codigo_produto AND p.ativo
+         JOIN cores c ON c.codigo = f.cor
+         JOIN tamanhos t ON t.codigo = f.tamanho
+         ORDER BY c.nome, t.sequencia`
+      ),
+    ])
+    return { produtos: produtos.rows, variacoes: variacoes.rows }
+  }
+
   // Salva produto + variações numa transação: ou grava tudo, ou nada.
   async criar(d, filhos) {
     try {

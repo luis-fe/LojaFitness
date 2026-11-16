@@ -298,3 +298,27 @@
     grid-column: 2;
   }
 }
+
+/* Aviso: item saiu do carrinho porque a variação não existe mais na loja */
+.carrinho__removidos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  background: var(--cinza-claro);
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.carrinho__removidos button {
+  padding: 0;
+  background: none;
+  border: none;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}

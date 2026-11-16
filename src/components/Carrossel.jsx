@@ -1,12 +1,9 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import './Carrossel.css'
-import { produtos, formatarPreco } from '@/lib/produtos'
-
-const itens = produtos.map((p) => ({ ...p, href: `/produto/${p.slug}` }))
+import Preco from '@/components/Preco'
 
 const INTERVALO = 4000 // tempo de cada passagem (ms)
 
@@ -26,8 +23,18 @@ function useSlidesPorVez() {
 
 const movimentoReduzido = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-export default function Carrossel({ selo = 'Lançamentos', titulo = 'Novidades', ancora = true }) {
-  const total = itens.length
+// produtos: catálogo vindo do servidor (página inicial). Sem ele (prévia do construtor), busca em /api/produtos.
+export default function Carrossel({ produtos, selo = 'Lançamentos', titulo = 'Novidades', ancora = true }) {
+  const [buscados, setBuscados] = useState(null)
+  useEffect(() => {
+    if (produtos) return
+    fetch('/api/produtos')
+      .then((r) => r.json())
+      .then((d) => setBuscados(d.produtos ?? []))
+      .catch(() => setBuscados([]))
+  }, [produtos])
+  const itens = (produtos ?? buscados ?? []).map((p) => ({ ...p, href: `/produto/${p.slug}` }))
+  const total = Math.max(itens.length, 1)
   const porVez = useSlidesPorVez()
   const [indice, setIndice] = useState(0)
   const [animar, setAnimar] = useState(true)
@@ -101,6 +108,8 @@ export default function Carrossel({ selo = 'Lançamentos', titulo = 'Novidades',
     if (Math.abs(delta) > 40) (delta < 0 ? proximo : anterior)()
   }
 
+  if (!itens.length) return null // sem produtos visíveis no cadastro
+
   const ativo = indice % total
 
   return (
@@ -154,17 +163,14 @@ export default function Carrossel({ selo = 'Lançamentos', titulo = 'Novidades',
               >
                 <Link href={item.href} className="carrossel__card">
                   <div className="carrossel__imagem">
-                    <Image
-                      src={item.imagem}
-                      alt={`${item.nome} azul JLK`}
-                      sizes="(min-width: 768px) 600px, 100vw"
-                      loading={i < 2 ? 'eager' : 'lazy'}
-                    />
+                    <img src={item.imagem} alt={`${item.nome} JLK`} loading={i < 2 ? 'eager' : 'lazy'} decoding="async" />
                   </div>
                   <div className="carrossel__legenda">
                     <span className="carrossel__nome">
                       {item.nome}
-                      <small>{formatarPreco(item.preco)}</small>
+                      <small>
+                        <Preco produto={item} />
+                      </small>
                     </span>
                     <span className="carrossel__cta">Comprar</span>
                   </div>

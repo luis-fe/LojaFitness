@@ -32,6 +32,7 @@ import { TamanhoServico } from '@/server/servicos/TamanhoServico'
 import { CorServico } from '@/server/servicos/CorServico'
 import { ProdutoServico } from '@/server/servicos/ProdutoServico'
 import { PedidoServico } from '@/server/servicos/PedidoServico'
+import { CatalogoServico } from '@/server/servicos/CatalogoServico'
 import { PainelServico } from '@/server/servicos/PainelServico'
 import { VisitaServico } from '@/server/servicos/VisitaServico'
 
@@ -64,7 +65,8 @@ export const layoutServico = new LayoutServico({ layoutRepositorio })
 export const tamanhoServico = new TamanhoServico({ tamanhoRepositorio })
 export const corServico = new CorServico({ corRepositorio })
 export const produtoServico = new ProdutoServico({ produtoRepositorio, layoutRepositorio })
-export const pedidoServico = new PedidoServico()
+export const catalogoServico = new CatalogoServico({ produtoRepositorio })
+export const pedidoServico = new PedidoServico({ catalogoServico })
 export const painelServico = new PainelServico({ banco, painelRepositorio, campanhaRepositorio })
 export const visitaServico = new VisitaServico({ visitaRepositorio })
 
@@ -80,5 +82,5 @@ export const layoutController = new LayoutController({ rota, layoutServico })
 export const tamanhoController = new TamanhoController({ rota, tamanhoServico })
 export const corController = new CorController({ rota, corServico })
 export const produtoController = new ProdutoController({ rota, produtoServico })
-export const lojaController = new LojaController({ rota, pedidoServico, painelServico })
+export const lojaController = new LojaController({ rota, pedidoServico, painelServico, catalogoServico })
 export const visitaController = new VisitaController({ visitaServico })

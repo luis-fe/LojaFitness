@@ -1,15 +1,17 @@
 import { notFound } from 'next/navigation'
+import { connection } from 'next/server'
 import Produto from '@/views/Produto'
-import { produtos, buscarProduto } from '@/lib/produtos'
+import { catalogoServico } from '@/server/container'
 
-// Gera as páginas de todos os produtos no build (carregam mais rápido e são boas para o Google)
-export function generateStaticParams() {
-  return produtos.map((p) => ({ slug: p.slug }))
+// Página do produto: dados, grade (cor × tamanho) e estoque vêm do cadastro (banco) a cada visita
+async function carregar(slug) {
+  await connection()
+  return catalogoServico.buscar(slug)
 }
 
 export async function generateMetadata({ params }) {
   const { slug } = await params
-  const produto = buscarProduto(slug)
+  const produto = await carregar(slug)
   if (!produto) return {}
   return {
     title: produto.nome,
@@ -20,13 +22,14 @@ export async function generateMetadata({ params }) {
       siteName: 'JLK Fitness e Casual',
       title: produto.nome,
       description: produto.descricao,
-      images: [produto.imagem.src],
+      images: [produto.imagem],
     },
   }
 }
 
 export default async function PaginaProduto({ params }) {
   const { slug } = await params
-  if (!buscarProduto(slug)) notFound()
-  return <Produto slug={slug} />
+  const produto = await carregar(slug)
+  if (!produto) notFound()
+  return <Produto produto={produto} />
 }

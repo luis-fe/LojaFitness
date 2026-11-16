@@ -1,16 +1,16 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import './Produto.css'
-import { TAMANHOS, ESTOQUE_BAIXO, buscarProduto, formatarPreco } from '@/lib/produtos'
+import { formatarPreco, situacaoVariacao } from '@/lib/produtos'
+import Preco from '@/components/Preco'
 import { linkWhatsApp, mensagemPedido } from '@/lib/whatsapp'
 import { useCarrinho } from '@/context/Carrinho'
 import IconeWhatsApp from '@/components/IconeWhatsApp'
 
-export default function Produto({ slug }) {
-  const produto = buscarProduto(slug)
+// produto: vem do cadastro (banco) — veja src/server/servicos/CatalogoServico.js
+export default function Produto({ produto }) {
   const [selecao, setSelecao] = useState(null) // { cor, tamanho }
   const [quantidade, setQuantidade] = useState(1)
   const [adicionado, setAdicionado] = useState(false)
@@ -32,7 +32,8 @@ export default function Produto({ slug }) {
     )
   }
 
-  const qtd = (cor, tam) => produto.estoque[cor]?.[tam] ?? 0
+  const TAMANHOS = produto.tamanhos
+  const qtd = (cor, tam) => situacaoVariacao(produto, cor, tam).quantidade
   const totalCor = (cor) => TAMANHOS.reduce((s, t) => s + qtd(cor, t), 0)
   const qtdSelecionada = selecao ? qtd(selecao.cor, selecao.tamanho) : 0
   const total = produto.preco * quantidade
@@ -48,14 +49,14 @@ export default function Produto({ slug }) {
     : ''
 
   const adicionarAoCarrinho = () => {
-    carrinho.adicionar(produto.slug, selecao.cor, selecao.tamanho, quantidade)
+    carrinho.adicionar(produto, selecao.cor, selecao.tamanho, quantidade)
     setAdicionado(true)
   }
 
   return (
     <section className="produto" aria-labelledby="produto-nome">
       <div className="produto__imagem">
-        <Image src={produto.imagem} alt={`${produto.nome} JLK`} priority loading="eager" sizes="(max-width: 768px) 100vw, 600px" />
+        <img src={produto.imagem} alt={`${produto.nome} JLK`} loading="eager" fetchPriority="high" />
       </div>
 
       <div className="produto__info">
@@ -95,23 +96,25 @@ export default function Produto({ slug }) {
                     </span>
                   </th>
                   {TAMANHOS.map((tam) => {
-                    const q = qtd(cor.nome, tam)
-                    const esgotado = q === 0
-                    const baixo = q > 0 && q <= ESTOQUE_BAIXO
+                    const { situacao, quantidade: q } = situacaoVariacao(produto, cor.nome, tam)
+                    const naoPossui = situacao === 'nao-possui' // a cor não tem este tamanho no cadastro
+                    const esgotado = situacao === 'esgotado'
+                    const baixo = situacao === 'baixo'
                     const ativo = selecao?.cor === cor.nome && selecao?.tamanho === tam
+                    const descricao = naoPossui ? 'não possui' : esgotado ? 'esgotado' : `${q} ${q === 1 ? 'disponível' : 'disponíveis'}`
                     return (
                       <td key={tam}>
                         <button
                           type="button"
-                          className={`grade__celula ${ativo ? 'is-ativo' : ''} ${baixo ? 'is-baixo' : ''}`}
-                          disabled={esgotado}
+                          className={`grade__celula ${ativo ? 'is-ativo' : ''} ${baixo ? 'is-baixo' : ''} ${naoPossui ? 'is-nao-possui' : ''}`}
+                          disabled={naoPossui || esgotado}
                           aria-pressed={ativo}
-                          aria-label={`${cor.nome}, tamanho ${tam}: ${esgotado ? 'esgotado' : `${q} ${q === 1 ? 'disponível' : 'disponíveis'}`}`}
+                          aria-label={`${cor.nome}, tamanho ${tam}: ${descricao}`}
                           onClick={() => escolher(cor.nome, tam)}
                         >
-                          <span className="grade__qtd">{esgotado ? '—' : q}</span>
+                          <span className="grade__qtd">{naoPossui || esgotado ? '—' : q}</span>
                           <span className="grade__rotulo">
-                            {esgotado ? 'Esgotado' : baixo ? 'Últimas' : q === 1 ? 'Disponível' : 'Disponíveis'}
+                            {naoPossui ? 'Não possui' : esgotado ? 'Esgotado' : baixo ? 'Últimas' : q === 1 ? 'Disponível' : 'Disponíveis'}
                           </span>
                         </button>
                       </td>
@@ -138,7 +141,9 @@ export default function Produto({ slug }) {
           <div className="produto__linha">
             <div className="produto__preco">
               <span className="produto__preco-rotulo">Preço</span>
-              <strong>{formatarPreco(produto.preco)}</strong>
+              <strong>
+                <Preco produto={produto} grande />
+              </strong>
             </div>
 
             <div className="quantidade">

@@ -5,7 +5,8 @@ import Carrossel from '@/components/Carrossel'
 
 // Desenha as camadas do layout, na ordem. Usado na página inicial e na prévia do construtor.
 //   destacada → id da camada selecionada no construtor (ganha um contorno na prévia)
-export default function RenderizadorLayout({ camadas, destacada, aoClicarCamada }) {
+//   produtos → catálogo para a vitrine (sem ele, a vitrine busca em /api/produtos)
+export default function RenderizadorLayout({ camadas, produtos, destacada, aoClicarCamada }) {
   const visiveis = camadas.filter((c) => c.visivel)
   const primeiroDestaque = visiveis.find((c) => c.tipo === 'destaque')?.id
   let vitrineUsada = false
@@ -24,7 +25,7 @@ export default function RenderizadorLayout({ camadas, destacada, aoClicarCamada 
         break
       case 'produtos':
         // A primeira vitrine recebe a âncora #novidades (usada pelos botões "Comprar agora")
-        bloco = <Carrossel selo={camada.dados.selo} titulo={camada.dados.titulo} ancora={!vitrineUsada} />
+        bloco = <Carrossel produtos={produtos} selo={camada.dados.selo} titulo={camada.dados.titulo} ancora={!vitrineUsada} />
         vitrineUsada = true
         break
       default:

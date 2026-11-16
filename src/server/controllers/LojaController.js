@@ -7,27 +7,16 @@
 //   GET  /api/campanhas              campanhas para o cadastro de produtos (login)
 import 'server-only'
 import { ErroNaoEncontrado, ErroValidacao } from '@/server/erros'
-import { produtos, buscarProduto } from '@/lib/produtos'
-
-const produtoPublico = (p) => ({
-  slug: p.slug,
-  nome: p.nome,
-  descricao: p.descricao,
-  preco: p.preco,
-  imagem: p.imagem.src,
-  cores: p.cores,
-  estoque: p.estoque,
-})
 
 export class LojaController {
-  constructor({ rota, pedidoServico, painelServico }) {
-    this.catalogo = rota(async () => ({ produtos: produtos.map(produtoPublico) }), { rotulo: 'GET /api/produtos' })
+  constructor({ rota, pedidoServico, painelServico, catalogoServico }) {
+    this.catalogo = rota(async () => ({ produtos: await catalogoServico.listar() }), { rotulo: 'GET /api/produtos' })
 
     this.produto = rota(
       async ({ params }) => {
-        const p = buscarProduto(params.slug)
-        if (!p) throw new ErroNaoEncontrado('Produto não encontrado.')
-        return { produto: produtoPublico(p) }
+        const produto = await catalogoServico.buscar(params.slug)
+        if (!produto) throw new ErroNaoEncontrado('Produto não encontrado.')
+        return { produto }
       },
       { rotulo: 'GET /api/produtos/:slug' }
     )
@@ -41,7 +30,7 @@ export class LojaController {
         return Response.json({ erros: ['Corpo da requisição inválido (JSON esperado).'] }, { status: 400 })
       }
       try {
-        return Response.json(pedidoServico.validar(corpo?.itens))
+        return Response.json(await pedidoServico.validar(corpo?.itens))
       } catch (erro) {
         if (erro instanceof ErroValidacao) return Response.json({ erros: erro.listaErros ?? [erro.message] }, { status: 422 })
         console.error('[POST /api/pedidos]', erro)
