@@ -6,6 +6,7 @@ import './AprovarPagamento.css'
 import PaginaVendedor from '@/components/PaginaVendedor'
 import ListaDados from '@/components/ListaDados'
 import Modal from '@/components/Modal'
+import ConfirmarExclusao from '@/components/ConfirmarExclusao'
 import { useAutenticacao } from '@/context/Autenticacao'
 import { useErro } from '@/context/Erro'
 import { AmostraCor } from '@/views/Cores'
@@ -184,6 +185,7 @@ export default function AprovarPagamento() {
   const [pedidos, setPedidos] = useState(null)
   const [aviso, setAviso] = useState('')
   const [aberto, setAberto] = useState(null) // { id, codigo }
+  const [excluindo, setExcluindo] = useState(null) // pedido a excluir
   const [busca, setBusca] = useState('')
 
   const carregar = useCallback(async () => {
@@ -242,12 +244,33 @@ export default function AprovarPagamento() {
             { id: 'total', titulo: 'Total', valor: (p) => Number(p.total), exibir: (p) => formatarPreco(Number(p.total)), alinhar: 'direita' },
           ]}
           acoes={(p) => (
-            <button type="button" className="botao botao--compacto botao--verde" onClick={() => setAberto({ id: p.id_pedido, codigo: p.codigo })}>
-              Aprovar pagamento
-            </button>
+            <span className="pedido-acoes">
+              <button type="button" className="botao botao--compacto botao--verde" onClick={() => setAberto({ id: p.id_pedido, codigo: p.codigo })}>
+                Aprovar pagamento
+              </button>
+              <button type="button" className="lista-acao is-perigo" onClick={() => setExcluindo(p)}>
+                Excluir rascunho
+              </button>
+            </span>
           )}
         />
       )}
+
+      <Modal aberto={Boolean(excluindo)} aoFechar={() => setExcluindo(null)} titulo="Excluir rascunho?" largura={480}>
+        {excluindo && (
+          <ConfirmarExclusao
+            mensagem={`O pedido ${excluindo.codigo} de ${excluindo.cliente_nome} (${formatarPreco(Number(excluindo.total))}) será apagado do banco, com os ${excluindo.skus} SKU(s). Esta ação não pode ser desfeita.`}
+            rotuloBotao="Excluir rascunho"
+            aoConfirmar={() => api(`/api/vendas/${excluindo.id_pedido}`, { metodo: 'DELETE' })}
+            aoConcluir={() => {
+              setAviso(`Rascunho ${excluindo.codigo} excluído.`)
+              setExcluindo(null)
+              carregar()
+            }}
+            aoCancelar={() => setExcluindo(null)}
+          />
+        )}
+      </Modal>
 
       <Modal aberto={Boolean(aberto)} aoFechar={() => setAberto(null)} titulo={aberto ? `Extrato do pedido ${aberto.codigo}` : ''} largura={960}>
         {aberto && (

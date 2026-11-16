@@ -91,4 +91,13 @@ export class VendaRepositorio {
       return { ok: true, pedido: atualizado[0] }
     })
   }
+
+  // Exclui um pedido em Rascunho (vendas_cor_tam, pedido_itens e pagamentos saem junto: ON DELETE CASCADE).
+  // Pedido pago não é excluído.
+  async excluirRascunho(idPedido) {
+    const { rowCount } = await this.banco.consultar('DELETE FROM pedidos WHERE id_pedido = $1 AND situacao = $2', [idPedido, SITUACAO.RASCUNHO])
+    if (rowCount) return { ok: true }
+    const { rows } = await this.banco.consultar('SELECT situacao FROM pedidos WHERE id_pedido = $1', [idPedido])
+    return { ok: false, motivo: rows[0] ? 'ja_aprovado' : 'nao_encontrado' }
+  }
 }

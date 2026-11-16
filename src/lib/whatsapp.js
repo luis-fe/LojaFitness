@@ -1,4 +1,4 @@
-import { WHATSAPP_NUMERO, NOME_LOJA } from '@/lib/config'
+import { WHATSAPP_NUMERO } from '@/lib/config'
 import { formatarPreco } from '@/lib/produtos'
 import { formatarCep } from '@/lib/cliente'
 
@@ -6,21 +6,36 @@ export function linkWhatsApp(mensagem) {
   return `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(mensagem)}`
 }
 
-// Monta a mensagem do pedido com um ou mais itens (e os dados do cliente para a entrega)
+const LINHA = '_____________________________'
+
+// Mensagem do pedido enviada pelo WhatsApp:
+//
+//   Olá!
+//   Gostaria de realizar a compra de:
+//   _____________________________
+//   *Conjunto Calça*
+//   Tam: P / Cor: Azul / Qt. 2 / Preço R$ 159,90
+//   ...
+//   _____________________________
+//   *Valor Total: R$ 319,80*
+//
+//   *Dados para Entrega*
+//   Nome / CEP / Bairro / Cidade - UF
+//
+//   Pedido: JLK-000001
 export function mensagemPedido(itens, cliente, codigoPedido) {
   const total = itens.reduce((s, i) => s + i.preco * i.quantidade, 0)
-  const linhas = itens.map(
-    (i, n) =>
-      `${n + 1}. *${i.nome}*\n   Cor: ${i.cor} | Tamanho: ${i.tamanho} | Qtd: ${i.quantidade}\n   ${formatarPreco(i.preco)} cada — subtotal ${formatarPreco(i.preco * i.quantidade)}`
-  )
+  const produtos = itens.flatMap((i) => [`*${i.nome}*`, `Tam: ${i.tamanho} / Cor: ${i.cor} / Qt. ${i.quantidade} / Preço ${formatarPreco(i.preco)}`])
   return [
-    codigoPedido ? `Olá! Quero finalizar meu pedido *${codigoPedido}* na ${NOME_LOJA}:` : `Olá! Quero finalizar meu pedido na ${NOME_LOJA}:`,
-    '',
-    ...linhas,
-    '',
-    `*Total do pedido: ${formatarPreco(total)}*`,
+    'Olá!',
+    'Gostaria de realizar a compra de:',
+    LINHA,
+    ...produtos,
+    LINHA,
+    `*Valor Total: ${formatarPreco(total)}*`,
     ...(cliente
-      ? ['', '*Dados para entrega*', `Nome: ${cliente.nome}`, `CEP: ${formatarCep(cliente.cep)}`, `Bairro: ${cliente.bairro}`, `Cidade: ${cliente.cidade} - ${cliente.estado}`]
+      ? ['', '*Dados para Entrega*', `Nome: ${cliente.nome}`, `CEP: ${formatarCep(cliente.cep)}`, `Bairro: ${cliente.bairro}`, `Cidade: ${cliente.cidade} - ${cliente.estado}`]
       : []),
+    ...(codigoPedido ? ['', `Pedido: ${codigoPedido}`] : []),
   ].join('\n')
 }

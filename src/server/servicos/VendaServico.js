@@ -60,4 +60,11 @@ export class VendaServico {
     if (!r.ok) throw new ErroValidacao(undefined, 'Um dos SKUs não pertence a este pedido. Recarregue o extrato.')
     return r.pedido
   }
+
+  async excluirRascunho(idPedido) {
+    const r = await this.repo.excluirRascunho(VendaServico.#id(idPedido))
+    if (r.ok) return
+    if (r.motivo === 'ja_aprovado') throw new ErroConflito('Pedido já aprovado não pode ser excluído.')
+    throw new ErroNaoEncontrado('Pedido não encontrado.')
+  }
 }

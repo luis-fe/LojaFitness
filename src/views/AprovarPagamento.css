@@ -196,3 +196,11 @@ tr.is-excluida td code {
     text-align: left !important;
   }
 }
+
+.pedido-acoes {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px 14px;
+}
