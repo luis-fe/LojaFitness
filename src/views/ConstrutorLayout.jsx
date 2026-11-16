@@ -341,7 +341,7 @@ export default function ConstrutorLayout() {
       <header className="construtor__barra">
         <div className="construtor__identificacao">
           <nav className="construtor__trilha" aria-label="Você está em">
-            <Link href="/area-do-vendedor">Área do Vendedor</Link> / <span aria-current="page">Meu Site</span>
+            <Link href="/area-do-vendedor">Início</Link> / <span aria-current="page">Meu Site</span>
           </nav>
           <h1 id="construtor-titulo">Construção Layout Site</h1>
           <p className="construtor__status" aria-live="polite">

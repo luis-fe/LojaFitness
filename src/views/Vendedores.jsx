@@ -357,17 +357,6 @@ export default function Vendedores() {
   const [aviso, setAviso] = useState('')
   const [modal, setModal] = useState(null) // { tipo, vendedor }
 
-  // Veio do card "Novo Vendedor" (?novo=1): abre o cadastro e limpa o endereço
-  useEffect(() => {
-    if (eu?.papel !== 'admin') return
-    const url = new URL(window.location.href)
-    if (url.searchParams.get('novo') === '1') {
-      setModal({ tipo: 'novo' })
-      url.searchParams.delete('novo')
-      window.history.replaceState(null, '', url.pathname + url.search)
-    }
-  }, [eu?.papel])
-
   // Espera a pessoa parar de digitar para buscar
   useEffect(() => {
     const id = setTimeout(() => {

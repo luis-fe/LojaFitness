@@ -2,7 +2,7 @@
 
 import PaginaVendedor from '@/components/PaginaVendedor'
 import CardsMenu from '@/components/CardsMenu'
-import { IconeNovoVendedor, IconeEditarPerfil } from '@/components/Icones'
+import { IconeVendedores, IconeEditarPerfil } from '@/components/Icones'
 import { useAutenticacao } from '@/context/Autenticacao'
 
 export default function MenuPerfil() {
@@ -14,9 +14,10 @@ export default function MenuPerfil() {
         rotulo="Opções de perfil"
         itens={[
           {
-            titulo: 'Novo Vendedor',
-            href: '/area-do-vendedor/vendedores?novo=1',
-            Icone: IconeNovoVendedor,
+            titulo: 'Vendedores',
+            href: '/area-do-vendedor/vendedores',
+            Icone: IconeVendedores,
+            cor: 'azul',
             bloqueado: !ehAdmin,
             motivo: 'Somente administradores',
           },
@@ -24,6 +25,7 @@ export default function MenuPerfil() {
             titulo: 'Alterar Perfil',
             href: '/area-do-vendedor/perfil/alterar',
             Icone: IconeEditarPerfil,
+            cor: 'azul',
           },
         ]}
       />
