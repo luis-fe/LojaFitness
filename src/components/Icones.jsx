@@ -197,3 +197,12 @@ export const IconePublicar = () => (
     <path d="M16 3h5v5M21 3l-6 6" />
   </Svg>
 )
+
+// Recibo com cifrão (registro de vendas)
+export const IconeVendas = () => (
+  <Svg>
+    <path d="M5 3h14v18l-2.5-1.5L14 21l-2-1.5L10 21l-2.5-1.5L5 21V3Z" />
+    <path d="M14.5 8.5c-.4-.9-1.4-1.5-2.5-1.5-1.4 0-2.5.8-2.5 1.9 0 2.6 5 1.4 5 4.1 0 1.1-1.1 2-2.5 2-1.2 0-2.2-.6-2.6-1.6" />
+    <path d="M12 5.8V7M12 15v1.2" />
+  </Svg>
+)

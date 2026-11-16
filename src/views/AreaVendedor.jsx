@@ -5,7 +5,7 @@ import './AreaVendedor.css'
 import { useAutenticacao } from '@/context/Autenticacao'
 import { useErro } from '@/context/Erro'
 import CardsMenu from '@/components/CardsMenu'
-import { IconeRosto, IconeProdutos, IconeSite, IconeVisitantes, IconeVariacoes } from '@/components/Icones'
+import { IconeRosto, IconeProdutos, IconeSite, IconeVisitantes, IconeVariacoes, IconeVendas } from '@/components/Icones'
 
 const horario = (iso) => new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
 const numero = (n) => Number(n ?? 0).toLocaleString('pt-BR')
@@ -22,6 +22,7 @@ const iniciais = (nome = '') =>
 const cardsMenu = (ehAdmin) => [
   { titulo: 'Perfil', href: '/area-do-vendedor/perfil', Icone: IconeRosto, cor: 'azul' },
   { titulo: 'Produtos', href: '/area-do-vendedor/produtos', Icone: IconeProdutos, cor: 'dourado' },
+  { titulo: 'Registro de Vendas', href: '/area-do-vendedor/registro-de-vendas', Icone: IconeVendas, cor: 'verde' },
   { titulo: 'Meu Site', href: '/area-do-vendedor/layout-site', Icone: IconeSite, cor: 'roxo', bloqueado: !ehAdmin, motivo: 'Somente administradores' },
 ]
 
