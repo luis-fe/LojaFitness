@@ -3,12 +3,13 @@ import './CardsMenu.css'
 import { IconeCadeado, IconeSeta } from '@/components/Icones'
 
 // Menu em cards grandes.
-//   itens: [{ titulo, href, Icone, bloqueado?, motivo?, selo? }]
+//   itens: [{ titulo, href, Icone, bloqueado?, motivo?, selo?, cor? }]
+//   cor = 'azul' | 'dourado' | 'roxo' pinta o fundo do ícone do card
 //   bloqueado = card apagado com cadeado; o motivo aparece ao passar o mouse e para leitores de tela
 export default function CardsMenu({ itens, rotulo }) {
   return (
     <ul className="cards-menu" aria-label={rotulo}>
-      {itens.map(({ titulo, href, Icone, bloqueado, motivo, selo }) => (
+      {itens.map(({ titulo, href, Icone, bloqueado, motivo, selo, cor }) => (
         <li key={titulo}>
           {bloqueado ? (
             <div className="card-menu is-bloqueado" aria-disabled="true" title={motivo || 'Indisponível'}>
@@ -24,7 +25,7 @@ export default function CardsMenu({ itens, rotulo }) {
               </span>
             </div>
           ) : (
-            <Link href={href} className="card-menu">
+            <Link href={href} className={`card-menu ${cor ? `card-menu--${cor}` : ''}`}>
               <span className="card-menu__icone">
                 <Icone />
               </span>

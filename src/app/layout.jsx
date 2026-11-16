@@ -1,5 +1,6 @@
 import './globals.css'
 import Header from '@/components/Header'
+import RegistroVisita from '@/components/RegistroVisita'
 import { CarrinhoProvider } from '@/context/Carrinho'
 import { AutenticacaoProvider } from '@/context/Autenticacao'
 import { NOME_LOJA } from '@/lib/config'
@@ -27,6 +28,7 @@ export default function RootLayout({ children }) {
           <a href="#conteudo" className="pular-conteudo">
             Pular para o conteúdo
           </a>
+          <RegistroVisita />
           <Header />
           <main id="conteudo" tabIndex={-1} style={{ outline: 'none' }}>
             {children}

@@ -545,6 +545,29 @@ COMMENT ON COLUMN produtos_filho.codigo_produto IS 'Código do produto pai (prod
 
 
 -- ---------------------------------------------------------------------
+-- VISITANTES_LOG — registro das visitas à loja (usado no painel da Área do Vendedor)
+--
+--   log        número sequencial do registro
+--   data_hora  quando a visita aconteceu
+--   ip         endereço IP do visitante
+--
+--   Guardamos somente os ÚLTIMOS 30 DIAS: o servidor apaga os registros mais antigos
+--   automaticamente (e o pré-deploy também), para a tabela não crescer sem limite.
+--   O mesmo IP é registrado no máximo uma vez a cada 30 minutos.
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS visitantes_log (
+  log        bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  data_hora  timestamptz NOT NULL DEFAULT now(),
+  ip         inet        NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS visitantes_log_data_hora_idx ON visitantes_log (data_hora);
+CREATE INDEX IF NOT EXISTS visitantes_log_ip_data_hora_idx ON visitantes_log (ip, data_hora DESC);
+
+COMMENT ON TABLE visitantes_log IS 'Visitas à loja; mantém apenas os últimos 30 dias';
+
+
+-- ---------------------------------------------------------------------
 -- VIEW: produto com o preço final (preco_atual com o desconto da campanha, se estiver ativa e no período)
 -- ---------------------------------------------------------------------
 CREATE VIEW produtos_com_preco AS

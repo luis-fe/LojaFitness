@@ -118,3 +118,28 @@ export const IconeOlhoFechado = () => (
     <path d="M3 3l18 18" />
   </Svg>
 )
+
+// Rosto (somente a cabeça), usado no card Perfil
+export const IconeRosto = () => (
+  <Svg>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M8.5 14.5a4.5 4.5 0 0 0 7 0" />
+    <path d="M9 9.5h.01M15 9.5h.01" strokeWidth="2.6" />
+  </Svg>
+)
+
+export const IconeVisitantes = () => (
+  <Svg>
+    <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" />
+    <circle cx="12" cy="12" r="3" />
+  </Svg>
+)
+
+export const IconeVariacoes = () => (
+  <Svg>
+    <rect x="3" y="3" width="7" height="7" rx="1.5" />
+    <rect x="14" y="3" width="7" height="7" rx="1.5" />
+    <rect x="3" y="14" width="7" height="7" rx="1.5" />
+    <rect x="14" y="14" width="7" height="7" rx="1.5" />
+  </Svg>
+)

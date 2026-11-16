@@ -21,6 +21,7 @@ import { CorRepositorio } from '@/server/repositorios/CorRepositorio'
 import { ProdutoRepositorio } from '@/server/repositorios/ProdutoRepositorio'
 import { CampanhaRepositorio } from '@/server/repositorios/CampanhaRepositorio'
 import { PainelRepositorio } from '@/server/repositorios/PainelRepositorio'
+import { VisitaRepositorio } from '@/server/repositorios/VisitaRepositorio'
 
 import { AuthServico } from '@/server/servicos/AuthServico'
 import { VendedorServico } from '@/server/servicos/VendedorServico'
@@ -32,6 +33,7 @@ import { CorServico } from '@/server/servicos/CorServico'
 import { ProdutoServico } from '@/server/servicos/ProdutoServico'
 import { PedidoServico } from '@/server/servicos/PedidoServico'
 import { PainelServico } from '@/server/servicos/PainelServico'
+import { VisitaServico } from '@/server/servicos/VisitaServico'
 
 import { AuthController } from '@/server/controllers/AuthController'
 import { VendedorController } from '@/server/controllers/VendedorController'
@@ -41,6 +43,7 @@ import { TamanhoController } from '@/server/controllers/TamanhoController'
 import { CorController } from '@/server/controllers/CorController'
 import { ProdutoController } from '@/server/controllers/ProdutoController'
 import { LojaController } from '@/server/controllers/LojaController'
+import { VisitaController } from '@/server/controllers/VisitaController'
 
 // ---------- Repositórios (SQL) ----------
 const vendedorRepositorio = new VendedorRepositorio(banco)
@@ -51,6 +54,7 @@ const corRepositorio = new CorRepositorio(banco)
 const produtoRepositorio = new ProdutoRepositorio(banco)
 const campanhaRepositorio = new CampanhaRepositorio(banco)
 const painelRepositorio = new PainelRepositorio(banco)
+const visitaRepositorio = new VisitaRepositorio(banco)
 
 // ---------- Serviços (regras de negócio) ----------
 export const authServico = new AuthServico({ vendedorRepositorio, limiteTentativas: new LimiteTentativas({ nome: 'login' }) })
@@ -62,6 +66,7 @@ export const corServico = new CorServico({ corRepositorio })
 export const produtoServico = new ProdutoServico({ produtoRepositorio })
 export const pedidoServico = new PedidoServico()
 export const painelServico = new PainelServico({ banco, painelRepositorio, campanhaRepositorio })
+export const visitaServico = new VisitaServico({ visitaRepositorio })
 
 // ---------- HTTP ----------
 const autenticador = new Autenticador({ authServico, vendedorRepositorio })
@@ -76,3 +81,4 @@ export const tamanhoController = new TamanhoController({ rota, tamanhoServico })
 export const corController = new CorController({ rota, corServico })
 export const produtoController = new ProdutoController({ rota, produtoServico })
 export const lojaController = new LojaController({ rota, pedidoServico, painelServico })
+export const visitaController = new VisitaController({ visitaServico })

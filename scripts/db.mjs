@@ -8,6 +8,7 @@
 //                         2. carrega os produtos de exemplo SOMENTE se não houver nenhum produto
 //                         3. cria o primeiro administrador SOMENTE se não houver nenhum vendedor,
 //                            usando ADMIN_LOGIN, ADMIN_NOME, ADMIN_TELEFONE e ADMIN_SENHA_INICIAL
+//                         4. apaga do log de visitantes os registros com mais de 30 dias
 
 import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
@@ -91,6 +92,8 @@ try {
     if ((await contar('produtos')) === 0) await executar('seed.sql')
     else console.log('ℹ️  Já existem produtos: dados de exemplo não carregados.')
     await criarAdminInicial()
+    const { rowCount } = await cliente.query("DELETE FROM visitantes_log WHERE data_hora < now() - interval '30 days'")
+    console.log(`🧹 Log de visitantes: ${rowCount} registro(s) com mais de 30 dias removido(s).`)
   }
 } catch (erro) {
   console.error(`❌ Erro: ${erro.message}`)

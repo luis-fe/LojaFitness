@@ -42,6 +42,18 @@ a.card-menu:focus-visible {
   border-radius: 10px;
 }
 
+.card-menu--azul { --cor-card: var(--azul); }
+.card-menu--dourado { --cor-card: var(--dourado); }
+.card-menu--roxo { --cor-card: var(--roxo); }
+
+.card-menu[class*='card-menu--'] .card-menu__icone {
+  background: var(--cor-card);
+}
+
+a.card-menu[class*='card-menu--']:hover {
+  border-color: var(--cor-card);
+}
+
 .card-menu__icone svg {
   width: 26px;
   height: 26px;

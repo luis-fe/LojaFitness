@@ -2,16 +2,15 @@
 import 'server-only'
 
 export class PainelServico {
-  static ESTOQUE_BAIXO = 3
-
   constructor({ banco, painelRepositorio, campanhaRepositorio }) {
     this.banco = banco
     this.painel = painelRepositorio
     this.campanhas = campanhaRepositorio
   }
 
+  // { produtosEmAnuncio, variacoesEmAnuncio, variacoesComEstoque, visitantesSemana, visitasSemana }
   resumo() {
-    return this.painel.resumo(PainelServico.ESTOQUE_BAIXO)
+    return this.painel.resumo()
   }
 
   listarCampanhas() {
