@@ -6,6 +6,7 @@ import './Vendedores.css'
 import PaginaVendedor from '@/components/PaginaVendedor'
 import Campo from '@/components/Campo'
 import Modal from '@/components/Modal'
+import { IconeEditar } from '@/components/Icones'
 import { useAutenticacao } from '@/context/Autenticacao'
 import { formatarCpfCnpj, formatarDataHora, formatarTelefone, mascaraCpfCnpj, mascaraTelefone } from '@/lib/formatos'
 
@@ -325,7 +326,8 @@ function LinhaVendedor({ v, ehVoceMesmo, abrir }) {
       </dl>
 
       <div className="linha-vendedor__acoes">
-        <button type="button" onClick={() => abrir('editar', v)}>
+        <button type="button" className="linha-vendedor__editar" onClick={() => abrir('editar', v)}>
+          <IconeEditar />
           Editar
         </button>
         {!ehVoceMesmo && (
@@ -350,7 +352,7 @@ export default function Vendedores() {
   const { api, vendedor: eu, atualizarVendedorSessao } = useAutenticacao()
   const [busca, setBusca] = useState('')
   const [buscaAplicada, setBuscaAplicada] = useState('')
-  const [situacao, setSituacao] = useState('todos') // todos | ativos | inativos
+  const [situacao, setSituacao] = useState('ativos') // ativos | inativos | todos
   const [pagina, setPagina] = useState(1)
   const [resultado, setResultado] = useState(null)
   const [erro, setErro] = useState('')
@@ -419,12 +421,12 @@ export default function Vendedores() {
   return (
     <PaginaVendedor
       titulo="Vendedores"
-      descricao="Cadastre e gerencie quem acessa a Área do Vendedor."
       trilha={[{ href: '/area-do-vendedor/perfil', rotulo: 'Perfil' }]}
       largura={960}
+      fixarTopo
       acoes={
-        <button type="button" className="botao" onClick={() => setModal({ tipo: 'novo' })}>
-          + Novo vendedor
+        <button type="button" className="botao botao--novo" aria-label="Novo vendedor" onClick={() => setModal({ tipo: 'novo' })}>
+          Novo +
         </button>
       }
     >
@@ -439,24 +441,20 @@ export default function Vendedores() {
             onChange={(e) => setBusca(e.target.value)}
           />
         </div>
-        <div className="filtros__situacao" role="group" aria-label="Situação">
-          {[
-            ['todos', 'Todos'],
-            ['ativos', 'Ativos'],
-            ['inativos', 'Inativos'],
-          ].map(([valor, rotulo]) => (
-            <button
-              key={valor}
-              type="button"
-              aria-pressed={situacao === valor}
-              onClick={() => {
-                setSituacao(valor)
-                setPagina(1)
-              }}
-            >
-              {rotulo}
-            </button>
-          ))}
+        <div className="campo filtros__situacao">
+          <label htmlFor="situacao">Situação</label>
+          <select
+            id="situacao"
+            value={situacao}
+            onChange={(e) => {
+              setSituacao(e.target.value)
+              setPagina(1)
+            }}
+          >
+            <option value="ativos">Ativos</option>
+            <option value="inativos">Inativos</option>
+            <option value="todos">Todos</option>
+          </select>
         </div>
       </div>
 

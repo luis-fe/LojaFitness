@@ -132,9 +132,12 @@
   transition: background 0.15s ease, color 0.15s ease;
 }
 
-.botao:hover:not(:disabled) {
-  background: var(--branco);
-  color: var(--preto);
+/* hover só em aparelhos com mouse (no celular o efeito ficava preso após o toque) */
+@media (hover: hover) {
+  .botao:hover:not(:disabled) {
+    background: var(--branco);
+    color: var(--preto);
+  }
 }
 
 .botao:disabled {
@@ -149,9 +152,11 @@
   color: var(--preto);
 }
 
-.botao--secundario:hover:not(:disabled) {
-  background: var(--preto);
-  color: var(--branco);
+@media (hover: hover) {
+  .botao--secundario:hover:not(:disabled) {
+    background: var(--preto);
+    color: var(--branco);
+  }
 }
 
 .botao--perigo {
@@ -159,9 +164,11 @@
   border-color: #b00020;
 }
 
-.botao--perigo:hover:not(:disabled) {
-  background: var(--branco);
-  color: #b00020;
+@media (hover: hover) {
+  .botao--perigo:hover:not(:disabled) {
+    background: var(--branco);
+    color: #b00020;
+  }
 }
 
 .botao:focus-visible {

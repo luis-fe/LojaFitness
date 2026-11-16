@@ -1,3 +1,26 @@
+/* Botão "Novo +" compacto e azul no topo */
+.botao.botao--novo {
+  min-height: 38px;
+  padding: 0 16px;
+  font-size: 12px;
+  background: var(--azul);
+  border-color: var(--azul);
+  color: var(--branco);
+  border-radius: 8px;
+}
+
+@media (hover: hover) {
+  .botao.botao--novo:hover {
+    background: var(--azul-escuro);
+    border-color: var(--azul-escuro);
+    color: var(--branco);
+  }
+}
+
+.botao.botao--novo:focus-visible {
+  outline-color: var(--azul);
+}
+
 /* Filtros */
 .filtros {
   display: flex;
@@ -17,33 +40,7 @@
 }
 
 .filtros__situacao {
-  display: flex;
-  border: 1px solid var(--preto);
-}
-
-.filtros__situacao button {
-  min-height: 46px;
-  padding: 0 16px;
-  background: var(--branco);
-  border: none;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.filtros__situacao button + button {
-  border-left: 1px solid var(--preto);
-}
-
-.filtros__situacao button[aria-pressed='true'] {
-  background: var(--preto);
-  color: var(--branco);
-}
-
-.filtros__situacao button:focus-visible {
-  outline: 2px solid var(--preto);
-  outline-offset: 2px;
+  flex: 0 1 180px;
 }
 
 .lista-total {
@@ -67,16 +64,20 @@
 /* Lista */
 .lista-vendedores {
   list-style: none;
-  border-top: 1px solid var(--borda);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
+/* Cada vendedor é um card cinza com cantos arredondados */
 .linha-vendedor {
   display: grid;
-  grid-template-columns: minmax(180px, 1.2fr) minmax(0, 2.6fr) auto;
+  grid-template-columns: minmax(170px, 1.1fr) minmax(0, 2.6fr) 290px; /* ações com largura fixa: colunas alinhadas entre os cards */
   align-items: center;
   gap: 12px 24px;
-  padding: 16px 4px;
-  border-bottom: 1px solid var(--borda);
+  padding: 18px 20px;
+  background: var(--cinza-claro);
+  border-radius: 16px;
 }
 
 .linha-vendedor.is-inativo {
@@ -169,6 +170,27 @@
   white-space: nowrap;
 }
 
+/* Editar: botão com ícone de lápis */
+.linha-vendedor__acoes .linha-vendedor__editar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  background: var(--branco);
+  border: 1px solid var(--borda);
+  border-radius: 999px;
+  text-decoration: none;
+}
+
+.linha-vendedor__acoes .linha-vendedor__editar:hover {
+  border-color: var(--preto);
+}
+
+.linha-vendedor__editar svg {
+  width: 16px;
+  height: 16px;
+}
+
 .linha-vendedor__acoes button.is-perigo {
   color: #b00020;
 }
@@ -209,7 +231,7 @@
   .linha-vendedor {
     grid-template-columns: 1fr;
     gap: 12px;
-    padding: 16px 0;
+    padding: 16px;
   }
 
   .linha-vendedor__dados {
@@ -223,15 +245,6 @@
 
 @media (max-width: 480px) {
   .filtros__situacao {
-    width: 100%;
-  }
-
-  .filtros__situacao button {
-    flex: 1;
-  }
-
-  .pagina-vendedor__acoes,
-  .pagina-vendedor__acoes .botao {
-    width: 100%;
+    flex-basis: 100%;
   }
 }

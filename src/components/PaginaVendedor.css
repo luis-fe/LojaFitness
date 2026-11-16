@@ -54,6 +54,24 @@
   color: var(--cinza-texto);
 }
 
+/* Topo congelado (trilha + título + botão) — logo abaixo do header do site */
+.pagina-vendedor__topo.is-fixo {
+  position: sticky;
+  top: var(--header-altura);
+  z-index: 50;
+  margin: -24px -16px 24px;
+  padding: 16px 16px 16px;
+  background: var(--branco);
+}
+
+.pagina-vendedor__topo.is-fixo .pagina-vendedor__trilha {
+  margin-bottom: 12px;
+}
+
+.pagina-vendedor__topo.is-fixo .pagina-vendedor__cabecalho {
+  margin-bottom: 0;
+}
+
 /* Bloco com título usado dentro das telas */
 .cartao {
   padding: 24px;
