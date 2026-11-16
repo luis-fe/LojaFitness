@@ -389,3 +389,42 @@
     transition: none !important;
   }
 }
+
+/* Ações à direita (pesquisar, compartilhar e carrinho) lado a lado */
+.header__acoes {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.header__acoes .header__carrinho,
+.header__acoes .header__compartilhar {
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .header__acoes {
+    gap: 0;
+    margin-right: -6px;
+  }
+
+  /* 3 ícones mais estreitos (área de toque continua com 44px de altura) para não encostar na logo */
+  .header__acoes .header__pesquisar,
+  .header__acoes .header__compartilhar,
+  .header__acoes .header__carrinho {
+    width: 40px;
+  }
+}
+
+/* Celulares bem estreitos (até 380px): logo ao lado do menu, para caber pesquisar, compartilhar e carrinho */
+@media (max-width: 380px) {
+  .header {
+    gap: 8px;
+  }
+
+  .header__logo {
+    position: static;
+    transform: none;
+  }
+}

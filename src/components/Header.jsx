@@ -11,6 +11,7 @@ import './Header.css'
 import logo from '@/assets/logo-jlk.png'
 import { useCarrinho } from '@/context/Carrinho'
 import { IconeLoja } from '@/components/Icones'
+import Pesquisa from '@/components/Pesquisa'
 
 
 // Menu lateral no formato de loja:
@@ -159,22 +160,26 @@ export default function Header() {
       </Link>
 
 
-      <BotaoCompartilhar />
+      {/* Ações à direita: pesquisar, compartilhar (celular) e carrinho */}
+      <div className="header__acoes">
+        <Pesquisa />
+        <BotaoCompartilhar />
 
-      <Link
-        href="/carrinho"
-        className="header__carrinho"
-        aria-label={`Carrinho: ${quantidadeTotal} ${quantidadeTotal === 1 ? 'item' : 'itens'}`}
-        aria-current={pathname === '/carrinho' ? 'page' : undefined}
-      >
-        {/* Carrinho de supermercado */}
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M2 3h2.5l2.6 11.2a1 1 0 0 0 1 .8h9.3a1 1 0 0 0 1-.76L20.5 7H5.6" />
-          <circle cx="9" cy="19.5" r="1.5" />
-          <circle cx="17" cy="19.5" r="1.5" />
-        </svg>
-        {quantidadeTotal > 0 && <span className="header__badge">{quantidadeTotal}</span>}
-      </Link>
+        <Link
+          href="/carrinho"
+          className="header__carrinho"
+          aria-label={`Carrinho: ${quantidadeTotal} ${quantidadeTotal === 1 ? 'item' : 'itens'}`}
+          aria-current={pathname === '/carrinho' ? 'page' : undefined}
+        >
+          {/* Carrinho de supermercado */}
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M2 3h2.5l2.6 11.2a1 1 0 0 0 1 .8h9.3a1 1 0 0 0 1-.76L20.5 7H5.6" />
+            <circle cx="9" cy="19.5" r="1.5" />
+            <circle cx="17" cy="19.5" r="1.5" />
+          </svg>
+          {quantidadeTotal > 0 && <span className="header__badge">{quantidadeTotal}</span>}
+        </Link>
+      </div>
 
       <div
         className={`header__overlay ${menuAberto ? 'is-visivel' : ''}`}
