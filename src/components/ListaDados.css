@@ -204,8 +204,9 @@
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 10px 16px;
     padding: 16px;
-    border: 1px solid var(--borda);
-    background: var(--branco);
+    border: none;
+    border-radius: 16px; /* card cinza arredondado, igual aos de Vendedores */
+    background: var(--cinza-claro);
   }
 
   .lista__tabela tbody tr:hover td {
