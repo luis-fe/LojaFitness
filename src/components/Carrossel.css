@@ -1,7 +1,13 @@
+/* Vitrine de produtos: prateleira horizontal com rolagem nativa.
+   --visiveis = quantos produtos cabem na tela; a fração deixa o próximo aparecendo
+   pela metade, para o cliente perceber que tem mais para o lado. */
 .carrossel {
+  --visiveis: 2.2;
+  --gap: 10px;
+  --margem: 16px;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 56px 16px;
+  padding: 40px var(--margem);
   scroll-margin-top: var(--header-altura);
 }
 
@@ -10,7 +16,7 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .carrossel__selo {
@@ -30,9 +36,9 @@
   line-height: 1;
 }
 
-/* Setas */
+/* Setas (só no computador: no celular o cliente passa com o dedo) */
 .carrossel__setas {
-  display: flex;
+  display: none;
   gap: 8px;
 }
 
@@ -57,43 +63,61 @@
   stroke-linejoin: round;
 }
 
-.carrossel__setas button:hover {
+.carrossel__setas button:hover:not(:disabled) {
   background: var(--preto);
 }
 
-.carrossel__setas button:hover svg {
+.carrossel__setas button:hover:not(:disabled) svg {
   stroke: var(--branco);
 }
 
-/* Trilho que desliza */
-.carrossel__janela {
-  overflow: hidden;
-  touch-action: pan-y;
+.carrossel__setas button:disabled {
+  border-color: var(--borda);
+  cursor: default;
 }
 
+.carrossel__setas button:disabled svg {
+  stroke: var(--borda);
+}
+
+/* Prateleira */
 .carrossel__trilho {
-  --gap: 16px;
-  display: flex;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: calc((100% - var(--gap) * (var(--visiveis) - 1)) / var(--visiveis));
+  gap: var(--gap);
   list-style: none;
-  margin: 0 calc(var(--gap) / -2);
-  transition: transform 0.6s cubic-bezier(0.65, 0, 0.35, 1);
-  will-change: transform;
+  /* no celular a prateleira vai até a borda direita da tela */
+  margin-right: calc(var(--margem) * -1);
+  padding-right: var(--margem);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-right: var(--margem);
+  scrollbar-width: none;
+}
+
+.carrossel__trilho::-webkit-scrollbar {
+  display: none;
 }
 
 .carrossel__slide {
-  flex: 0 0 calc(100% / var(--por-vez));
-  padding: 0 calc(var(--gap) / 2);
+  scroll-snap-align: start;
+  min-width: 0;
 }
 
 .carrossel__card {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   color: var(--preto);
   text-decoration: none;
 }
 
 .carrossel__imagem {
+  position: relative;
   overflow: hidden;
-  aspect-ratio: 1;
+  aspect-ratio: 3 / 4;
   background: var(--cinza-claro);
 }
 
@@ -102,82 +126,175 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.5s ease;
+  object-position: center top;
 }
 
-.carrossel__card:hover img {
-  transform: scale(1.04);
+.carrossel__card.is-esgotado img {
+  opacity: 0.55;
 }
 
-.carrossel__legenda {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 2px;
-  font-weight: 700;
+/* Etiqueta sobre a foto: desconto ou esgotado */
+.carrossel__etiqueta {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 4px 8px;
+  background: var(--branco);
+  color: var(--preto);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
-.carrossel__nome {
+.carrossel__etiqueta--oferta {
+  background: var(--preto);
+  color: var(--branco);
+  font-size: 13px;
+  letter-spacing: 0;
+}
+
+/* Nome discreto, preço em destaque: é o que o cliente procura */
+.carrossel__legenda {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  padding: 10px 0 2px;
 }
 
-.carrossel__nome small {
-  font-size: 15px;
-  font-weight: 400;
-  text-transform: none;
-}
-
-.carrossel__cta {
+.carrossel__nome {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   font-size: 13px;
-  border-bottom: 2px solid var(--preto);
+  line-height: 1.3;
+  color: var(--cinza-texto);
+}
+
+.carrossel__preco {
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+/* "de X" em cima, "por Y" embaixo */
+.carrossel__preco .preco__anterior {
+  flex-basis: 100%;
+  font-size: 13px;
+}
+
+.carrossel__preco .preco__por {
+  font-size: 13px;
+}
+
+.carrossel__card.is-esgotado .carrossel__preco {
+  color: var(--cinza-neutro);
+}
+
+.carrossel__variacoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--cinza-texto);
+}
+
+.carrossel__cores {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.carrossel__cor {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
 }
 
 .carrossel__card:focus-visible,
 .carrossel button:focus-visible {
   outline: 2px solid var(--preto);
-  outline-offset: 3px;
+  outline-offset: -2px;
 }
 
-/* Pontos de navegação */
-.carrossel__pontos {
-  display: flex;
-  justify-content: center;
-  gap: 4px;
-  margin-top: 16px;
-}
-
-.carrossel__pontos button {
+/* Barra que mostra em que ponto da prateleira o cliente está */
+.carrossel__progresso {
   position: relative;
-  width: 32px;
-  height: 24px;
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-
-.carrossel__pontos button::after {
-  content: '';
-  position: absolute;
-  left: 4px;
-  right: 4px;
-  top: 50%;
-  height: 3px;
+  height: 2px;
+  margin-top: 20px;
   background: var(--borda);
-  transform: translateY(-50%);
-  transition: background 0.2s ease;
 }
 
-.carrossel__pontos button.is-ativo::after {
+.carrossel__progresso span {
+  position: absolute;
+  top: 0;
+  bottom: 0;
   background: var(--preto);
 }
 
+.carrossel .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (min-width: 600px) {
+  .carrossel {
+    --visiveis: 3.2;
+    --gap: 14px;
+  }
+}
+
+@media (min-width: 900px) {
+  .carrossel {
+    --visiveis: 4;
+    --gap: 16px;
+    padding-top: 56px;
+    padding-bottom: 56px;
+  }
+
+  .carrossel__setas {
+    display: flex;
+  }
+
+  /* no computador os produtos cabem inteiros, sem encostar na borda */
+  .carrossel__trilho {
+    margin-right: 0;
+    padding-right: 0;
+    scroll-padding-right: 0;
+  }
+
+  .carrossel__nome {
+    font-size: 14px;
+  }
+
+  .carrossel__preco {
+    font-size: 22px;
+  }
+}
+
+@media (hover: hover) {
+  .carrossel__imagem img {
+    transition: transform 0.5s ease;
+  }
+
+  .carrossel__card:hover img {
+    transform: scale(1.04);
+  }
+
+  .carrossel__card:hover .carrossel__nome {
+    color: var(--preto);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .carrossel__trilho,
   .carrossel__imagem img {
     transition: none;
   }

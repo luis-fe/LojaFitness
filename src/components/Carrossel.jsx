@@ -4,25 +4,15 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import './Carrossel.css'
 import Preco from '@/components/Preco'
-
-const INTERVALO = 4000 // tempo de cada passagem (ms)
-
-// Quantos slides aparecem ao mesmo tempo, conforme a largura da tela
-function useSlidesPorVez() {
-  const consulta = '(min-width: 768px)'
-  const [porVez, setPorVez] = useState(1) // no servidor não há tela: começa com 1
-  useEffect(() => {
-    const mq = window.matchMedia(consulta)
-    const atualizar = () => setPorVez(mq.matches ? 2 : 1)
-    atualizar()
-    mq.addEventListener('change', atualizar)
-    return () => mq.removeEventListener('change', atualizar)
-  }, [])
-  return porVez
-}
+import { resumoVariacoes } from '@/components/blocos/AnuncioProduto'
 
 const movimentoReduzido = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
+// Desconto do "de X por Y", em % (só quando o cadastro tem preço anterior)
+const desconto = (p) => (p.precoAnterior ? Math.round((1 - p.preco / p.precoAnterior) * 100) : 0)
+
+// Vitrine de produtos: prateleira que o cliente passa com o dedo (ou com as setas, no computador).
+// Vários produtos aparecem de uma vez, cada um com foto, nome e preço em destaque; nada se move sozinho.
 // produtos: catálogo vindo do servidor (página inicial). Sem ele (prévia do construtor), busca em /api/produtos.
 export default function Carrossel({ produtos, selo = 'Lançamentos', titulo = 'Novidades', ancora = true }) {
   const [buscados, setBuscados] = useState(null)
@@ -33,166 +23,116 @@ export default function Carrossel({ produtos, selo = 'Lançamentos', titulo = 'N
       .then((d) => setBuscados(d.produtos ?? []))
       .catch(() => setBuscados([]))
   }, [produtos])
-  const itens = (produtos ?? buscados ?? []).map((p) => ({ ...p, href: `/produto/${p.slug}` }))
-  const total = Math.max(itens.length, 1)
-  const porVez = useSlidesPorVez()
-  const [indice, setIndice] = useState(0)
-  const [animar, setAnimar] = useState(true)
-  const [pausado, setPausado] = useState(false)
-  const voltarPendente = useRef(false)
-  const toqueInicio = useRef(null)
+  const itens = produtos ?? buscados ?? []
 
-  // Cópias dos primeiros slides no fim criam o efeito de passagem contínua
-  const slides = [...itens, ...itens.slice(0, porVez)]
+  // Posição da rolagem: liga/desliga as setas e move a barra de progresso
+  const trilho = useRef(null)
+  const [rolagem, setRolagem] = useState({ inicio: 0, tamanho: 1, voltar: false, avancar: false })
+  const medir = useCallback(() => {
+    const el = trilho.current
+    if (!el) return
+    const sobra = el.scrollWidth - el.clientWidth
+    setRolagem({
+      inicio: el.scrollWidth ? el.scrollLeft / el.scrollWidth : 0,
+      tamanho: el.scrollWidth ? el.clientWidth / el.scrollWidth : 1,
+      voltar: el.scrollLeft > 4,
+      avancar: el.scrollLeft < sobra - 4,
+    })
+  }, [])
 
-  const proximo = useCallback(() => {
-    setAnimar(true)
-    setIndice((i) => Math.min(i + 1, total))
-  }, [total])
-
-  const anterior = () => {
-    if (indice === 0) {
-      // Salta (sem animação) para as cópias e depois volta uma posição
-      voltarPendente.current = true
-      setAnimar(false)
-      setIndice(total)
-    } else {
-      setAnimar(true)
-      setIndice((i) => i - 1)
-    }
-  }
-
-  const irPara = (i) => {
-    setAnimar(true)
-    setIndice(i)
-  }
-
-  // Ao chegar nas cópias, volta para o início sem o usuário perceber
-  const aoTerminarTransicao = () => {
-    if (indice >= total) {
-      setAnimar(false)
-      setIndice(indice - total)
-    }
-  }
-
-  // Reativa a animação logo após um salto invisível
   useEffect(() => {
-    if (animar) return
-    const id = requestAnimationFrame(() =>
-      requestAnimationFrame(() => {
-        setAnimar(true)
-        if (voltarPendente.current) {
-          voltarPendente.current = false
-          setIndice((i) => i - 1)
-        }
-      })
-    )
-    return () => cancelAnimationFrame(id)
-  }, [animar])
+    const el = trilho.current
+    if (!el) return
+    medir()
+    let quadro = 0
+    const aoRolar = () => {
+      cancelAnimationFrame(quadro)
+      quadro = requestAnimationFrame(medir)
+    }
+    el.addEventListener('scroll', aoRolar, { passive: true })
+    const observador = new ResizeObserver(medir)
+    observador.observe(el)
+    return () => {
+      cancelAnimationFrame(quadro)
+      el.removeEventListener('scroll', aoRolar)
+      observador.disconnect()
+    }
+  }, [medir, itens.length])
 
-  // Passagem automática (pausa com mouse em cima, foco ou aba escondida)
-  useEffect(() => {
-    if (pausado || movimentoReduzido()) return
-    const id = setInterval(() => {
-      if (!document.hidden) proximo()
-    }, INTERVALO)
-    return () => clearInterval(id)
-  }, [pausado, proximo])
-
-  // Gestos de arrastar no celular
-  const aoTocar = (e) => (toqueInicio.current = e.touches[0].clientX)
-  const aoSoltar = (e) => {
-    if (toqueInicio.current === null) return
-    const delta = e.changedTouches[0].clientX - toqueInicio.current
-    toqueInicio.current = null
-    if (Math.abs(delta) > 40) (delta < 0 ? proximo : anterior)()
+  // As setas passam uma "tela" de produtos por vez
+  const passar = (sentido) => {
+    const el = trilho.current
+    if (!el) return
+    el.scrollBy({ left: sentido * el.clientWidth, behavior: movimentoReduzido() ? 'auto' : 'smooth' })
   }
 
   if (!itens.length) return null // sem produtos visíveis no cadastro
 
-  const ativo = indice % total
+  const rola = rolagem.voltar || rolagem.avancar
 
   return (
-    <section
-      id={ancora ? 'novidades' : undefined}
-      className="carrossel"
-      aria-roledescription="carrossel"
-      aria-label={titulo || 'Produtos'}
-      onMouseEnter={() => setPausado(true)}
-      onMouseLeave={() => setPausado(false)}
-      onFocus={() => setPausado(true)}
-      onBlur={() => setPausado(false)}
-    >
+    <section id={ancora ? 'novidades' : undefined} className="carrossel" aria-label={titulo || 'Produtos'}>
       <div className="carrossel__topo">
         <div>
           {selo && <span className="carrossel__selo">{selo}</span>}
           <h2 className="carrossel__titulo">{titulo}</h2>
         </div>
-        <div className="carrossel__setas">
-          <button type="button" onClick={anterior} aria-label="Slide anterior">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
-          </button>
-          <button type="button" onClick={proximo} aria-label="Próximo slide">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
-          </button>
-        </div>
+        {rola && (
+          <div className="carrossel__setas">
+            <button type="button" onClick={() => passar(-1)} disabled={!rolagem.voltar} aria-label="Produtos anteriores">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
+            </button>
+            <button type="button" onClick={() => passar(1)} disabled={!rolagem.avancar} aria-label="Próximos produtos">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+            </button>
+          </div>
+        )}
       </div>
 
-      <div className="carrossel__janela" onTouchStart={aoTocar} onTouchEnd={aoSoltar}>
-        <ul
-          className="carrossel__trilho"
-          aria-live={pausado ? 'polite' : 'off'}
-          onTransitionEnd={aoTerminarTransicao}
-          style={{
-            '--por-vez': porVez,
-            transform: `translateX(-${(indice * 100) / porVez}%)`,
-            transition: animar ? undefined : 'none',
-          }}
-        >
-          {slides.map((item, i) => {
-            const copia = i >= total
-            return (
-              <li
-                key={`${item.nome}-${i}`}
-                className="carrossel__slide"
-                role="group"
-                aria-roledescription="slide"
-                aria-label={`${(i % total) + 1} de ${total}: ${item.nome}`}
-                aria-hidden={copia || undefined}
-                inert={copia}
-              >
-                <Link href={item.href} className="carrossel__card">
-                  <div className="carrossel__imagem">
-                    <img src={item.imagem} alt={`${item.nome} JLK`} loading={i < 2 ? 'eager' : 'lazy'} decoding="async" />
-                  </div>
-                  <div className="carrossel__legenda">
-                    <span className="carrossel__nome">
-                      {item.nome}
-                      <small>
-                        <Preco produto={item} />
-                      </small>
+      <ul className="carrossel__trilho" ref={trilho}>
+        {itens.map((item, i) => {
+          const { cores, tamanhos, esgotado } = resumoVariacoes(item)
+          const off = desconto(item)
+          return (
+            <li key={item.slug} className="carrossel__slide">
+              <Link href={`/produto/${item.slug}`} className={`carrossel__card ${esgotado ? 'is-esgotado' : ''}`}>
+                <div className="carrossel__imagem">
+                  <img src={item.imagem} alt={`${item.nome} JLK`} loading={i < 4 ? 'eager' : 'lazy'} decoding="async" />
+                  {esgotado && <span className="carrossel__etiqueta">Esgotado</span>}
+                  {!esgotado && off > 0 && (
+                    <span className="carrossel__etiqueta carrossel__etiqueta--oferta">
+                      <span aria-hidden="true">-{off}%</span>
+                      <span className="sr-only">{off}% de desconto</span>
                     </span>
-                    <span className="carrossel__cta">Comprar</span>
-                  </div>
-                </Link>
-              </li>
-            )
-          })}
-        </ul>
-      </div>
+                  )}
+                </div>
+                <div className="carrossel__legenda">
+                  <span className="carrossel__nome">{item.nome}</span>
+                  <span className="carrossel__preco">
+                    <Preco produto={item} />
+                  </span>
+                  {!esgotado && (
+                    <span className="carrossel__variacoes">
+                      <span className="carrossel__cores" aria-label={`Cores: ${cores.map((c) => c.nome).join(', ')}`}>
+                        {cores.map((c) => (
+                          <span key={c.codigo} className="carrossel__cor" style={{ background: c.hex }} title={c.nome} />
+                        ))}
+                      </span>
+                      <span aria-label={`Tamanhos: ${tamanhos.join(', ')}`}>{tamanhos.join(' ')}</span>
+                    </span>
+                  )}
+                </div>
+              </Link>
+            </li>
+          )
+        })}
+      </ul>
 
-      <div className="carrossel__pontos">
-        {itens.map((item, i) => (
-          <button
-            key={item.nome}
-            type="button"
-            className={i === ativo ? 'is-ativo' : ''}
-            aria-label={`Ir para ${item.nome}`}
-            aria-current={i === ativo || undefined}
-            onClick={() => irPara(i)}
-          />
-        ))}
-      </div>
+      {rola && (
+        <div className="carrossel__progresso" aria-hidden="true">
+          <span style={{ left: `${rolagem.inicio * 100}%`, width: `${rolagem.tamanho * 100}%` }} />
+        </div>
+      )}
     </section>
   )
 }

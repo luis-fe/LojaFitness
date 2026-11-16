@@ -241,11 +241,11 @@ function EditorCamada({ camada, aoMudar, abrirSeletor, catalogo }) {
         <div className="editor">
           <Campo rotulo="Selo" opcional valor={d.selo} aoMudar={set('selo')} maxLength={40} />
           <Campo rotulo="Título" valor={d.titulo} aoMudar={set('titulo')} maxLength={120} />
-          <ListaProdutos imagens={d.imagens ?? []} limite={MAX_IMAGENS_POR_CAMADA} aoMudar={set('imagens')} abrirSeletor={abrirSeletor} catalogo={catalogo} rotulo="Produtos da passagem" />
+          <ListaProdutos imagens={d.imagens ?? []} limite={MAX_IMAGENS_POR_CAMADA} aoMudar={set('imagens')} abrirSeletor={abrirSeletor} catalogo={catalogo} rotulo="Produtos da vitrine" />
           <p className="editor__nota">
             {(d.imagens ?? []).length
-              ? 'No site, estes produtos passam sozinhos no carrossel, na ordem acima, com o preço do cadastro.'
-              : 'Escolha os produtos da passagem. Sem produtos, a vitrine não aparece no site.'}
+              ? 'No site, estes produtos aparecem lado a lado, na ordem acima, com o preço do cadastro. O cliente passa para o lado para ver os demais.'
+              : 'Escolha os produtos da vitrine. Sem produtos, ela não aparece no site.'}
           </p>
         </div>
       )
