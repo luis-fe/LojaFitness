@@ -244,8 +244,8 @@ function EditorCamada({ camada, aoMudar, abrirSeletor, catalogo }) {
           <ListaProdutos imagens={d.imagens ?? []} limite={MAX_IMAGENS_POR_CAMADA} aoMudar={set('imagens')} abrirSeletor={abrirSeletor} catalogo={catalogo} rotulo="Produtos da passagem" />
           <p className="editor__nota">
             {(d.imagens ?? []).length
-              ? 'No site, estes produtos passam sozinhos no carrossel, na ordem acima.'
-              : 'Nenhum produto escolhido: a passagem mostra todos os produtos à venda.'}
+              ? 'No site, estes produtos passam sozinhos no carrossel, na ordem acima, com o preço do cadastro.'
+              : 'Escolha os produtos da passagem. Sem produtos, a vitrine não aparece no site.'}
           </p>
         </div>
       )
@@ -361,7 +361,16 @@ export default function ConstrutorLayout() {
     const c = novaCamada(tipo)
     setCamadas((cs) => [...cs, c])
     setSelecionada(c.id)
-    setModal(null)
+    // Vitrine começa vazia: já abre a escolha dos produtos
+    if (tipo === 'produtos') {
+      setModal({
+        tipo: 'produtos',
+        limite: MAX_IMAGENS_POR_CAMADA,
+        multiplo: true,
+        jaUsados: [],
+        aoEscolher: (slugs) => setCamadas((cs) => cs.map((x) => (x.id === c.id ? { ...x, dados: { ...x.dados, imagens: slugs.map((produto) => ({ produto })) } } : x))),
+      })
+    } else setModal(null)
     setTimeout(() => document.getElementById(`camada-${c.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50)
   }
 

@@ -27,9 +27,17 @@ export default function RenderizadorLayout({ camadas, produtos, destacada, aoCli
       case 'produtos':
         // A primeira vitrine recebe a âncora #novidades (usada pelos botões "Comprar agora")
         {
-          // Só os produtos escolhidos na camada, na ordem escolhida (nenhum escolhido = todos à venda)
-          const escolhidos = (camada.dados.imagens ?? []).map((i) => catalogo?.[i.produto]).filter(Boolean)
-          bloco = <Carrossel key={escolhidos.map((p) => p.slug).join()} produtos={escolhidos.length ? escolhidos : produtos} selo={camada.dados.selo} titulo={camada.dados.titulo} ancora={!vitrineUsada} />
+          // Só os produtos escolhidos na camada, na ordem escolhida.
+          // (vitrine antiga, sem lista de produtos = todos à venda)
+          const antiga = camada.dados.imagens === undefined
+          const escolhidos = antiga ? produtos : camada.dados.imagens.map((i) => catalogo?.[i.produto]).filter(Boolean)
+          if (escolhidos?.length) {
+            bloco = <Carrossel key={escolhidos.map((p) => p.slug).join()} produtos={escolhidos} selo={camada.dados.selo} titulo={camada.dados.titulo} ancora={!vitrineUsada} />
+          } else if (destacada !== undefined) {
+            bloco = <div className="bloco-sem-imagem bloco-sem-imagem--faixa">Vitrine vazia: escolha os produtos no construtor</div>
+          } else {
+            return null // no site, vitrine sem produtos não aparece
+          }
         }
         vitrineUsada = true
         break

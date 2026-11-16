@@ -29,7 +29,7 @@ export const MODELOS = {
   },
   produtos: {
     nome: 'Vitrine de produtos',
-    descricao: 'Carrossel com passagem automática dos produtos que você escolher (foto, preço e botão de comprar).',
+    descricao: 'Carrossel com passagem automática: você escolhe os produtos e o preço vem do cadastro.',
     novo: () => ({ selo: 'Lançamentos', titulo: 'Novidades', imagens: [] }),
   },
   cascata: {
@@ -71,7 +71,12 @@ export const LAYOUT_PADRAO = [
       botao2Link: '/#black-friday',
     },
   },
-  { id: 'padrao-produtos', tipo: 'produtos', visivel: true, dados: { selo: 'Lançamentos', titulo: 'Novidades' } },
+  {
+    id: 'padrao-produtos',
+    tipo: 'produtos',
+    visivel: true,
+    dados: { selo: 'Lançamentos', titulo: 'Novidades', imagens: [{ produto: 'conjunto-calca' }, { produto: 'conjunto-short' }, { produto: 'conjunto-bermuda' }] },
+  },
 ]
 
 // Imagens que já vêm com o site (podem ser usadas sem enviar nada)
@@ -199,8 +204,13 @@ export function validarLayout(entrada, { estrito = false } = {}) {
         }
         break
       case 'produtos':
-        // imagens = produtos escolhidos para a passagem (vazio = todos os produtos à venda)
-        dados = { selo: texto(d.selo, 40), titulo: texto(d.titulo, 120), imagens: listaImagens(d.imagens, erros, onde, { estrito: true }).filter((i) => i.produto) }
+        // imagens = produtos escolhidos para a passagem (só eles aparecem; nenhum = vitrine não aparece).
+        // Vitrines salvas antes desta opção não têm "imagens": ao exibir, continuam mostrando todos.
+        dados = {
+          selo: texto(d.selo, 40),
+          titulo: texto(d.titulo, 120),
+          imagens: d.imagens === undefined && !estrito ? undefined : listaImagens(d.imagens, erros, onde, { estrito: true }).filter((i) => i.produto),
+        }
         break
     }
     return { id, tipo: c.tipo, visivel: c.visivel !== false, dados }
