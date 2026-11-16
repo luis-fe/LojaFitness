@@ -8,7 +8,7 @@ export const metadata = {
 }
 
 // ⚠️ Ao mudar o que o site coleta, atualize este texto e a data abaixo.
-const ATUALIZADA_EM = '16 de novembro de 2026'
+const ATUALIZADA_EM = '16 de novembro de 2026' // dados para entrega (tabela clientes)
 
 function Contato() {
   const itens = []
@@ -42,8 +42,8 @@ export default function PoliticaPrivacidade() {
       <p className="politica__resumo">
         <strong>Resumo:</strong> guardamos o mínimo possível. Registramos o endereço IP das visitas por
         no máximo 30 dias, só para saber quantas pessoas visitam a loja. Seu carrinho fica salvo no seu
-        próprio aparelho. Os dados do pedido (nome, endereço, telefone) você envia pelo WhatsApp, e eles
-        são usados só para entregar sua compra. Não usamos cookies de publicidade nem vendemos seus dados.
+        próprio aparelho. Ao enviar o pedido, guardamos seu nome, CEP, bairro, cidade e estado para a
+        entrega, e o restante da conversa segue pelo WhatsApp. Não usamos cookies de publicidade nem vendemos seus dados.
       </p>
 
       <section>
@@ -80,7 +80,13 @@ export default function PoliticaPrivacidade() {
               <td data-rotulo="Por quanto tempo">Fica só no seu navegador, até você limpar ou finalizar a compra</td>
             </tr>
             <tr>
-              <td data-rotulo="Dado">Nome, telefone, endereço e itens do pedido</td>
+              <td data-rotulo="Dado">Nome, CEP, bairro, cidade e estado</td>
+              <td data-rotulo="Quando">Ao enviar o pedido pelo WhatsApp (formulário “Dados para entrega”)</td>
+              <td data-rotulo="Para quê">Calcular e combinar a entrega e identificar o cliente em novas compras</td>
+              <td data-rotulo="Por quanto tempo">Enquanto você for nosso cliente, ou até você pedir a exclusão</td>
+            </tr>
+            <tr>
+              <td data-rotulo="Dado">Telefone, endereço completo e itens do pedido</td>
               <td data-rotulo="Quando">Quando você envia o pedido pelo WhatsApp</td>
               <td data-rotulo="Para quê">Confirmar, cobrar e entregar a compra</td>
               <td data-rotulo="Por quanto tempo">Pelo prazo exigido pela legislação fiscal e de defesa do consumidor</td>
@@ -114,8 +120,8 @@ export default function PoliticaPrivacidade() {
       <section>
         <h2>4. Cookies e armazenamento no navegador</h2>
         <p>
-          Usamos apenas o armazenamento local do navegador para funções essenciais (carrinho e controle
-          para não contar a mesma visita duas vezes). <strong>Não usamos</strong> cookies de publicidade,
+          Usamos apenas o armazenamento local do navegador para funções essenciais (carrinho, controle
+          para não contar a mesma visita duas vezes e os dados para entrega, para facilitar a próxima compra). <strong>Não usamos</strong> cookies de publicidade,
           redes sociais ou rastreamento de terceiros. Se isso mudar, pediremos o seu consentimento antes.
         </p>
       </section>
@@ -126,6 +132,10 @@ export default function PoliticaPrivacidade() {
           <li>
             <strong>WhatsApp (Meta):</strong> quando você escolhe finalizar o pedido, a mensagem é enviada
             pelo aplicativo WhatsApp, que tem sua própria política de privacidade.
+          </li>
+          <li>
+            <strong>ViaCEP:</strong> o CEP digitado é consultado no serviço público ViaCEP para preencher
+            bairro, cidade e estado automaticamente (só o CEP é enviado).
           </li>
           <li>
             <strong>Hospedagem:</strong> o site e o banco de dados ficam em provedor de nuvem com servidores

@@ -328,7 +328,7 @@
   color: var(--preto);
 }
 
-.produto__btn.produto__btn--whats:hover {
+.produto__btn.produto__btn--whats:hover:not(:disabled) {
   background: var(--whatsapp-escuro);
   border-color: var(--whatsapp-escuro);
   color: var(--preto);
@@ -465,4 +465,18 @@
   .produto__btn {
     width: 100%;
   }
+}
+
+/* WhatsApp desabilitado até preencher os dados para entrega */
+.produto__btn.produto__btn--whats:disabled {
+  background: var(--cinza-claro);
+  border-color: var(--borda);
+  color: var(--cinza-neutro);
+  cursor: not-allowed;
+}
+
+.produto__direto {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }

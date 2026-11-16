@@ -5,9 +5,10 @@ import Link from 'next/link'
 import './Produto.css'
 import { formatarPreco, situacaoVariacao } from '@/lib/produtos'
 import Preco from '@/components/Preco'
-import { linkWhatsApp, mensagemPedido } from '@/lib/whatsapp'
 import { useCarrinho } from '@/context/Carrinho'
 import IconeWhatsApp from '@/components/IconeWhatsApp'
+import DadosCliente, { useDadosCliente } from '@/components/DadosCliente'
+import { useErro } from '@/context/Erro'
 
 // produto: vem do cadastro (banco) — veja src/server/servicos/CatalogoServico.js
 export default function Produto({ produto }) {
@@ -15,6 +16,10 @@ export default function Produto({ produto }) {
   const [quantidade, setQuantidade] = useState(1)
   const [adicionado, setAdicionado] = useState(false)
   const carrinho = useCarrinho()
+  const { mostrarErro } = useErro()
+  const { cliente, setCliente, dados: dadosCliente, completo, lembrar } = useDadosCliente()
+  const [comprandoDireto, setComprandoDireto] = useState(false)
+  const [enviando, setEnviando] = useState(false)
 
   // Esconde o aviso de "adicionado" depois de alguns segundos
   useEffect(() => {
@@ -44,9 +49,32 @@ export default function Produto({ produto }) {
     setQuantidade((q) => Math.min(q, qtd(cor, tamanho)))
   }
 
-  const mensagem = selecao
-    ? mensagemPedido([{ nome: produto.nome, preco: produto.preco, quantidade, ...selecao }])
-    : ''
+  // Compra direta: o servidor confere estoque e preço, grava o cliente e devolve o link do WhatsApp
+  const comprarDireto = async () => {
+    setEnviando(true)
+    const aba = window.open('', '_blank') // abre já no clique (senão o navegador bloqueia)
+    try {
+      const resposta = await fetch('/api/pedidos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itens: [{ slug: produto.slug, cor: selecao.cor, tamanho: selecao.tamanho, quantidade }], cliente: dadosCliente }),
+      })
+      const dados = await resposta.json()
+      if (!resposta.ok) {
+        aba?.close()
+        mostrarErro(dados.erros || ['Não foi possível enviar o pedido.'])
+        return
+      }
+      lembrar(dadosCliente)
+      if (aba) aba.location.href = dados.whatsappUrl
+      else window.location.href = dados.whatsappUrl
+    } catch {
+      aba?.close()
+      mostrarErro('Sem conexão. Verifique sua internet e tente de novo.')
+    } finally {
+      setEnviando(false)
+    }
+  }
 
   const adicionarAoCarrinho = () => {
     carrinho.adicionar(produto, selecao.cor, selecao.tamanho, quantidade)
@@ -191,17 +219,22 @@ export default function Produto({ produto }) {
             </p>
           )}
 
-          {selecao ? (
-            <a
-              className="produto__btn produto__btn--whats"
-              href={linkWhatsApp(mensagem)}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+          {selecao && !comprandoDireto && (
+            <button type="button" className="produto__btn produto__btn--whats" onClick={() => setComprandoDireto(true)}>
               <IconeWhatsApp className="produto__whats-icone" />
               Comprar direto pelo WhatsApp
-            </a>
-          ) : null}
+            </button>
+          )}
+          {selecao && comprandoDireto && (
+            <div className="produto__direto">
+              <DadosCliente cliente={cliente} setCliente={setCliente} idBase="produto-cliente" />
+              <button type="button" className="produto__btn produto__btn--whats" onClick={comprarDireto} disabled={!completo || enviando}>
+                <IconeWhatsApp className="produto__whats-icone" />
+                {enviando ? 'Conferindo pedido…' : 'Enviar pedido pelo WhatsApp'}
+              </button>
+              {!completo && <p className="produto__aviso">Preencha os dados para entrega para enviar pelo WhatsApp.</p>}
+            </div>
+          )}
           {selecao && (
             <p className="produto__aviso">
               Adicione ao carrinho para comprar vários itens, ou compre só este direto pelo WhatsApp.

@@ -8,11 +8,13 @@ import Preco from '@/components/Preco'
 import { formatarPreco } from '@/lib/produtos'
 import IconeWhatsApp from '@/components/IconeWhatsApp'
 import { useErro } from '@/context/Erro'
+import DadosCliente, { useDadosCliente } from '@/components/DadosCliente'
 
 export default function Carrinho() {
   const { carregado, itens, total, quantidadeTotal, alterarQuantidade, remover, estoqueDe, removidos, dispensarRemovidos } = useCarrinho()
   const [enviando, setEnviando] = useState(false)
   const { mostrarErro } = useErro()
+  const { cliente, setCliente, dados: dadosCliente, completo, lembrar } = useDadosCliente()
 
   // Envia o pedido ao backend, que confere estoque, recalcula o total
   // e devolve o link do WhatsApp com a mensagem pronta.
@@ -26,6 +28,7 @@ export default function Carrinho() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           itens: itens.map(({ slug, cor, tamanho, quantidade }) => ({ slug, cor, tamanho, quantidade })),
+          cliente: dadosCliente,
         }),
       })
       const dados = await resposta.json()
@@ -34,6 +37,7 @@ export default function Carrinho() {
         mostrarErro(dados.erros || ['Não foi possível finalizar o pedido.'])
         return
       }
+      lembrar(dadosCliente)
       if (aba) aba.location.href = dados.whatsappUrl
       else window.location.href = dados.whatsappUrl
     } catch {
@@ -150,16 +154,20 @@ export default function Carrinho() {
             </div>
           </dl>
 
+          <DadosCliente cliente={cliente} setCliente={setCliente} idBase="carrinho-cliente" />
+
           <button
             type="button"
             className="carrinho__btn carrinho__btn--whats"
             onClick={finalizar}
-            disabled={enviando}
+            disabled={enviando || !completo}
           >
             <IconeWhatsApp className="carrinho__whats-icone" />
             {enviando ? 'Conferindo pedido…' : 'Finalizar pelo WhatsApp'}
           </button>
-          <p className="resumo__aviso">O pedido completo vai pronto na mensagem.</p>
+          <p className="resumo__aviso">
+            {completo ? 'O pedido completo e seus dados vão prontos na mensagem.' : 'Preencha os dados para entrega para enviar pelo WhatsApp.'}
+          </p>
           <Link href="/#novidades" className="resumo__continuar">Continuar comprando</Link>
         </aside>
       </div>

@@ -252,7 +252,7 @@
   color: var(--preto);
 }
 
-.carrinho__btn.carrinho__btn--whats:hover {
+.carrinho__btn.carrinho__btn--whats:hover:not(:disabled) {
   background: var(--whatsapp-escuro);
   border-color: var(--whatsapp-escuro);
 }
@@ -321,4 +321,12 @@
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
+}
+
+/* WhatsApp desabilitado até preencher os dados para entrega */
+.carrinho__btn.carrinho__btn--whats:disabled {
+  background: var(--cinza-claro);
+  border-color: var(--borda);
+  color: var(--cinza-neutro);
+  cursor: not-allowed;
 }

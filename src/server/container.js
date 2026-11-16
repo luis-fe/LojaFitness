@@ -22,6 +22,7 @@ import { ProdutoRepositorio } from '@/server/repositorios/ProdutoRepositorio'
 import { CampanhaRepositorio } from '@/server/repositorios/CampanhaRepositorio'
 import { PainelRepositorio } from '@/server/repositorios/PainelRepositorio'
 import { VisitaRepositorio } from '@/server/repositorios/VisitaRepositorio'
+import { ClienteRepositorio } from '@/server/repositorios/ClienteRepositorio'
 
 import { AuthServico } from '@/server/servicos/AuthServico'
 import { VendedorServico } from '@/server/servicos/VendedorServico'
@@ -56,6 +57,7 @@ const produtoRepositorio = new ProdutoRepositorio(banco)
 const campanhaRepositorio = new CampanhaRepositorio(banco)
 const painelRepositorio = new PainelRepositorio(banco)
 const visitaRepositorio = new VisitaRepositorio(banco)
+const clienteRepositorio = new ClienteRepositorio(banco)
 
 // ---------- Serviços (regras de negócio) ----------
 export const authServico = new AuthServico({ vendedorRepositorio, limiteTentativas: new LimiteTentativas({ nome: 'login' }) })
@@ -66,7 +68,7 @@ export const tamanhoServico = new TamanhoServico({ tamanhoRepositorio })
 export const corServico = new CorServico({ corRepositorio })
 export const produtoServico = new ProdutoServico({ produtoRepositorio, layoutRepositorio })
 export const catalogoServico = new CatalogoServico({ produtoRepositorio })
-export const pedidoServico = new PedidoServico({ catalogoServico })
+export const pedidoServico = new PedidoServico({ catalogoServico, clienteRepositorio })
 export const painelServico = new PainelServico({ banco, painelRepositorio, campanhaRepositorio })
 export const visitaServico = new VisitaServico({ visitaRepositorio })
 

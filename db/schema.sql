@@ -179,13 +179,61 @@ CREATE TRIGGER campanhas_atualizado_em
 -- ---------------------------------------------------------------------
 -- CLIENTES
 -- ---------------------------------------------------------------------
+-- Chave: CEP + nome (o mesmo cliente que volta é atualizado, não duplicado).
+-- "id" continua único para ligar com "pedidos".
 CREATE TABLE IF NOT EXISTS clientes (
-  id         bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  nome       text,
-  telefone   text UNIQUE,                    -- WhatsApp, só dígitos: 5511987654321
-  email      text UNIQUE,
-  criado_em  timestamptz NOT NULL DEFAULT now()
+  id             bigint GENERATED ALWAYS AS IDENTITY UNIQUE,
+  cep            char(8)     NOT NULL CHECK (cep ~ '^[0-9]{8}$'),
+  nome           text        NOT NULL CHECK (length(nome) BETWEEN 3 AND 120),
+  bairro         text        NOT NULL CHECK (length(bairro) BETWEEN 2 AND 80),
+  cidade         text        NOT NULL CHECK (length(cidade) BETWEEN 2 AND 80),
+  estado         char(2)     NOT NULL CHECK (estado ~ '^[A-Z]{2}$'),
+  telefone       text UNIQUE,                -- WhatsApp, só dígitos (opcional)
+  email          text UNIQUE,                -- opcional
+  pedidos        integer     NOT NULL DEFAULT 1 CHECK (pedidos >= 0),
+  criado_em      timestamptz NOT NULL DEFAULT now(),
+  atualizado_em  timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (cep, nome)
 );
+
+-- Bancos criados antes: a tabela antiga (id, nome, telefone, email) nunca foi usada pelo site.
+-- Converte para o formato novo; se houver linhas, guarda uma cópia em clientes_legado antes.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'clientes' AND column_name = 'cep') THEN
+    IF EXISTS (SELECT 1 FROM clientes) THEN
+      CREATE TABLE IF NOT EXISTS clientes_legado AS SELECT * FROM clientes;
+      RAISE NOTICE 'clientes antigos copiados para clientes_legado';
+      DELETE FROM clientes;
+    END IF;
+    ALTER TABLE clientes
+      ADD COLUMN cep char(8), ADD COLUMN bairro text, ADD COLUMN cidade text, ADD COLUMN estado char(2),
+      ADD COLUMN pedidos integer NOT NULL DEFAULT 1, ADD COLUMN atualizado_em timestamptz NOT NULL DEFAULT now();
+    ALTER TABLE clientes ADD CONSTRAINT clientes_id_key UNIQUE (id);
+    ALTER TABLE pedidos DROP CONSTRAINT IF EXISTS pedidos_cliente_id_fkey;
+    ALTER TABLE clientes DROP CONSTRAINT clientes_pkey;
+    ALTER TABLE clientes
+      ALTER COLUMN cep SET NOT NULL, ALTER COLUMN nome SET NOT NULL, ALTER COLUMN bairro SET NOT NULL,
+      ALTER COLUMN cidade SET NOT NULL, ALTER COLUMN estado SET NOT NULL;
+    ALTER TABLE clientes ADD PRIMARY KEY (cep, nome);
+    ALTER TABLE clientes
+      ADD CONSTRAINT clientes_cep_check CHECK (cep ~ '^[0-9]{8}$'),
+      ADD CONSTRAINT clientes_nome_check CHECK (length(nome) BETWEEN 3 AND 120),
+      ADD CONSTRAINT clientes_bairro_check CHECK (length(bairro) BETWEEN 2 AND 80),
+      ADD CONSTRAINT clientes_cidade_check CHECK (length(cidade) BETWEEN 2 AND 80),
+      ADD CONSTRAINT clientes_estado_check CHECK (estado ~ '^[A-Z]{2}$'),
+      ADD CONSTRAINT clientes_pedidos_check CHECK (pedidos >= 0);
+    ALTER TABLE pedidos ADD CONSTRAINT pedidos_cliente_id_fkey FOREIGN KEY (cliente_id) REFERENCES clientes (id) ON DELETE SET NULL;
+  END IF;
+END $$;
+
+DROP TRIGGER IF EXISTS clientes_atualizado_em ON clientes;
+CREATE TRIGGER clientes_atualizado_em
+  BEFORE UPDATE ON clientes
+  FOR EACH ROW EXECUTE FUNCTION definir_atualizado_em();
+
+COMMENT ON TABLE clientes IS 'Clientes que enviaram pedido pelo WhatsApp (chave: CEP + nome)';
+COMMENT ON COLUMN clientes.pedidos IS 'Quantas vezes o cliente enviou pedido pelo site';
 
 
 -- ---------------------------------------------------------------------

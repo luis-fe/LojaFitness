@@ -1,22 +1,26 @@
 // Regras de pedido: confere itens e estoque e recalcula o total com os preços do servidor
-// (nunca confia em preços enviados pelo navegador). Devolve a mensagem e o link do WhatsApp.
+// (nunca confia em preços enviados pelo navegador), confere e grava o cliente (tabela clientes)
+// e devolve a mensagem e o link do WhatsApp.
 import 'server-only'
 import { ErroValidacao } from '@/server/erros'
 import { linkWhatsApp, mensagemPedido } from '@/lib/whatsapp'
+import { validarCliente } from '@/lib/cliente'
 
 export class PedidoServico {
   static MAX_ITENS = 50
 
-  constructor({ catalogoServico }) {
+  constructor({ catalogoServico, clienteRepositorio }) {
     this.catalogo = catalogoServico
+    this.clientes = clienteRepositorio
   }
 
-  async validar(entrada) {
+  async validar(entrada, clienteEntrada) {
     if (!Array.isArray(entrada) || entrada.length === 0) throw new ErroValidacao({ itens: 'O pedido está vazio.' }, 'O pedido está vazio.')
     if (entrada.length > PedidoServico.MAX_ITENS) throw new ErroValidacao({ itens: `Máximo de ${PedidoServico.MAX_ITENS} itens por pedido.` })
 
+    const { dados: cliente, erros: errosCliente } = validarCliente(clienteEntrada ?? {})
     const catalogo = await this.catalogo.listar()
-    const erros = []
+    const erros = Object.values(errosCliente)
     const itens = []
     for (const [n, item] of entrada.entries()) {
       const produto = catalogo.find((p) => p.slug === item?.slug)
@@ -61,8 +65,9 @@ export class PedidoServico {
       throw e
     }
 
+    await this.clientes.salvar(cliente)
     const total = Math.round(itens.reduce((s, i) => s + i.subtotal, 0) * 100) / 100
-    const mensagem = mensagemPedido(itens)
+    const mensagem = mensagemPedido(itens, cliente)
     return { itens, total, mensagem, whatsappUrl: linkWhatsApp(mensagem) }
   }
 }
