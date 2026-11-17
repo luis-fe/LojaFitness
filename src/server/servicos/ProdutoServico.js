@@ -1,6 +1,7 @@
 // Regras de negócio do cadastro de produtos (pai) e variações (produtos_filho).
 //
 //   • Código único em maiúsculas; o endereço da página (slug) é gerado a partir dele.
+//   • Embalagem X/Y/Z em cm e pesos bruto/líquido em kg: opcionais, maiores que 0, líquido ≤ bruto.
 //   • preco_atual com 2 casas (aceita "159,90"); campanha opcional; caminho = imagem do site/volume.
 //   • Variações: cor x tamanho únicos por produto, estoque inteiro ≥ 0; salvas junto com o produto.
 //   • criado_por = vendedor logado.
@@ -117,6 +118,24 @@ export class ProdutoServico {
       if (!tipoSeloValido(e.selo_tipo)) erros.selo_tipo = 'Tipo do selo deve ser Categoria ou Campanha.'
       else d.selo_tipo = e.selo_tipo
     }
+    // Embalagem (cm) e peso (kg): opcionais; aceitam vírgula ("0,350")
+    const MEDIDAS = {
+      embalagem_x: ['Dimensão X', 'cm', 2, 1000],
+      embalagem_y: ['Dimensão Y', 'cm', 2, 1000],
+      embalagem_z: ['Dimensão Z', 'cm', 2, 1000],
+      peso_bruto: ['Peso bruto', 'kg', 3, 1000],
+      peso_liquido: ['Peso líquido', 'kg', 3, 1000],
+    }
+    for (const [campo, [rotulo, unidade, casas, max]] of Object.entries(MEDIDAS)) {
+      if (!veio(campo)) continue
+      if (e[campo] === null || e[campo] === '') {
+        d[campo] = null
+        continue
+      }
+      const n = ProdutoServico.lerPreco(e[campo])
+      if (!Number.isFinite(n) || n <= 0 || n > max) erros[campo] = `${rotulo}: informe um valor maior que 0 (em ${unidade}).`
+      else d[campo] = Math.round(n * 10 ** casas) / 10 ** casas
+    }
     if (veio('mostrar_preco_anterior')) {
       if (typeof e.mostrar_preco_anterior !== 'boolean') erros.mostrar_preco_anterior = 'Valor inválido.'
       else d.mostrar_preco_anterior = e.mostrar_preco_anterior
@@ -129,6 +148,14 @@ export class ProdutoServico {
     if (!final.mostrar_preco_anterior || erros.preco_anterior || erros.preco_atual) return
     if (final.preco_anterior === null || final.preco_anterior === undefined) erros.preco_anterior = 'Informe o preço anterior para usar o efeito X.'
     else if (Number(final.preco_anterior) <= Number(final.preco_atual)) erros.preco_anterior = 'O preço anterior precisa ser maior que o preço atual.'
+  }
+
+  // Peso líquido nunca maior que o bruto
+  static #validarPesos(final, erros) {
+    if (erros.peso_bruto || erros.peso_liquido) return
+    if (final.peso_bruto != null && final.peso_liquido != null && Number(final.peso_liquido) > Number(final.peso_bruto)) {
+      erros.peso_liquido = 'O peso líquido não pode ser maior que o peso bruto.'
+    }
   }
 
   // [{ cor, tamanho, estoque }] — combinação cor+tamanho única. undefined = não mexer nas variações.
@@ -171,6 +198,7 @@ export class ProdutoServico {
     const { d, erros } = ProdutoServico.#validar(entrada ?? {}, { parcial: false })
     const filhos = ProdutoServico.#validarFilhos(entrada?.filhos ?? [], erros)
     ProdutoServico.#validarPrecoAnterior(d, erros)
+    ProdutoServico.#validarPesos(d, erros)
     validarOuFalhar(erros)
     await this.repo.criar({ ...d, slug: ProdutoServico.slugDoCodigo(d.codigo), criado_por: autor.id }, filhos)
     return this.buscar(d.codigo)
@@ -182,6 +210,10 @@ export class ProdutoServico {
     if (['preco_atual', 'preco_anterior', 'mostrar_preco_anterior'].some((c) => c in d)) {
       const atual = await this.repo.buscar(codigo)
       if (atual) ProdutoServico.#validarPrecoAnterior({ ...atual, ...d }, erros)
+    }
+    if ('peso_bruto' in d || 'peso_liquido' in d) {
+      const atual = await this.repo.buscar(codigo)
+      if (atual) ProdutoServico.#validarPesos({ ...atual, ...d }, erros)
     }
     validarOuFalhar(erros)
     if (!Object.keys(d).length && filhos === undefined) throw new ErroRequisicao('Nenhum campo para atualizar.')

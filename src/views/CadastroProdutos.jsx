@@ -33,6 +33,17 @@ const mascaraPreco = (v) =>
     .replace(/[^\d,]/g, '')
     .replace(/,(?=.*,)/g, '')
     .replace(/(,\d{2})\d+$/, '$1')
+// Medidas com vírgula: "30,5" cm (2 casas) e "0,350" kg (3 casas)
+const medidaParaCampo = (v) => (v === null || v === undefined ? '' : String(Number(v)).replace('.', ','))
+const mascaraMedida = (casas) => (v) =>
+  v
+    .replace(/\./g, ',')
+    .replace(/[^\d,]/g, '')
+    .replace(/,(?=.*,)/g, '')
+    .replace(new RegExp(`(,\\d{${casas}})\\d+$`), '$1')
+const mascaraCm = mascaraMedida(2)
+const mascaraKg = mascaraMedida(3)
+const MEDIDAS = ['embalagem_x', 'embalagem_y', 'embalagem_z', 'peso_bruto', 'peso_liquido']
 
 // ---------------------------------------------------------------------------
 // Variações (produtos filho)
@@ -193,6 +204,7 @@ function FormProduto({ produto, cores, tamanhos, campanhas, selosExistentes = []
     selo_tipo: produto?.selo_tipo ?? TIPO_SELO_PADRAO,
     caminho: produto?.caminho ?? null,
     ativo: produto?.ativo ?? true,
+    ...Object.fromEntries(MEDIDAS.map((c) => [c, medidaParaCampo(produto?.[c])])),
   })
   const [filhos, setFilhos] = useState(() => (produto?.filhos ?? []).map(({ id, cor, tamanho, estoque }) => ({ id, cor, tamanho, estoque })))
   const [escolhendoImagem, setEscolhendoImagem] = useState(false)
@@ -216,6 +228,7 @@ function FormProduto({ produto, cores, tamanhos, campanhas, selosExistentes = []
       campanha_id: form.campanha_id === '' ? null : Number(form.campanha_id),
       selo_campanha: form.selo_campanha.trim() === '' ? null : form.selo_campanha,
       preco_anterior: form.preco_anterior === '' ? null : form.preco_anterior,
+      ...Object.fromEntries(MEDIDAS.map((c) => [c, form[c] === '' ? null : form[c]])),
       filhos: filhos.map(({ cor, tamanho, estoque }) => ({ cor, tamanho, estoque: Number(estoque) || 0 })),
     }
     const { ok, dados } = produto ? await api(`/api/cadastro/produtos/${encodeURIComponent(produto.codigo)}`, { metodo: 'PATCH', corpo }) : await api('/api/cadastro/produtos', { metodo: 'POST', corpo })
@@ -361,6 +374,19 @@ function FormProduto({ produto, cores, tamanhos, campanhas, selosExistentes = []
                 Visível na loja
               </label>
             </div>
+          </div>
+        </section>
+
+        <section className="secao-form" aria-labelledby="embalagem-titulo">
+          <h3 id="embalagem-titulo">
+            Embalagem e peso <span>(usados no cálculo do frete)</span>
+          </h3>
+          <div className="grade-medidas">
+            <Campo rotulo="Dimensão X — largura (cm)" opcional valor={form.embalagem_x} aoMudar={alterar('embalagem_x')} mascara={mascaraCm} erro={erros.embalagem_x} inputMode="decimal" placeholder="20" />
+            <Campo rotulo="Dimensão Y — altura (cm)" opcional valor={form.embalagem_y} aoMudar={alterar('embalagem_y')} mascara={mascaraCm} erro={erros.embalagem_y} inputMode="decimal" placeholder="5" />
+            <Campo rotulo="Dimensão Z — comprimento (cm)" opcional valor={form.embalagem_z} aoMudar={alterar('embalagem_z')} mascara={mascaraCm} erro={erros.embalagem_z} inputMode="decimal" placeholder="30" />
+            <Campo rotulo="Peso bruto (kg)" opcional valor={form.peso_bruto} aoMudar={alterar('peso_bruto')} mascara={mascaraKg} erro={erros.peso_bruto} inputMode="decimal" placeholder="0,400" dica="Produto com a embalagem." />
+            <Campo rotulo="Peso líquido (kg)" opcional valor={form.peso_liquido} aoMudar={alterar('peso_liquido')} mascara={mascaraKg} erro={erros.peso_liquido} inputMode="decimal" placeholder="0,350" dica="Só o produto." />
           </div>
         </section>
 

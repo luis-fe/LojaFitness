@@ -603,6 +603,29 @@ CREATE INDEX IF NOT EXISTS produtos_selo_campanha_idx ON produtos (selo_campanha
 ALTER TABLE produtos ADD COLUMN IF NOT EXISTS selo_tipo text NOT NULL DEFAULT 'campanha' CHECK (selo_tipo IN ('categoria', 'campanha'));
 COMMENT ON COLUMN produtos.selo_tipo IS 'Tipo do selo: categoria ou campanha (grupo do selo no menu lateral do site)';
 
+-- Embalagem e peso (usados no cálculo de frete — Melhor Envio)
+--   embalagem_x/y/z  dimensões da embalagem em cm: X = largura, Y = altura, Z = comprimento
+--   peso_bruto       peso do produto com a embalagem, em kg (é o que vai para o frete)
+--   peso_liquido     peso só do produto, em kg (nunca maior que o bruto)
+ALTER TABLE produtos
+  ADD COLUMN IF NOT EXISTS embalagem_x  numeric(8,2),
+  ADD COLUMN IF NOT EXISTS embalagem_y  numeric(8,2),
+  ADD COLUMN IF NOT EXISTS embalagem_z  numeric(8,2),
+  ADD COLUMN IF NOT EXISTS peso_bruto   numeric(8,3),
+  ADD COLUMN IF NOT EXISTS peso_liquido numeric(8,3);
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'produtos_embalagem_check') THEN
+    ALTER TABLE produtos ADD CONSTRAINT produtos_embalagem_check
+      CHECK ((embalagem_x IS NULL OR embalagem_x > 0) AND (embalagem_y IS NULL OR embalagem_y > 0) AND (embalagem_z IS NULL OR embalagem_z > 0));
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'produtos_peso_check') THEN
+    ALTER TABLE produtos ADD CONSTRAINT produtos_peso_check
+      CHECK ((peso_bruto IS NULL OR peso_bruto > 0) AND (peso_liquido IS NULL OR peso_liquido > 0)
+             AND (peso_bruto IS NULL OR peso_liquido IS NULL OR peso_liquido <= peso_bruto));
+  END IF;
+END $$;
+
 CREATE INDEX IF NOT EXISTS produtos_campanha_idx   ON produtos (campanha_id);
 CREATE INDEX IF NOT EXISTS produtos_criado_por_idx ON produtos (criado_por);
 
@@ -615,6 +638,11 @@ COMMENT ON COLUMN produtos.mostrar_preco_anterior IS 'Efeito X: mostra o preço 
 COMMENT ON COLUMN produtos.selo_campanha IS 'Selo-Campanha (opcional): cria um item no menu lateral do site que filtra os produtos';
 COMMENT ON COLUMN produtos.criado_em   IS 'Data da criação';
 COMMENT ON COLUMN produtos.criado_por  IS 'Vendedor que cadastrou o produto';
+COMMENT ON COLUMN produtos.embalagem_x IS 'Dimensão X da embalagem (largura), em cm';
+COMMENT ON COLUMN produtos.embalagem_y IS 'Dimensão Y da embalagem (altura), em cm';
+COMMENT ON COLUMN produtos.embalagem_z IS 'Dimensão Z da embalagem (comprimento), em cm';
+COMMENT ON COLUMN produtos.peso_bruto  IS 'Peso bruto (produto + embalagem), em kg';
+COMMENT ON COLUMN produtos.peso_liquido IS 'Peso líquido (só o produto), em kg';
 COMMENT ON COLUMN produtos.caminho     IS 'URL da imagem do produto no volume (ex.: /arquivos/<id>.jpg)';
 
 

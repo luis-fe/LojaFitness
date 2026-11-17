@@ -3,6 +3,7 @@ import 'server-only'
 import { ErroConflito, ErroValidacao } from '@/server/erros'
 
 const CAMPOS = `p.id, p.codigo, p.slug, p.nome, p.descricao, p.preco_atual, p.preco_anterior, p.mostrar_preco_anterior, p.selo_campanha, p.selo_tipo, p.ativo, p.caminho,
+  p.embalagem_x, p.embalagem_y, p.embalagem_z, p.peso_bruto, p.peso_liquido,
   p.campanha_id, c.nome AS campanha_nome, p.criado_em, p.criado_por, v.nome AS criado_por_nome, p.atualizado_em,
   (SELECT count(*)::int FROM produtos_filho f WHERE f.codigo_produto = p.codigo) AS variacoes,
   (SELECT COALESCE(sum(estoque), 0)::int FROM produtos_filho f WHERE f.codigo_produto = p.codigo) AS estoque_total`
@@ -19,6 +20,9 @@ export class ProdutoRepositorio {
   static traduzirErro(erro) {
     if (erro.code === '23505' && /codigo|slug/.test(erro.constraint ?? '')) {
       throw new ErroConflito('Já existe um produto com este código.', { codigo: 'Já existe um produto com este código.' })
+    }
+    if (erro.code === '23514' && erro.constraint === 'produtos_peso_check') {
+      throw new ErroValidacao({ peso_liquido: 'O peso líquido não pode ser maior que o peso bruto.' })
     }
     if (erro.code === '23503') {
       if (erro.constraint?.includes('campanha')) throw new ErroValidacao({ campanha_id: 'Campanha não encontrada.' })
@@ -76,9 +80,11 @@ export class ProdutoRepositorio {
     try {
       await this.banco.transacao(async (db) => {
         await db.query(
-          `INSERT INTO produtos (codigo, slug, nome, descricao, preco_atual, campanha_id, caminho, ativo, criado_por, preco_anterior, mostrar_preco_anterior, selo_campanha, selo_tipo)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, true), $9, $10, COALESCE($11, false), $12, COALESCE($13, 'campanha'))`,
-          [d.codigo, d.slug, d.nome, d.descricao, d.preco_atual, d.campanha_id ?? null, d.caminho ?? null, d.ativo ?? null, d.criado_por, d.preco_anterior ?? null, d.mostrar_preco_anterior ?? null, d.selo_campanha ?? null, d.selo_tipo ?? null]
+          `INSERT INTO produtos (codigo, slug, nome, descricao, preco_atual, campanha_id, caminho, ativo, criado_por, preco_anterior, mostrar_preco_anterior, selo_campanha, selo_tipo,
+                                 embalagem_x, embalagem_y, embalagem_z, peso_bruto, peso_liquido)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, true), $9, $10, COALESCE($11, false), $12, COALESCE($13, 'campanha'), $14, $15, $16, $17, $18)`,
+          [d.codigo, d.slug, d.nome, d.descricao, d.preco_atual, d.campanha_id ?? null, d.caminho ?? null, d.ativo ?? null, d.criado_por, d.preco_anterior ?? null, d.mostrar_preco_anterior ?? null, d.selo_campanha ?? null, d.selo_tipo ?? null,
+           d.embalagem_x ?? null, d.embalagem_y ?? null, d.embalagem_z ?? null, d.peso_bruto ?? null, d.peso_liquido ?? null]
         )
         await ProdutoRepositorio.#alinharTipoDoSelo(db, d.codigo)
         await ProdutoRepositorio.#gravarFilhos(db, d.codigo, filhos)

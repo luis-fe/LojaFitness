@@ -105,6 +105,28 @@
   gap: 8px;
 }
 
+/* Embalagem e peso: X/Y/Z numa linha, pesos na seguinte */
+.grade-medidas {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.grade-medidas > .campo {
+  grid-column: span 2;
+}
+
+.grade-medidas > .campo:nth-child(n + 4) {
+  grid-column: span 3;
+}
+
+@media (max-width: 640px) {
+  .grade-medidas > .campo,
+  .grade-medidas > .campo:nth-child(n + 4) {
+    grid-column: span 6;
+  }
+}
+
 .form-produto__dados {
   display: grid;
   grid-template-columns: 160px minmax(0, 1fr);
