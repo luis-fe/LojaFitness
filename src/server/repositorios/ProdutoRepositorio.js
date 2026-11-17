@@ -3,7 +3,7 @@ import 'server-only'
 import { ErroConflito, ErroValidacao } from '@/server/erros'
 
 const CAMPOS = `p.id, p.codigo, p.slug, p.nome, p.descricao, p.preco_atual, p.preco_anterior, p.mostrar_preco_anterior, p.selo_campanha, p.selo_tipo, p.ativo, p.caminho,
-  p.embalagem_x, p.embalagem_y, p.embalagem_z, p.peso_bruto, p.peso_liquido,
+  p.embalagem_x, p.embalagem_y, p.embalagem_z, p.peso_bruto, p.peso_liquido, p.calcula_frete,
   p.campanha_id, c.nome AS campanha_nome, p.criado_em, p.criado_por, v.nome AS criado_por_nome, p.atualizado_em,
   (SELECT count(*)::int FROM produtos_filho f WHERE f.codigo_produto = p.codigo) AS variacoes,
   (SELECT COALESCE(sum(estoque), 0)::int FROM produtos_filho f WHERE f.codigo_produto = p.codigo) AS estoque_total`
@@ -60,7 +60,7 @@ export class ProdutoRepositorio {
     const [produtos, variacoes] = await Promise.all([
       this.banco.consultar(
         `SELECT codigo, slug, nome, descricao, caminho, preco_atual, preco_final, desconto_percentual, campanha_nome,
-                preco_anterior, mostrar_preco_anterior, selo_campanha, selo_tipo
+                preco_anterior, mostrar_preco_anterior, selo_campanha, selo_tipo, calcula_frete
          FROM produtos_com_preco WHERE ativo ORDER BY destaque DESC NULLS LAST, criado_em, id`
       ),
       this.banco.consultar(
@@ -75,16 +75,27 @@ export class ProdutoRepositorio {
     return { produtos: produtos.rows, variacoes: variacoes.rows }
   }
 
+  // Medidas para o cálculo de frete dos produtos visíveis (por slug), com o preço já com campanha
+  async listarParaFrete(slugs) {
+    const { rows } = await this.banco.consultar(
+      `SELECT v.slug, v.nome, v.preco_final, p.calcula_frete, p.embalagem_x, p.embalagem_y, p.embalagem_z, p.peso_bruto
+       FROM produtos_com_preco v JOIN produtos p ON p.id = v.id
+       WHERE v.ativo AND v.slug = ANY($1::text[])`,
+      [slugs]
+    )
+    return rows
+  }
+
   // Salva produto + variações numa transação: ou grava tudo, ou nada.
   async criar(d, filhos) {
     try {
       await this.banco.transacao(async (db) => {
         await db.query(
           `INSERT INTO produtos (codigo, slug, nome, descricao, preco_atual, campanha_id, caminho, ativo, criado_por, preco_anterior, mostrar_preco_anterior, selo_campanha, selo_tipo,
-                                 embalagem_x, embalagem_y, embalagem_z, peso_bruto, peso_liquido)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, true), $9, $10, COALESCE($11, false), $12, COALESCE($13, 'campanha'), $14, $15, $16, $17, $18)`,
+                                 embalagem_x, embalagem_y, embalagem_z, peso_bruto, peso_liquido, calcula_frete)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, true), $9, $10, COALESCE($11, false), $12, COALESCE($13, 'campanha'), $14, $15, $16, $17, $18, COALESCE($19, false))`,
           [d.codigo, d.slug, d.nome, d.descricao, d.preco_atual, d.campanha_id ?? null, d.caminho ?? null, d.ativo ?? null, d.criado_por, d.preco_anterior ?? null, d.mostrar_preco_anterior ?? null, d.selo_campanha ?? null, d.selo_tipo ?? null,
-           d.embalagem_x ?? null, d.embalagem_y ?? null, d.embalagem_z ?? null, d.peso_bruto ?? null, d.peso_liquido ?? null]
+           d.embalagem_x ?? null, d.embalagem_y ?? null, d.embalagem_z ?? null, d.peso_bruto ?? null, d.peso_liquido ?? null, d.calcula_frete ?? null]
         )
         await ProdutoRepositorio.#alinharTipoDoSelo(db, d.codigo)
         await ProdutoRepositorio.#gravarFilhos(db, d.codigo, filhos)

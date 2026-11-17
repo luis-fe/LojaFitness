@@ -55,6 +55,7 @@ export class CatalogoServico {
         selo: p.selo_campanha ?? null,
         seloSlug: p.selo_campanha ? slugDoSelo(p.selo_campanha) : null,
         seloTipo: p.selo_campanha ? (p.selo_tipo ?? TIPO_SELO_PADRAO) : null, // 'categoria' | 'campanha'
+        calculaFrete: Boolean(p.calcula_frete), // mostra o "Simular frete" na compra
         cores,
         tamanhos: [...tamanhos.entries()].sort((a, b) => a[1] - b[1]).map(([codigo]) => codigo),
         estoque,

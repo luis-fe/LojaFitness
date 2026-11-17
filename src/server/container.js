@@ -41,6 +41,7 @@ import { VendaServico } from '@/server/servicos/VendaServico'
 import { EstoqueServico } from '@/server/servicos/EstoqueServico'
 import { PainelServico } from '@/server/servicos/PainelServico'
 import { VisitaServico } from '@/server/servicos/VisitaServico'
+import { FreteServico } from '@/server/servicos/FreteServico'
 
 import { AuthController } from '@/server/controllers/AuthController'
 import { VendedorController } from '@/server/controllers/VendedorController'
@@ -53,6 +54,7 @@ import { LojaController } from '@/server/controllers/LojaController'
 import { VisitaController } from '@/server/controllers/VisitaController'
 import { VendaController } from '@/server/controllers/VendaController'
 import { EstoqueController } from '@/server/controllers/EstoqueController'
+import { FreteController } from '@/server/controllers/FreteController'
 
 // ---------- Repositórios (SQL) ----------
 const vendedorRepositorio = new VendedorRepositorio(banco)
@@ -83,6 +85,11 @@ export const vendaServico = new VendaServico({ vendaRepositorio })
 export const estoqueServico = new EstoqueServico({ estoqueRepositorio })
 export const painelServico = new PainelServico({ banco, painelRepositorio, campanhaRepositorio })
 export const visitaServico = new VisitaServico({ visitaRepositorio })
+export const freteServico = new FreteServico({
+  produtoRepositorio,
+  vendedorServico,
+  limiteTentativas: new LimiteTentativas({ nome: 'frete', maximo: 30, janelaMs: 10 * 60 * 1000 }),
+})
 
 // ---------- HTTP ----------
 const autenticador = new Autenticador({ authServico, vendedorRepositorio })
@@ -100,3 +107,4 @@ export const lojaController = new LojaController({ rota, pedidoServico, painelSe
 export const visitaController = new VisitaController({ visitaServico })
 export const vendaController = new VendaController({ rota, vendaServico })
 export const estoqueController = new EstoqueController({ rota, estoqueServico })
+export const freteController = new FreteController({ rota, freteServico })

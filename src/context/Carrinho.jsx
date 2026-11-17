@@ -54,7 +54,7 @@ export function CarrinhoProvider({ children }) {
           fora.push(i)
           continue
         }
-        novos.push({ ...i, nome: p.nome, preco: p.preco, precoAnterior: p.precoAnterior, imagem: p.imagem, quantidade: Math.max(1, Math.min(i.quantidade, estoque || 1)) })
+        novos.push({ ...i, nome: p.nome, preco: p.preco, precoAnterior: p.precoAnterior, imagem: p.imagem, calculaFrete: Boolean(p.calculaFrete), quantidade: Math.max(1, Math.min(i.quantidade, estoque || 1)) })
       }
       if (fora.length) setRemovidos((antes) => [...antes, ...fora])
       return fora.length || novos.some((n, k) => n !== atual[k]) ? novos : atual
@@ -101,7 +101,7 @@ export function CarrinhoProvider({ children }) {
       adicionar(produto, cor, tamanho, quantidade) {
         const limite = produto.estoque?.[cor]?.[tamanho] ?? 0
         if (limite <= 0) return
-        const dados = { nome: produto.nome, preco: produto.preco, precoAnterior: produto.precoAnterior ?? null, imagem: produto.imagem, limite }
+        const dados = { nome: produto.nome, preco: produto.preco, precoAnterior: produto.precoAnterior ?? null, imagem: produto.imagem, calculaFrete: Boolean(produto.calculaFrete), limite }
         setItens((atual) => {
           const id = idItem(produto.slug, cor, tamanho)
           const existente = atual.find((i) => idItem(i.slug, i.cor, i.tamanho) === id)

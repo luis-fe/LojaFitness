@@ -158,7 +158,12 @@ export default function Carrinho() {
             </div>
           </dl>
 
-          <FormaEnvio valor={frete} aoMudar={setFrete} idBase="carrinho-envio" />
+          <FormaEnvio
+            valor={frete}
+            aoMudar={setFrete}
+            idBase="carrinho-envio"
+            itensFrete={itens.filter((i) => i.calculaFrete).map(({ slug, quantidade }) => ({ slug, quantidade }))}
+          />
           <DadosCliente cliente={cliente} setCliente={setCliente} idBase="carrinho-cliente" />
 
           <button

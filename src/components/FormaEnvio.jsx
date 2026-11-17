@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import './FormaEnvio.css'
 import { FRETES } from '@/lib/frete'
+import SimularFrete from '@/components/SimularFrete'
 import { enderecoCompleto, linkMapa, urlMapaEmbutido } from '@/lib/retirada'
 
 const RETIRAR = 1 // id de "Retirar c/ vendedor" na tabela frete
@@ -58,7 +59,8 @@ function LocaisRetirada() {
 
 // Escolha da forma de envio antes de mandar o pedido pelo WhatsApp (padrão: Combinar Frete).
 // Ao escolher "Retirar c/ vendedor", aparece a localização do vendedor no Google Maps.
-export default function FormaEnvio({ valor, aoMudar, idBase = 'envio' }) {
+// itensFrete: [{ slug, quantidade }] dos produtos com "calcula frete" — mostra o "Simular frete" pelo CEP.
+export default function FormaEnvio({ valor, aoMudar, idBase = 'envio', itensFrete = [] }) {
   return (
     <fieldset className="forma-envio">
       <legend>Forma de envio</legend>
@@ -76,6 +78,7 @@ export default function FormaEnvio({ valor, aoMudar, idBase = 'envio' }) {
           <LocaisRetirada />
         </div>
       )}
+      {valor !== RETIRAR && itensFrete.length > 0 && <SimularFrete itens={itensFrete} idBase={`${idBase}-simular`} />}
     </fieldset>
   )
 }

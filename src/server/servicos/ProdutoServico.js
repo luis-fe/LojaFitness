@@ -2,6 +2,7 @@
 //
 //   • Código único em maiúsculas; o endereço da página (slug) é gerado a partir dele.
 //   • Embalagem X/Y/Z em cm e pesos bruto/líquido em kg: opcionais, maiores que 0, líquido ≤ bruto.
+//   • calcula_frete (padrão não): ligado, exige embalagem X/Y/Z e peso bruto (o Melhor Envio precisa deles).
 //   • preco_atual com 2 casas (aceita "159,90"); campanha opcional; caminho = imagem do site/volume.
 //   • Variações: cor x tamanho únicos por produto, estoque inteiro ≥ 0; salvas junto com o produto.
 //   • criado_por = vendedor logado.
@@ -136,6 +137,10 @@ export class ProdutoServico {
       if (!Number.isFinite(n) || n <= 0 || n > max) erros[campo] = `${rotulo}: informe um valor maior que 0 (em ${unidade}).`
       else d[campo] = Math.round(n * 10 ** casas) / 10 ** casas
     }
+    if (veio('calcula_frete')) {
+      if (typeof e.calcula_frete !== 'boolean') erros.calcula_frete = 'Calcula frete deve ser sim ou não.'
+      else d.calcula_frete = e.calcula_frete
+    }
     if (veio('mostrar_preco_anterior')) {
       if (typeof e.mostrar_preco_anterior !== 'boolean') erros.mostrar_preco_anterior = 'Valor inválido.'
       else d.mostrar_preco_anterior = e.mostrar_preco_anterior
@@ -150,8 +155,13 @@ export class ProdutoServico {
     else if (Number(final.preco_anterior) <= Number(final.preco_atual)) erros.preco_anterior = 'O preço anterior precisa ser maior que o preço atual.'
   }
 
-  // Peso líquido nunca maior que o bruto
+  // Peso líquido nunca maior que o bruto; "calcula frete" ligado exige embalagem e peso bruto
   static #validarPesos(final, erros) {
+    if (final.calcula_frete) {
+      for (const [c, rotulo] of [['embalagem_x', 'a dimensão X'], ['embalagem_y', 'a dimensão Y'], ['embalagem_z', 'a dimensão Z'], ['peso_bruto', 'o peso bruto']]) {
+        if (!erros[c] && (final[c] === null || final[c] === undefined)) erros[c] = `Informe ${rotulo} para calcular o frete.`
+      }
+    }
     if (erros.peso_bruto || erros.peso_liquido) return
     if (final.peso_bruto != null && final.peso_liquido != null && Number(final.peso_liquido) > Number(final.peso_bruto)) {
       erros.peso_liquido = 'O peso líquido não pode ser maior que o peso bruto.'
@@ -211,7 +221,7 @@ export class ProdutoServico {
       const atual = await this.repo.buscar(codigo)
       if (atual) ProdutoServico.#validarPrecoAnterior({ ...atual, ...d }, erros)
     }
-    if ('peso_bruto' in d || 'peso_liquido' in d) {
+    if (['peso_bruto', 'peso_liquido', 'calcula_frete', 'embalagem_x', 'embalagem_y', 'embalagem_z'].some((c) => c in d)) {
       const atual = await this.repo.buscar(codigo)
       if (atual) ProdutoServico.#validarPesos({ ...atual, ...d }, erros)
     }

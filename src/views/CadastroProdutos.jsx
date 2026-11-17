@@ -205,6 +205,7 @@ function FormProduto({ produto, cores, tamanhos, campanhas, selosExistentes = []
     caminho: produto?.caminho ?? null,
     ativo: produto?.ativo ?? true,
     ...Object.fromEntries(MEDIDAS.map((c) => [c, medidaParaCampo(produto?.[c])])),
+    calcula_frete: produto?.calcula_frete ?? false,
   })
   const [filhos, setFilhos] = useState(() => (produto?.filhos ?? []).map(({ id, cor, tamanho, estoque }) => ({ id, cor, tamanho, estoque })))
   const [escolhendoImagem, setEscolhendoImagem] = useState(false)
@@ -381,6 +382,24 @@ function FormProduto({ produto, cores, tamanhos, campanhas, selosExistentes = []
           <h3 id="embalagem-titulo">
             Embalagem e peso <span>(usados no cálculo do frete)</span>
           </h3>
+          <div className="calcula-frete">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={form.calcula_frete}
+              aria-describedby="calcula-frete-dica"
+              className={`interruptor ${form.calcula_frete ? 'is-ligado' : ''}`}
+              onClick={() => alterar('calcula_frete')(!form.calcula_frete)}
+            >
+              <span className="interruptor__trilho" aria-hidden="true">
+                <span className="interruptor__bolinha" />
+              </span>
+              Calcula frete: <strong>{form.calcula_frete ? 'Sim' : 'Não'}</strong>
+            </button>
+            <span id="calcula-frete-dica" className={erros.calcula_frete ? 'campo__erro' : 'campo__dica'}>
+              {erros.calcula_frete || (form.calcula_frete ? 'Na compra, o cliente informa o CEP e simula o frete pelo Melhor Envio. Preencha X, Y, Z e o peso bruto.' : 'Desligado, o frete é combinado pelo WhatsApp.')}
+            </span>
+          </div>
           <div className="grade-medidas">
             <Campo rotulo="Dimensão X — largura (cm)" opcional valor={form.embalagem_x} aoMudar={alterar('embalagem_x')} mascara={mascaraCm} erro={erros.embalagem_x} inputMode="decimal" placeholder="20" />
             <Campo rotulo="Dimensão Y — altura (cm)" opcional valor={form.embalagem_y} aoMudar={alterar('embalagem_y')} mascara={mascaraCm} erro={erros.embalagem_y} inputMode="decimal" placeholder="5" />

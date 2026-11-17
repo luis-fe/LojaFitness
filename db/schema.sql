@@ -613,6 +613,8 @@ ALTER TABLE produtos
   ADD COLUMN IF NOT EXISTS embalagem_z  numeric(8,2),
   ADD COLUMN IF NOT EXISTS peso_bruto   numeric(8,3),
   ADD COLUMN IF NOT EXISTS peso_liquido numeric(8,3);
+-- calcula_frete: liga o "Simular frete" (Melhor Envio) na compra deste produto. Padrão: não
+ALTER TABLE produtos ADD COLUMN IF NOT EXISTS calcula_frete boolean NOT NULL DEFAULT false;
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'produtos_embalagem_check') THEN
@@ -643,6 +645,7 @@ COMMENT ON COLUMN produtos.embalagem_y IS 'Dimensão Y da embalagem (altura), em
 COMMENT ON COLUMN produtos.embalagem_z IS 'Dimensão Z da embalagem (comprimento), em cm';
 COMMENT ON COLUMN produtos.peso_bruto  IS 'Peso bruto (produto + embalagem), em kg';
 COMMENT ON COLUMN produtos.peso_liquido IS 'Peso líquido (só o produto), em kg';
+COMMENT ON COLUMN produtos.calcula_frete IS 'Calcula frete (sim/não): mostra o Simular frete na compra';
 COMMENT ON COLUMN produtos.caminho     IS 'URL da imagem do produto no volume (ex.: /arquivos/<id>.jpg)';
 
 
@@ -823,7 +826,7 @@ CREATE VIEW produtos_com_preco AS
 SELECT
   p.id, p.codigo, p.slug, p.nome, p.descricao, p.preco_atual, p.caminho, p.ativo, p.destaque,
   p.campanha_id, p.criado_em, p.criado_por, p.atualizado_em, p.preco_anterior, p.mostrar_preco_anterior,
-  p.selo_campanha, p.selo_tipo,
+  p.selo_campanha, p.selo_tipo, p.calcula_frete,
   c.nome AS campanha_nome,
   CASE WHEN c.id IS NOT NULL THEN c.desconto_percentual END AS desconto_percentual,
   round(p.preco_atual * (1 - COALESCE(c.desconto_percentual, 0) / 100), 2) AS preco_final
