@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import './FormaEnvio.css'
 import { FRETES } from '@/lib/frete'
-import { enderecoCompleto, linkMapa, urlMapaEmbutido } from '@/lib/retirada'
+import { enderecoCompleto, linkMapa } from '@/lib/retirada'
 
 const RETIRAR = 1 // id de "Retirar c/ vendedor" na tabela frete
 
@@ -18,7 +18,15 @@ const buscarLocais = () =>
       return []
     }))
 
-// Local de retirada: endereço do vendedor, mapa e link para abrir no Google Maps
+// Pino de mapa
+const IconeMapa = () => (
+  <svg className="retirada__icone" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21Z" />
+    <circle cx="12" cy="9.5" r="2.5" />
+  </svg>
+)
+
+// Local de retirada (localização da empresa): nome, CEP e o link com ícone para abrir no Google Maps
 function LocaisRetirada() {
   const [locais, setLocais] = useState(null)
   useEffect(() => {
@@ -38,15 +46,14 @@ function LocaisRetirada() {
       {locais.map((local, i) => {
         const endereco = enderecoCompleto(local)
         const link = linkMapa(local)
-        const mapa = unico ? urlMapaEmbutido(local) : null // vários locais: só os links, para não carregar vários mapas
         return (
           <li key={i} className="retirada__local">
             <strong>{local.nome}</strong>
             {endereco && <span>{endereco}</span>}
-            {mapa && <iframe className="retirada__mapa" src={mapa} title={`Mapa do local de retirada: ${local.nome}`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />}
             {link && (
-              <a className="retirada__link" href={link} target="_blank" rel="noopener noreferrer">
-                Abrir no Google Maps
+              <a className="retirada__link" href={link} target="_blank" rel="noopener noreferrer" aria-label={`Ver a localização de ${local.nome} no Google Maps (abre em nova aba)`}>
+                <IconeMapa />
+                Ver localização no Google Maps
               </a>
             )}
           </li>

@@ -60,6 +60,14 @@ export class EmpresaServico {
     return this.repo.buscar()
   }
 
+  // Local de retirada mostrado na loja ("Retirar c/ vendedor"): só o que é público.
+  // null quando a empresa ainda não tem a localização cadastrada.
+  async localRetirada() {
+    const e = await this.repo.buscar()
+    if (!e?.localizacao_coordenada) return null
+    return { nome: e.razao_social, cep: e.cep, localizacao: e.localizacao_coordenada }
+  }
+
   salvar(entrada, vendedor) {
     return this.repo.salvar(EmpresaServico.validar(entrada ?? {}), vendedor?.id)
   }
