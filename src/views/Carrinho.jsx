@@ -12,6 +12,8 @@ import DadosCliente, { useDadosCliente } from '@/components/DadosCliente'
 import FormaEnvio from '@/components/FormaEnvio'
 import { FRETE_PADRAO, descricaoFrete } from '@/lib/frete'
 
+const RETIRAR = 1 // "Retirar c/ vendedor": sem frete para calcular
+
 export default function Carrinho() {
   const { carregado, itens, total, quantidadeTotal, alterarQuantidade, remover, estoqueDe, removidos, dispensarRemovidos } = useCarrinho()
   const [enviando, setEnviando] = useState(false)
@@ -158,13 +160,13 @@ export default function Carrinho() {
             </div>
           </dl>
 
-          <FormaEnvio
-            valor={frete}
-            aoMudar={setFrete}
-            idBase="carrinho-envio"
-            itensFrete={itens.filter((i) => i.calculaFrete).map(({ slug, quantidade }) => ({ slug, quantidade }))}
+          <FormaEnvio valor={frete} aoMudar={setFrete} idBase="carrinho-envio" />
+          <DadosCliente
+            cliente={cliente}
+            setCliente={setCliente}
+            idBase="carrinho-cliente"
+            itensFrete={frete === RETIRAR ? [] : itens.filter((i) => i.calculaFrete).map(({ slug, quantidade }) => ({ slug, quantidade }))}
           />
-          <DadosCliente cliente={cliente} setCliente={setCliente} idBase="carrinho-cliente" />
 
           <button
             type="button"

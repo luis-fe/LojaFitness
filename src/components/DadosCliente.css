@@ -68,3 +68,38 @@
 .dados-cliente__aviso {
   color: #a15c00 !important;
 }
+
+/* CEP com o botão "Calcular frete" ao lado */
+.dados-cliente__cep {
+  display: flex;
+  gap: 8px;
+}
+
+.dados-cliente__cep input {
+  flex: 1;
+  min-width: 0;
+}
+
+.dados-cliente__frete {
+  flex-shrink: 0;
+  height: 42px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--preto);
+  color: var(--branco);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dados-cliente__frete:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.dados-cliente__frete:focus-visible {
+  outline: 2px solid var(--preto);
+  outline-offset: 2px;
+}

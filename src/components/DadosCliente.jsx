@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import './DadosCliente.css'
 import { buscarCep, formatarCep, soDigitosCep, validarCliente } from '@/lib/cliente'
+import { ResultadoFrete, useSimularFrete } from '@/components/SimularFrete'
 
 const CHAVE = 'jlk-cliente' // lembra os dados neste aparelho para a próxima compra
 
@@ -30,7 +31,11 @@ export function useDadosCliente() {
 
 // Nome, CEP (preenche bairro, cidade e estado sozinho), bairro, cidade e estado
 //   legenda: título do quadro · extras: campos depois do nome (ex.: CNPJ no lançamento manual)
-export default function DadosCliente({ cliente, setCliente, idBase = 'cliente', legenda = 'Dados para entrega', extras = null }) {
+//   itensFrete: [{ slug, quantidade }] dos produtos com "calcula frete" — mostra o botão "Calcular frete"
+//               ao lado do CEP e as opções do Melhor Envio abaixo dos dados
+export default function DadosCliente({ cliente, setCliente, idBase = 'cliente', legenda = 'Dados para entrega', extras = null, itensFrete = [] }) {
+  const comFrete = itensFrete.length > 0
+  const frete = useSimularFrete(itensFrete, cliente.cep)
   const [buscando, setBuscando] = useState(false)
   const [avisoCep, setAvisoCep] = useState('')
   const ultimoCep = useRef('')
@@ -79,17 +84,25 @@ export default function DadosCliente({ cliente, setCliente, idBase = 'cliente', 
           <input id={`${idBase}-nome`} value={cliente.nome} onChange={mudar('nome')} autoComplete="name" maxLength={120} placeholder="Nome completo" />
         </div>
         {extras}
-        <div className="campo">
+        <div className={`campo ${comFrete ? 'dados-cliente__largo' : ''}`}>
           <label htmlFor={`${idBase}-cep`}>CEP</label>
-          <input
-            id={`${idBase}-cep`}
-            value={formatarCep(cliente.cep)}
-            onChange={(e) => setCliente((c) => ({ ...c, cep: soDigitosCep(e.target.value) }))}
-            autoComplete="postal-code"
-            inputMode="numeric"
-            placeholder="00000-000"
-            aria-describedby={`${idBase}-cep-aviso`}
-          />
+          <div className={comFrete ? 'dados-cliente__cep' : undefined}>
+            <input
+              id={`${idBase}-cep`}
+              value={formatarCep(cliente.cep)}
+              onChange={(e) => setCliente((c) => ({ ...c, cep: soDigitosCep(e.target.value) }))}
+              onKeyDown={(e) => comFrete && e.key === 'Enter' && (e.preventDefault(), frete.simular())}
+              autoComplete="postal-code"
+              inputMode="numeric"
+              placeholder="00000-000"
+              aria-describedby={`${idBase}-cep-aviso${comFrete ? ` ${idBase}-frete` : ''}`}
+            />
+            {comFrete && (
+              <button type="button" className="dados-cliente__frete" onClick={frete.simular} disabled={!frete.pronto || frete.carregando}>
+                {frete.carregando ? 'Calculando…' : 'Calcular frete'}
+              </button>
+            )}
+          </div>
           <span id={`${idBase}-cep-aviso`} className={`campo__dica ${avisoCep ? 'dados-cliente__aviso' : ''}`} aria-live="polite">
             {buscando ? 'Buscando endereço…' : avisoCep || 'Bairro, cidade e estado são preenchidos pelo CEP.'}
           </span>
@@ -114,6 +127,7 @@ export default function DadosCliente({ cliente, setCliente, idBase = 'cliente', 
           />
         </div>
       </div>
+      {comFrete && <ResultadoFrete id={`${idBase}-frete`} {...frete} />}
     </fieldset>
   )
 }

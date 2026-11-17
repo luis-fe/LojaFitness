@@ -10,6 +10,8 @@ import IconeWhatsApp from '@/components/IconeWhatsApp'
 import DadosCliente, { useDadosCliente } from '@/components/DadosCliente'
 import FormaEnvio from '@/components/FormaEnvio'
 import { FRETE_PADRAO } from '@/lib/frete'
+
+const RETIRAR = 1 // "Retirar c/ vendedor": sem frete para calcular
 import { useErro } from '@/context/Erro'
 
 // Junta as peças escolhidas por cor + tamanho: [{ cor, tamanho, quantidade }]
@@ -267,8 +269,13 @@ export default function Produto({ produto }) {
               )}
               {completo_ && comprandoDireto && (
                 <div className="produto__direto">
-                  <FormaEnvio valor={frete} aoMudar={setFrete} idBase="produto-envio" itensFrete={produto.calculaFrete ? [{ slug: produto.slug, quantidade: escolhas.length || quantidade }] : []} />
-                  <DadosCliente cliente={cliente} setCliente={setCliente} idBase="produto-cliente" />
+                  <FormaEnvio valor={frete} aoMudar={setFrete} idBase="produto-envio" />
+                  <DadosCliente
+                    cliente={cliente}
+                    setCliente={setCliente}
+                    idBase="produto-cliente"
+                    itensFrete={produto.calculaFrete && frete !== RETIRAR ? [{ slug: produto.slug, quantidade: escolhas.length || quantidade }] : []}
+                  />
                   <button type="button" className="produto__btn produto__btn--whats" onClick={comprarDireto} disabled={!completo || enviando}>
                     <IconeWhatsApp className="produto__whats-icone" />
                     {enviando ? 'Conferindo pedido…' : 'Enviar pedido pelo WhatsApp'}
