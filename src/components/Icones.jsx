@@ -38,6 +38,16 @@ export const IconeEditarPerfil = () => (
   </Svg>
 )
 
+// Prédio (Minha Empresa)
+export const IconeEmpresa = () => (
+  <Svg>
+    <path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16" />
+    <path d="M15 9h4a1 1 0 0 1 1 1v11" />
+    <path d="M2 21h20" />
+    <path d="M8 8h3M8 12h3M8 16h3" />
+  </Svg>
+)
+
 export const IconeProdutos = () => (
   <Svg>
     <path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z" />

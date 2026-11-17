@@ -2,7 +2,7 @@
 
 import PaginaVendedor from '@/components/PaginaVendedor'
 import CardsMenu from '@/components/CardsMenu'
-import { IconeVendedores, IconeEditarPerfil } from '@/components/Icones'
+import { IconeVendedores, IconeEditarPerfil, IconeEmpresa } from '@/components/Icones'
 import { useAutenticacao } from '@/context/Autenticacao'
 
 export default function MenuPerfil() {
@@ -25,6 +25,12 @@ export default function MenuPerfil() {
             titulo: 'Alterar Perfil',
             href: '/area-do-vendedor/perfil/alterar',
             Icone: IconeEditarPerfil,
+            cor: 'azul',
+          },
+          {
+            titulo: 'Minha Empresa',
+            href: '/area-do-vendedor/perfil/empresa',
+            Icone: IconeEmpresa,
             cor: 'azul',
           },
         ]}

@@ -820,6 +820,40 @@ COMMENT ON COLUMN mov_produto.movimento IS 'entrada (aumenta), saida (venda) ou 
 
 
 -- ---------------------------------------------------------------------
+-- EMPRESA — dados cadastrais da loja (Perfil → Minha Empresa)
+--
+--   Tabela de UMA linha só (id = 1): a empresa dona do site.
+--   cnpj / cep / contato guardam só dígitos; localizacao_coordenada = "latitude,longitude".
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS empresa (
+  id                      smallint    PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+  cnpj                    text        NOT NULL CHECK (cnpj ~ '^[0-9]{14}$'),
+  razao_social            text        NOT NULL CHECK (length(trim(razao_social)) BETWEEN 2 AND 150),
+  administrador           text        CHECK (administrador IS NULL OR length(trim(administrador)) BETWEEN 2 AND 120),
+  cep                     text        CHECK (cep ~ '^[0-9]{8}$'),
+  email                   text        CHECK (email IS NULL OR (length(email) <= 200 AND email ~ '^[^@\s]+@[^@\s]+\.[^@\s]+$')),
+  localizacao_coordenada  text        CHECK (localizacao_coordenada IS NULL OR length(localizacao_coordenada) <= 60),
+  e_mei                   boolean     NOT NULL DEFAULT false,
+  contato                 text        CHECK (contato ~ '^[0-9]{10,13}$'),
+  atualizado_por          bigint      REFERENCES vendedores (id) ON DELETE SET NULL,
+  criado_em               timestamptz NOT NULL DEFAULT now(),
+  atualizado_em           timestamptz NOT NULL DEFAULT now()
+);
+
+COMMENT ON TABLE  empresa IS 'Dados cadastrais da empresa dona da loja (uma linha só, id = 1)';
+COMMENT ON COLUMN empresa.cnpj IS 'CNPJ, 14 dígitos';
+COMMENT ON COLUMN empresa.administrador IS 'Nome do administrador / responsável legal';
+COMMENT ON COLUMN empresa.localizacao_coordenada IS 'Coordenadas "latitude,longitude"';
+COMMENT ON COLUMN empresa.e_mei IS 'true = Microempreendedor Individual (MEI)';
+COMMENT ON COLUMN empresa.contato IS 'Telefone de contato (DDD + número, só dígitos)';
+
+DROP TRIGGER IF EXISTS empresa_atualizado_em ON empresa;
+CREATE TRIGGER empresa_atualizado_em
+  BEFORE UPDATE ON empresa
+  FOR EACH ROW EXECUTE FUNCTION definir_atualizado_em();
+
+
+-- ---------------------------------------------------------------------
 -- VIEW: produto com o preço final (preco_atual com o desconto da campanha, se estiver ativa e no período)
 -- ---------------------------------------------------------------------
 CREATE VIEW produtos_com_preco AS

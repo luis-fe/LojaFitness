@@ -26,6 +26,7 @@ import { ClienteRepositorio } from '@/server/repositorios/ClienteRepositorio'
 import { PedidoRepositorio } from '@/server/repositorios/PedidoRepositorio'
 import { VendaRepositorio } from '@/server/repositorios/VendaRepositorio'
 import { EstoqueRepositorio } from '@/server/repositorios/EstoqueRepositorio'
+import { EmpresaRepositorio } from '@/server/repositorios/EmpresaRepositorio'
 
 import { AuthServico } from '@/server/servicos/AuthServico'
 import { VendedorServico } from '@/server/servicos/VendedorServico'
@@ -42,6 +43,7 @@ import { EstoqueServico } from '@/server/servicos/EstoqueServico'
 import { PainelServico } from '@/server/servicos/PainelServico'
 import { VisitaServico } from '@/server/servicos/VisitaServico'
 import { FreteServico } from '@/server/servicos/FreteServico'
+import { EmpresaServico } from '@/server/servicos/EmpresaServico'
 
 import { AuthController } from '@/server/controllers/AuthController'
 import { VendedorController } from '@/server/controllers/VendedorController'
@@ -55,6 +57,7 @@ import { VisitaController } from '@/server/controllers/VisitaController'
 import { VendaController } from '@/server/controllers/VendaController'
 import { EstoqueController } from '@/server/controllers/EstoqueController'
 import { FreteController } from '@/server/controllers/FreteController'
+import { EmpresaController } from '@/server/controllers/EmpresaController'
 
 // ---------- Repositórios (SQL) ----------
 const vendedorRepositorio = new VendedorRepositorio(banco)
@@ -70,6 +73,7 @@ const clienteRepositorio = new ClienteRepositorio(banco)
 const pedidoRepositorio = new PedidoRepositorio(banco, { clienteRepositorio })
 const vendaRepositorio = new VendaRepositorio(banco, { clienteRepositorio })
 const estoqueRepositorio = new EstoqueRepositorio(banco)
+const empresaRepositorio = new EmpresaRepositorio(banco)
 
 // ---------- Serviços (regras de negócio) ----------
 export const authServico = new AuthServico({ vendedorRepositorio, limiteTentativas: new LimiteTentativas({ nome: 'login' }) })
@@ -85,6 +89,7 @@ export const vendaServico = new VendaServico({ vendaRepositorio })
 export const estoqueServico = new EstoqueServico({ estoqueRepositorio })
 export const painelServico = new PainelServico({ banco, painelRepositorio, campanhaRepositorio })
 export const visitaServico = new VisitaServico({ visitaRepositorio })
+export const empresaServico = new EmpresaServico({ empresaRepositorio })
 export const freteServico = new FreteServico({
   produtoRepositorio,
   vendedorServico,
@@ -108,3 +113,4 @@ export const visitaController = new VisitaController({ visitaServico })
 export const vendaController = new VendaController({ rota, vendaServico })
 export const estoqueController = new EstoqueController({ rota, estoqueServico })
 export const freteController = new FreteController({ rota, freteServico })
+export const empresaController = new EmpresaController({ rota, empresaServico })
