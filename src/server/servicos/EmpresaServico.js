@@ -1,11 +1,9 @@
 // Regras de negócio dos dados da empresa (Perfil → Minha Empresa).
 //   • CNPJ e Razão Social obrigatórios; os demais campos são opcionais (vazio = null).
 //   • CNPJ / CEP / contato são guardados só com dígitos.
-//   • Localização: coordenadas "latitude, longitude" (ex.: -16.8233, -49.2439).
 import 'server-only'
 import { validarOuFalhar } from '@/server/erros'
 import { soDigitos, cnpjValido, telefoneValido } from '@/server/utils/validacao'
-import { lerCoordenadas } from '@/lib/retirada'
 
 const texto = (v) => (v === null || v === undefined ? '' : String(v).trim())
 
@@ -37,13 +35,6 @@ export class EmpresaServico {
     const email = texto(e.email).toLowerCase()
     if (email && (email.length > 200 || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))) erros.email = 'E-mail inválido.'
     else dados.email = email || null
-
-    const loc = texto(e.localizacao_coordenada)
-    if (loc) {
-      const c = lerCoordenadas(loc)
-      if (!c) erros.localizacao_coordenada = 'Use "latitude, longitude", ex.: -16.8233, -49.2439.'
-      else dados.localizacao_coordenada = `${c.lat},${c.lng}`
-    } else dados.localizacao_coordenada = null
 
     if (e.e_mei !== undefined && typeof e.e_mei !== 'boolean') erros.e_mei = 'MEI deve ser verdadeiro ou falso.'
     else dados.e_mei = e.e_mei === true
