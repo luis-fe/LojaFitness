@@ -6,7 +6,7 @@ import Campo from '@/components/Campo'
 import { useAutenticacao } from '@/context/Autenticacao'
 import { useErro } from '@/context/Erro'
 import { formatarCpfCnpj, formatarTelefone, mascaraCpfCnpj, mascaraTelefone } from '@/lib/formatos'
-import { formatarCep, mascaraCep } from '@/lib/retirada'
+import { formatarCep, lerCoordenadas, mascaraCep } from '@/lib/retirada'
 
 const VAZIO = {
   cnpj: '',
@@ -14,6 +14,7 @@ const VAZIO = {
   administrador: '',
   cep: '',
   email: '',
+  localizacao_coordenada: '',
   e_mei: false,
   contato: '',
 }
@@ -27,6 +28,7 @@ const paraFormulario = (e) =>
         administrador: e.administrador ?? '',
         cep: formatarCep(e.cep),
         email: e.email ?? '',
+        localizacao_coordenada: e.localizacao_coordenada ? e.localizacao_coordenada.replace(',', ', ') : '',
         e_mei: Boolean(e.e_mei),
         contato: formatarTelefone(e.contato),
       }
@@ -77,6 +79,7 @@ export default function MinhaEmpresa() {
     setAviso('Dados da empresa salvos.')
   }
 
+  const coordenadas = lerCoordenadas(form.localizacao_coordenada)
   const somenteLeitura = !ehAdmin
 
   return (
@@ -124,6 +127,25 @@ export default function MinhaEmpresa() {
                 inputMode="numeric"
                 placeholder="00000-000"
               />
+              <div className="largo">
+                <Campo
+                  rotulo="Localização (coordenadas)"
+                  opcional
+                  valor={form.localizacao_coordenada}
+                  aoMudar={alterar('localizacao_coordenada')}
+                  erro={erros.localizacao_coordenada}
+                  dica={
+                    coordenadas ? (
+                      <a href={`https://www.google.com/maps?q=${coordenadas.lat},${coordenadas.lng}`} target="_blank" rel="noopener noreferrer">
+                        Ver no Google Maps
+                      </a>
+                    ) : (
+                      'Latitude, longitude — ex.: -16.8233, -49.2439 (no Google Maps, clique com o botão direito no local).'
+                    )
+                  }
+                  placeholder="-16.8233, -49.2439"
+                />
+              </div>
               <div className="largo">
                 <label className="opcao">
                   <input type="checkbox" checked={form.e_mei} onChange={(e) => alterar('e_mei')(e.target.checked)} />
