@@ -840,6 +840,10 @@ CREATE TABLE IF NOT EXISTS empresa (
   atualizado_em           timestamptz NOT NULL DEFAULT now()
 );
 
+-- Bancos em que a coluna foi apagada (commit b46e662) e depois voltou: recria (CREATE TABLE IF NOT EXISTS não altera tabela existente)
+ALTER TABLE empresa ADD COLUMN IF NOT EXISTS localizacao_coordenada text
+  CHECK (localizacao_coordenada IS NULL OR length(localizacao_coordenada) <= 60);
+
 COMMENT ON TABLE  empresa IS 'Dados cadastrais da empresa dona da loja (uma linha só, id = 1)';
 COMMENT ON COLUMN empresa.cnpj IS 'CNPJ, 14 dígitos';
 COMMENT ON COLUMN empresa.administrador IS 'Nome do administrador / responsável legal';
