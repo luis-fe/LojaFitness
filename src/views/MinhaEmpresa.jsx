@@ -7,6 +7,7 @@ import { useAutenticacao } from '@/context/Autenticacao'
 import { useErro } from '@/context/Erro'
 import { formatarCpfCnpj, formatarTelefone, mascaraCpfCnpj, mascaraTelefone } from '@/lib/formatos'
 import { formatarCep, lerCoordenadas, mascaraCep } from '@/lib/retirada'
+import { buscarCep } from '@/lib/cliente'
 
 const VAZIO = {
   cnpj: '',
@@ -17,6 +18,12 @@ const VAZIO = {
   localizacao_coordenada: '',
   e_mei: false,
   contato: '',
+  logradouro: '',
+  numero: '',
+  complemento: '',
+  bairro: '',
+  cidade: '',
+  uf: '',
 }
 
 // Dados do banco → valores exibidos no formulário (com máscara)
@@ -31,6 +38,12 @@ const paraFormulario = (e) =>
         localizacao_coordenada: e.localizacao_coordenada ? e.localizacao_coordenada.replace(',', ', ') : '',
         e_mei: Boolean(e.e_mei),
         contato: formatarTelefone(e.contato),
+        logradouro: e.logradouro ?? '',
+        numero: e.numero ?? '',
+        complemento: e.complemento ?? '',
+        bairro: e.bairro ?? '',
+        cidade: e.cidade ?? '',
+        uf: e.uf ?? '',
       }
     : VAZIO
 
@@ -64,6 +77,28 @@ export default function MinhaEmpresa() {
     setErros((e) => ({ ...e, [campo]: undefined }))
     setAviso('')
   }
+
+  // CEP completo: preenche rua, bairro, cidade e UF pelo ViaCEP (só os campos vazios)
+  const cepDigitos = form.cep.replace(/\D/g, '')
+  useEffect(() => {
+    if (cepDigitos.length !== 8 || carregando) return
+    let ativo = true
+    buscarCep(cepDigitos)
+      .then((end) => {
+        if (!ativo || !end) return
+        setForm((f) => ({
+          ...f,
+          logradouro: f.logradouro || end.logradouro || '',
+          bairro: f.bairro || end.bairro || '',
+          cidade: f.cidade || end.cidade || '',
+          uf: f.uf || end.estado || '',
+        }))
+      })
+      .catch(() => {})
+    return () => {
+      ativo = false
+    }
+  }, [cepDigitos, carregando])
 
   const salvar = async (e) => {
     e.preventDefault()
@@ -126,6 +161,23 @@ export default function MinhaEmpresa() {
                 erro={erros.cep}
                 inputMode="numeric"
                 placeholder="00000-000"
+              />
+              <div className="largo">
+                <Campo rotulo="Rua / avenida" opcional valor={form.logradouro} aoMudar={alterar('logradouro')} erro={erros.logradouro} autoComplete="address-line1" />
+              </div>
+              <Campo rotulo="Número" opcional valor={form.numero} aoMudar={alterar('numero')} erro={erros.numero} placeholder="123 ou S/N" />
+              <Campo rotulo="Complemento" opcional valor={form.complemento} aoMudar={alterar('complemento')} erro={erros.complemento} />
+              <Campo rotulo="Bairro" opcional valor={form.bairro} aoMudar={alterar('bairro')} erro={erros.bairro} />
+              <Campo rotulo="Cidade" opcional valor={form.cidade} aoMudar={alterar('cidade')} erro={erros.cidade} />
+              <Campo
+                rotulo="UF"
+                opcional
+                valor={form.uf}
+                aoMudar={alterar('uf')}
+                mascara={(v) => v.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2)}
+                erro={erros.uf}
+                placeholder="GO"
+                dica="O endereço completo é o remetente das etiquetas do Melhor Envio."
               />
               <div className="largo">
                 <Campo

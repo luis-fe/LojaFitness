@@ -33,9 +33,23 @@ export function useDadosCliente() {
 //   legenda: título do quadro · extras: campos depois do nome (ex.: CNPJ no lançamento manual)
 //   itensFrete: [{ slug, quantidade }] dos produtos com "calcula frete" — mostra o botão "Calcular frete"
 //               ao lado do CEP e as opções do Melhor Envio abaixo dos dados
-export default function DadosCliente({ cliente, setCliente, idBase = 'cliente', legenda = 'Dados para entrega', extras = null, itensFrete = [] }) {
+//   aoEscolherServico (Receber em casa): as opções do frete viram uma escolha; servicoEscolhido = id escolhido
+export default function DadosCliente({
+  cliente,
+  setCliente,
+  idBase = 'cliente',
+  legenda = 'Dados para entrega',
+  extras = null,
+  itensFrete = [],
+  servicoEscolhido = null,
+  aoEscolherServico = null,
+}) {
   const comFrete = itensFrete.length > 0
   const frete = useSimularFrete(itensFrete, cliente.cep)
+  // CEP ou produtos mudaram (opções zeradas): a escolha anterior não vale mais
+  useEffect(() => {
+    if (!frete.opcoes) aoEscolherServico?.(null)
+  }, [frete.opcoes, aoEscolherServico])
   const [buscando, setBuscando] = useState(false)
   const [avisoCep, setAvisoCep] = useState('')
   const ultimoCep = useRef('')
@@ -62,7 +76,7 @@ export default function DadosCliente({ cliente, setCliente, idBase = 'cliente', 
           setCliente((c) => ({ ...c, bairro: '', cidade: '', estado: '' }))
           return
         }
-        setCliente((c) => ({ ...c, bairro: end.bairro || c.bairro, cidade: end.cidade, estado: end.estado }))
+        setCliente((c) => ({ ...c, bairro: end.bairro || c.bairro, cidade: end.cidade, estado: end.estado, logradouro: end.logradouro || '' }))
         if (!end.bairro) setAvisoCep('Este CEP não tem bairro definido: digite o seu bairro.')
       })
       .catch(() => !cancelado && setAvisoCep('Não foi possível consultar o CEP agora. Preencha bairro, cidade e estado.'))
@@ -127,7 +141,7 @@ export default function DadosCliente({ cliente, setCliente, idBase = 'cliente', 
           />
         </div>
       </div>
-      {comFrete && <ResultadoFrete id={`${idBase}-frete`} {...frete} />}
+      {comFrete && <ResultadoFrete id={`${idBase}-frete`} {...frete} escolhido={servicoEscolhido} aoEscolher={aoEscolherServico} />}
     </fieldset>
   )
 }

@@ -874,4 +874,61 @@ LEFT JOIN campanhas c
  AND c.ativa
  AND now() BETWEEN c.inicio AND c.fim;
 
+
+-- =====================================================================
+-- MELHOR ENVIO: etiqueta de envio e DC-e
+-- =====================================================================
+
+-- Endereço completo da empresa (remetente da etiqueta)
+ALTER TABLE empresa ADD COLUMN IF NOT EXISTS logradouro  text CHECK (logradouro IS NULL OR length(logradouro) BETWEEN 2 AND 120);
+ALTER TABLE empresa ADD COLUMN IF NOT EXISTS numero      text CHECK (numero IS NULL OR length(numero) BETWEEN 1 AND 20);
+ALTER TABLE empresa ADD COLUMN IF NOT EXISTS complemento text CHECK (complemento IS NULL OR length(complemento) <= 60);
+ALTER TABLE empresa ADD COLUMN IF NOT EXISTS bairro      text CHECK (bairro IS NULL OR length(bairro) BETWEEN 2 AND 80);
+ALTER TABLE empresa ADD COLUMN IF NOT EXISTS cidade      text CHECK (cidade IS NULL OR length(cidade) BETWEEN 2 AND 80);
+ALTER TABLE empresa ADD COLUMN IF NOT EXISTS uf          char(2) CHECK (uf IS NULL OR uf ~ '^[A-Z]{2}$');
+COMMENT ON COLUMN empresa.logradouro IS 'Rua/avenida do remetente (etiqueta do Melhor Envio)';
+
+-- Dados do cliente pedidos no ato da compra com entrega pela transportadora (destinatário da etiqueta)
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS logradouro  text CHECK (logradouro IS NULL OR length(logradouro) BETWEEN 2 AND 120);
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS numero      text CHECK (numero IS NULL OR length(numero) BETWEEN 1 AND 20);
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS complemento text CHECK (complemento IS NULL OR length(complemento) <= 60);
+-- telefone/e-mail podem se repetir entre clientes (a chave é CEP + nome: a mesma pessoa em outro endereço)
+ALTER TABLE clientes DROP CONSTRAINT IF EXISTS clientes_telefone_key;
+ALTER TABLE clientes DROP CONSTRAINT IF EXISTS clientes_email_key;
+COMMENT ON COLUMN clientes.logradouro IS 'Rua/avenida para a etiqueta de envio (preenchido na compra com entrega)';
+
+-- Forma de envio 3: entrega pela transportadora (frete calculado pelo Melhor Envio)
+INSERT INTO frete (id, descricao) VALUES (3, 'Receber em casa')
+ON CONFLICT (id) DO UPDATE SET descricao = EXCLUDED.descricao;
+COMMENT ON TABLE frete IS 'Opções de frete da venda: 1 Retirar c/ vendedor, 2 Combinar Frete, 3 Receber em casa (Melhor Envio)';
+
+-- Valor do frete cobrado do cliente (fora do total dos produtos)
+ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS valor_frete numeric(10,2) NOT NULL DEFAULT 0 CHECK (valor_frete >= 0);
+
+-- Envio do pedido pelo Melhor Envio: serviço escolhido e etiqueta gerada (1 por pedido)
+CREATE TABLE IF NOT EXISTS envios (
+  id_pedido      bigint      PRIMARY KEY REFERENCES pedidos (id_pedido) ON DELETE CASCADE,
+  servico_id     integer     NOT NULL,
+  servico_nome   text        NOT NULL,
+  transportadora text        NOT NULL,
+  valor          numeric(10,2) NOT NULL CHECK (valor >= 0),
+  prazo_dias     integer,
+  situacao       text        NOT NULL DEFAULT 'pendente' CHECK (situacao IN ('pendente', 'gerando', 'gerada', 'erro')),
+  dce            boolean     NOT NULL DEFAULT false,   -- envio não comercial com DC-e (empresa MEI)
+  me_ids         text[]      NOT NULL DEFAULT '{}',    -- ids das etiquetas no Melhor Envio
+  me_protocolos  text[]      NOT NULL DEFAULT '{}',
+  etiqueta_url   text,
+  erro           text,
+  gerada_em      timestamptz,
+  criado_em      timestamptz NOT NULL DEFAULT now(),
+  atualizado_em  timestamptz NOT NULL DEFAULT now()
+);
+COMMENT ON TABLE envios IS 'Etiqueta do Melhor Envio do pedido (forma de envio 3). situacao: pendente → gerando → gerada | erro';
+
+DROP TRIGGER IF EXISTS envios_atualizado_em ON envios;
+CREATE TRIGGER envios_atualizado_em
+  BEFORE UPDATE ON envios
+  FOR EACH ROW EXECUTE FUNCTION definir_atualizado_em();
+
+
 COMMIT;

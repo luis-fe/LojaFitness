@@ -2,7 +2,8 @@
 //
 //   • Só entram os produtos com "calcula frete" ligado; cada um usa a embalagem X/Y/Z (cm),
 //     o peso bruto (kg) e o preço (valor segurado) do cadastro — o navegador manda só slug e quantidade.
-//   • CEP de origem: MELHORENVIO_CEP_ORIGEM ou, se vazio, o CEP do primeiro local de retirada.
+//   • CEP de origem: MELHORENVIO_CEP_ORIGEM; senão o CEP de Minha Empresa; senão o do primeiro local de retirada.
+//   • cotarServico(): recota no servidor o serviço escolhido pelo cliente (o preço nunca vem do navegador).
 //   • Variáveis: MELHORENVIO_API_URL, MELHORENVIO_TOKEN, MELHORENVIO_USER_AGENT (veja .env.example).
 //   • Limite por IP para ninguém usar a loja como proxy da API.
 import 'server-only'
@@ -12,9 +13,10 @@ const MAX_ITENS = 50
 const so8Digitos = (v) => String(v ?? '').replace(/\D/g, '')
 
 export class FreteServico {
-  constructor({ produtoRepositorio, vendedorServico, limiteTentativas, ambiente = process.env, buscar = (...a) => fetch(...a) }) {
+  constructor({ produtoRepositorio, vendedorServico, empresaServico = null, limiteTentativas, ambiente = process.env, buscar = (...a) => fetch(...a) }) {
     this.repo = produtoRepositorio
     this.vendedores = vendedorServico
+    this.empresa = empresaServico
     this.limite = limiteTentativas
     this.env = ambiente
     this.buscar = buscar
@@ -23,6 +25,8 @@ export class FreteServico {
   async #cepOrigem() {
     const doEnv = so8Digitos(this.env.MELHORENVIO_CEP_ORIGEM)
     if (doEnv.length === 8) return doEnv
+    const daEmpresa = so8Digitos((await this.empresa?.buscar())?.cep)
+    if (daEmpresa.length === 8) return daEmpresa
     const locais = await this.vendedores.locaisRetirada()
     return locais.map((l) => so8Digitos(l.cep)).find((c) => c.length === 8) ?? null
   }
@@ -36,7 +40,23 @@ export class FreteServico {
     const situacao = this.limite.verificar(ip)
     if (situacao.bloqueado) throw new ErroMuitasTentativas('Muitas simulações seguidas. Tente de novo em instantes.', situacao.tenteEmSegundos)
     this.limite.registrarFalha(ip) // conta cada simulação
+    const { opcoes, produtos } = await this.#cotar(destino, itens)
+    return { cep: destino, opcoes: opcoes.map(({ pacotes, ...o }) => o), produtos: produtos.map((p) => p.slug) }
+  }
 
+  // Recota o serviço escolhido pelo cliente (sem limite por IP: só roda ao gravar um pedido válido).
+  // → { id, nome, empresa, preco, prazo, pacotes, produtos } ou erro de validação se o serviço não atende mais
+  async cotarServico({ cep, itens, servicoId }) {
+    const destino = so8Digitos(cep)
+    if (destino.length !== 8) throw new ErroValidacao({ cep: 'Informe um CEP válido com 8 números.' })
+    const { opcoes, produtos } = await this.#cotar(destino, itens)
+    const opcao = opcoes.find((o) => o.id === Number(servicoId))
+    if (!opcao) throw new ErroValidacao({ frete: 'O frete escolhido não está mais disponível para este CEP. Calcule o frete de novo.' })
+    return { ...opcao, produtos }
+  }
+
+  async #cotar(destino, itens) {
+    if (!Array.isArray(itens) || !itens.length || itens.length > MAX_ITENS) throw new ErroValidacao({ itens: 'Nenhum produto para calcular o frete.' })
     const quantidades = new Map()
     for (const i of itens) {
       const q = Number(i?.quantidade)
@@ -102,9 +122,11 @@ export class FreteServico {
         logo: o.company?.picture ?? null,
         preco: Number(o.custom_price ?? o.price),
         prazo: Number(o.custom_delivery_time ?? o.delivery_time) || null,
+        empresaId: o.company?.id ?? null,
+        pacotes: Array.isArray(o.packages) ? o.packages : [],
       }))
       .filter((o) => Number.isFinite(o.preco))
       .sort((a, b) => a.preco - b.preco)
-    return { cep: destino, opcoes, produtos: produtos.map((p) => p.slug) }
+    return { opcoes, produtos: produtos.map((p) => ({ ...p, quantidade: quantidades.get(p.slug) })) }
   }
 }

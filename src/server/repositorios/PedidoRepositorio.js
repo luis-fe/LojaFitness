@@ -13,15 +13,23 @@ export class PedidoRepositorio {
   // Numa transação: grava/atualiza o cliente, cria o pedido como Rascunho (0), os itens e as
   // linhas de vendas_cor_tam.
   // itens: [{ codigoProduto, codigoCor, nome, cor, tamanho, quantidade, preco }]
-  async criarRascunho({ cliente, itens, total, frete = null }) {
+  //   envio (forma de envio 3): { servico: { id, nome, empresa, preco, prazo }, entrega: {...} } → linha em "envios"
+  async criarRascunho({ cliente, itens, total, frete = null, envio = null }) {
     return this.banco.transacao(async (db) => {
-      await this.clientes.salvar(cliente, db)
+      await this.clientes.salvar(cliente, db, envio?.entrega)
       const { rows } = await db.query(
-        `INSERT INTO pedidos (situacao, cliente_cep, cliente_nome, total, frete) VALUES ($1, $2, $3, $4, $5)
+        `INSERT INTO pedidos (situacao, cliente_cep, cliente_nome, total, frete, valor_frete) VALUES ($1, $2, $3, $4, $5, $6)
          RETURNING id_pedido, codigo, data_emissao, situacao`,
-        [SITUACAO.RASCUNHO, cliente.cep, cliente.nome, total, frete]
+        [SITUACAO.RASCUNHO, cliente.cep, cliente.nome, total, frete, envio?.servico.preco ?? 0]
       )
       const pedido = rows[0]
+      if (envio) {
+        const s = envio.servico
+        await db.query(
+          `INSERT INTO envios (id_pedido, servico_id, servico_nome, transportadora, valor, prazo_dias) VALUES ($1, $2, $3, $4, $5, $6)`,
+          [pedido.id_pedido, s.id, s.nome, s.empresa, s.preco, s.prazo]
+        )
+      }
       for (const i of itens) {
         await db.query(
           `INSERT INTO pedido_itens (pedido_id, produto_filho_id, produto_nome, cor, tamanho, quantidade, preco_unitario)

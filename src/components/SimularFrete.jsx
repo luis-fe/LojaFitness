@@ -36,7 +36,8 @@ export function useSimularFrete(itens, cep) {
   return { ...estado, simular, pronto: digitos.length === 8 }
 }
 
-export function ResultadoFrete({ id, carregando, opcoes, erro }) {
+//   aoEscolher (Receber em casa): as opções viram uma escolha (radio); escolhido = id do serviço
+export function ResultadoFrete({ id, carregando, opcoes, erro, escolhido = null, aoEscolher = null }) {
   return (
     <div id={id} className="simular-frete" aria-live="polite" hidden={!carregando && !opcoes && !erro}>
       {carregando && <p className="simular-frete__nota">Calculando o frete…</p>}
@@ -45,18 +46,31 @@ export function ResultadoFrete({ id, carregando, opcoes, erro }) {
       {opcoes?.length > 0 && (
         <>
           <p className="simular-frete__rotulo">Opções de frete</p>
-          <ul className="simular-frete__opcoes">
-            {opcoes.map((o) => (
-              <li key={o.id}>
-                <span>
-                  <strong>{[o.empresa, o.nome].filter(Boolean).join(' ')}</strong>
-                  {o.prazo && <small>Até {o.prazo} dia{o.prazo === 1 ? '' : 's'} úte{o.prazo === 1 ? 'il' : 'is'}</small>}
-                </span>
-                <b>{formatarPreco(o.preco)}</b>
-              </li>
-            ))}
+          <ul className={`simular-frete__opcoes ${aoEscolher ? 'is-escolha' : ''}`} role={aoEscolher ? 'radiogroup' : undefined} aria-label={aoEscolher ? 'Escolha a entrega' : undefined}>
+            {opcoes.map((o) => {
+              const conteudo = (
+                <>
+                  <span>
+                    <strong>{[o.empresa, o.nome].filter(Boolean).join(' ')}</strong>
+                    {o.prazo && <small>Até {o.prazo} dia{o.prazo === 1 ? '' : 's'} úte{o.prazo === 1 ? 'il' : 'is'}</small>}
+                  </span>
+                  <b>{formatarPreco(o.preco)}</b>
+                </>
+              )
+              if (!aoEscolher) return <li key={o.id}>{conteudo}</li>
+              return (
+                <li key={o.id} className={escolhido === o.id ? 'is-escolhido' : ''}>
+                  <label>
+                    <input type="radio" name={`${id}-servico`} value={o.id} checked={escolhido === o.id} onChange={() => aoEscolher(o)} />
+                    {conteudo}
+                  </label>
+                </li>
+              )
+            })}
           </ul>
-          <p className="simular-frete__nota">Valores estimados. O frete final é confirmado pelo WhatsApp.</p>
+          <p className="simular-frete__nota">
+            {aoEscolher ? 'Escolha a entrega: o valor do frete entra no total do pedido.' : 'Valores estimados. O frete final é confirmado pelo WhatsApp.'}
+          </p>
         </>
       )}
     </div>

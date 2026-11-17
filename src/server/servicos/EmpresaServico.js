@@ -2,10 +2,11 @@
 //   • CNPJ e Razão Social obrigatórios; os demais campos são opcionais (vazio = null).
 //   • CNPJ / CEP / contato são guardados só com dígitos.
 //   • Localização: coordenadas "latitude, longitude" (ex.: -16.8233, -49.2439).
+//   • Endereço (rua, número, complemento, bairro, cidade, UF): remetente da etiqueta do Melhor Envio.
 import 'server-only'
 import { validarOuFalhar } from '@/server/erros'
 import { soDigitos, cnpjValido, telefoneValido } from '@/server/utils/validacao'
-import { lerCoordenadas } from '@/lib/retirada'
+import { lerCoordenadas, UFS } from '@/lib/retirada'
 
 const texto = (v) => (v === null || v === undefined ? '' : String(v).trim())
 
@@ -51,6 +52,22 @@ export class EmpresaServico {
     const contato = soDigitos(e.contato)
     if (contato && !telefoneValido(contato)) erros.contato = 'Telefone inválido. Informe DDD + número, ex.: (62) 98765-4321.'
     else dados.contato = contato || null
+
+    // Endereço do remetente (opcional aqui; a etiqueta do Melhor Envio exige rua, número, bairro, cidade e UF)
+    for (const [campo, rotulo, min, max] of [
+      ['logradouro', 'Rua', 2, 120],
+      ['numero', 'Número', 1, 20],
+      ['complemento', 'Complemento', 0, 60],
+      ['bairro', 'Bairro', 2, 80],
+      ['cidade', 'Cidade', 2, 80],
+    ]) {
+      const v = texto(e[campo])
+      if (v && (v.length < min || v.length > max)) erros[campo] = `${rotulo} deve ter de ${Math.max(min, 1)} a ${max} caracteres.`
+      else dados[campo] = v || null
+    }
+    const uf = texto(e.uf).toUpperCase()
+    if (uf && !UFS.includes(uf)) erros.uf = 'UF inválida.'
+    else dados.uf = uf || null
 
     validarOuFalhar(erros)
     return dados

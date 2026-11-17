@@ -1,22 +1,28 @@
 // Regras de pedido: confere itens e estoque e recalcula o total com os preços do servidor
 // (nunca confia em preços enviados pelo navegador), confere o cliente e grava cliente + pedido
 // (situação 0 = Rascunho) + itens numa transação. Devolve o número, a mensagem e o link do WhatsApp.
+//   Forma de envio 3 (Receber em casa): confere os dados de entrega, recota no Melhor Envio o serviço escolhido
+//   (preço do servidor) e grava o envio; a etiqueta é gerada conforme EtiquetaServico.modo.
 import 'server-only'
 import { ErroValidacao } from '@/server/erros'
 import { linkWhatsApp, mensagemPedido } from '@/lib/whatsapp'
 import { validarCliente } from '@/lib/cliente'
-import { normalizarFrete } from '@/lib/frete'
+import { normalizarFrete, FRETE_TRANSPORTADORA } from '@/lib/frete'
+import { validarEntrega } from '@/lib/entrega'
 
 export class PedidoServico {
   static MAX_ITENS = 50
   static LIMPEZA_A_CADA_MS = 60 * 60 * 1000 // limpeza de rascunhos antigos no máximo 1 vez por hora
 
-  constructor({ catalogoServico, pedidoRepositorio }) {
+  constructor({ catalogoServico, pedidoRepositorio, freteServico = null, etiquetaServico = null }) {
     this.catalogo = catalogoServico
     this.pedidos = pedidoRepositorio
+    this.frete = freteServico
+    this.etiquetas = etiquetaServico
   }
 
-  async validar(entrada, clienteEntrada, freteEntrada) {
+  // envioEntrada (só com frete 3): { servico: id do serviço escolhido na cotação, entrega: { logradouro, numero, complemento, cpf, telefone, email } }
+  async validar(entrada, clienteEntrada, freteEntrada, envioEntrada) {
     if (!Array.isArray(entrada) || entrada.length === 0) throw new ErroValidacao({ itens: 'O pedido está vazio.' }, 'O pedido está vazio.')
     if (entrada.length > PedidoServico.MAX_ITENS) throw new ErroValidacao({ itens: `Máximo de ${PedidoServico.MAX_ITENS} itens por pedido.` })
 
@@ -25,6 +31,13 @@ export class PedidoServico {
     const erros = Object.values(errosCliente)
     const frete = normalizarFrete(freteEntrada) // vazio = Combinar Frete
     if (frete === null) erros.push('Forma de envio inválida.')
+    let entrega = null
+    if (frete === FRETE_TRANSPORTADORA) {
+      const r = validarEntrega(envioEntrada?.entrega ?? {})
+      erros.push(...Object.values(r.erros))
+      entrega = r.dados
+      if (!Number.isInteger(Number(envioEntrada?.servico)) || !envioEntrada?.servico) erros.push('Escolha uma opção de frete.')
+    }
     const itens = []
     for (const [n, item] of entrada.entries()) {
       const produto = catalogo.find((p) => p.slug === item?.slug)
@@ -72,11 +85,29 @@ export class PedidoServico {
     }
 
     const total = Math.round(itens.reduce((s, i) => s + i.subtotal, 0) * 100) / 100
-    const pedido = await this.pedidos.criarRascunho({ cliente, itens, total, frete })
+
+    // Receber em casa: recota no Melhor Envio só os produtos com "calcula frete" (o preço nunca vem do navegador)
+    let envio = null
+    if (frete === FRETE_TRANSPORTADORA) {
+      const porSlug = new Map()
+      for (const i of itens) if (catalogo.find((p) => p.slug === i.slug)?.calculaFrete) porSlug.set(i.slug, (porSlug.get(i.slug) ?? 0) + i.quantidade)
+      if (!porSlug.size || !this.frete) throw new ErroValidacao({ frete: 'Estes produtos não têm entrega pela transportadora. Combine o frete pelo WhatsApp.' })
+      const s = await this.frete.cotarServico({ cep: cliente.cep, itens: [...porSlug].map(([slug, quantidade]) => ({ slug, quantidade })), servicoId: envioEntrada.servico })
+      envio = { servico: { id: s.id, nome: s.nome, empresa: s.empresa, preco: s.preco, prazo: s.prazo }, entrega }
+    }
+
+    const pedido = await this.pedidos.criarRascunho({ cliente, itens, total, frete, envio })
     this.#limparRascunhosSeNecessario()
-    const mensagem = mensagemPedido(itens, cliente, pedido.codigo, frete)
+    if (envio && this.etiquetas?.modo === 'pedido') this.etiquetas.gerarEmSegundoPlano(pedido.id_pedido)
+    const mensagem = mensagemPedido(itens, cliente, pedido.codigo, frete, envio?.servico)
     const publicos = itens.map(({ codigoProduto, codigoCor, ...resto }) => resto) // códigos internos ficam no servidor
-    return { pedido: { codigo: pedido.codigo, situacao: pedido.situacao, frete }, itens: publicos, total, mensagem, whatsappUrl: linkWhatsApp(mensagem) }
+    return {
+      pedido: { codigo: pedido.codigo, situacao: pedido.situacao, frete, valorFrete: envio?.servico.preco ?? 0 },
+      itens: publicos,
+      total,
+      mensagem,
+      whatsappUrl: linkWhatsApp(mensagem),
+    }
   }
 
   // Rascunhos com mais de 15 dias saem sozinhos (não trava o pedido do cliente se falhar)

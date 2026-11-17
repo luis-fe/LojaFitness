@@ -1,0 +1,97 @@
+.envio-etiqueta {
+  margin: 14px 0;
+  padding: 14px 16px;
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  background: var(--cinza-claro);
+}
+
+.envio-etiqueta__topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.envio-etiqueta__topo h3 {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.envio-etiqueta__situacao {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.envio-etiqueta__situacao.is-pendente {
+  background: #fdf6e7;
+  color: #8a5a00;
+}
+
+.envio-etiqueta__situacao.is-gerando {
+  background: #e6f0ff;
+  color: #1d4ed8;
+}
+
+.envio-etiqueta__situacao.is-gerada {
+  background: #e6f4ea;
+  color: #116632;
+}
+
+.envio-etiqueta__situacao.is-erro {
+  background: #fdecee;
+  color: #b00020;
+}
+
+.envio-etiqueta__dados {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px 16px;
+  font-size: 14px;
+}
+
+.envio-etiqueta__dados dt {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--cinza-neutro);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.envio-etiqueta__erro {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #fdecee;
+  color: #b00020;
+  font-size: 13px;
+}
+
+.envio-etiqueta__aviso {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #8a5a00;
+}
+
+.envio-etiqueta__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.envio-etiqueta__acoes .botao {
+  text-decoration: none;
+}
+
+.envio-etiqueta__nota {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--cinza-neutro);
+}

@@ -43,5 +43,5 @@ export async function buscarCep(cep) {
   if (!resposta.ok) throw new Error('falha')
   const j = await resposta.json()
   if (j.erro) return null
-  return { bairro: j.bairro ?? '', cidade: j.localidade ?? '', estado: j.uf ?? '' }
+  return { logradouro: j.logradouro ?? '', bairro: j.bairro ?? '', cidade: j.localidade ?? '', estado: j.uf ?? '' }
 }

@@ -1,0 +1,81 @@
+/* Endereço completo e documento para a etiqueta (Receber em casa) */
+.entrega {
+  margin: 12px 0;
+  padding: 14px;
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  background: var(--branco);
+}
+
+.entrega legend {
+  padding: 0 6px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.entrega__grade {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 12px;
+}
+
+.entrega__largo {
+  grid-column: 1 / -1;
+}
+
+.entrega .campo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.entrega label {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.entrega__opcional {
+  font-weight: 400;
+  color: var(--cinza-neutro);
+}
+
+.entrega input {
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid #b5b5b5;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 16px;
+  background: var(--branco);
+  min-width: 0;
+}
+
+.entrega input:focus {
+  outline: 2px solid var(--preto);
+  outline-offset: 1px;
+}
+
+.entrega input[aria-invalid='true'] {
+  border-color: #b00020;
+}
+
+.entrega__erro {
+  font-size: 12px;
+  color: #b00020;
+}
+
+.entrega__nota {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--cinza-neutro);
+}
+
+/* Celular: um campo por linha (CPF e celular inteiros na tela) */
+@media (max-width: 480px) {
+  .entrega__grade {
+    grid-template-columns: 1fr;
+  }
+}

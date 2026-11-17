@@ -9,9 +9,8 @@ import { useCarrinho } from '@/context/Carrinho'
 import IconeWhatsApp from '@/components/IconeWhatsApp'
 import DadosCliente, { useDadosCliente } from '@/components/DadosCliente'
 import FormaEnvio from '@/components/FormaEnvio'
-import { FRETE_PADRAO } from '@/lib/frete'
-
-const RETIRAR = 1 // "Retirar c/ vendedor": sem frete para calcular
+import EntregaTransportadora, { useEntregaTransportadora } from '@/components/EntregaTransportadora'
+import { FRETE_PADRAO, FRETE_RETIRAR as RETIRAR, FRETE_TRANSPORTADORA } from '@/lib/frete'
 import { useErro } from '@/context/Erro'
 
 // Junta as peças escolhidas por cor + tamanho: [{ cor, tamanho, quantidade }]
@@ -36,6 +35,8 @@ export default function Produto({ produto }) {
   const { mostrarErro } = useErro()
   const { cliente, setCliente, dados: dadosCliente, completo, lembrar } = useDadosCliente()
   const [frete, setFrete] = useState(FRETE_PADRAO)
+  const envio = useEntregaTransportadora()
+  const transportadora = frete === FRETE_TRANSPORTADORA
   const [comprandoDireto, setComprandoDireto] = useState(false)
   const [enviando, setEnviando] = useState(false)
 
@@ -92,7 +93,12 @@ export default function Produto({ produto }) {
       const resposta = await fetch('/api/pedidos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ itens: grupos.map((g) => ({ slug: produto.slug, ...g })), cliente: dadosCliente, frete }),
+        body: JSON.stringify({
+          itens: grupos.map((g) => ({ slug: produto.slug, ...g })),
+          cliente: dadosCliente,
+          frete,
+          envio: transportadora ? { servico: envio.servico?.id, entrega: envio.dados } : undefined,
+        }),
       })
       const dados = await resposta.json()
       if (!resposta.ok) {
@@ -101,6 +107,7 @@ export default function Produto({ produto }) {
         return
       }
       lembrar(dadosCliente)
+      if (transportadora) envio.lembrar()
       if (aba) aba.location.href = dados.whatsappUrl
       else window.location.href = dados.whatsappUrl
     } catch {
@@ -269,18 +276,43 @@ export default function Produto({ produto }) {
               )}
               {completo_ && comprandoDireto && (
                 <div className="produto__direto">
-                  <FormaEnvio valor={frete} aoMudar={setFrete} idBase="produto-envio" />
+                  <FormaEnvio valor={frete} aoMudar={setFrete} idBase="produto-envio" comTransportadora={produto.calculaFrete} />
                   <DadosCliente
                     cliente={cliente}
                     setCliente={setCliente}
                     idBase="produto-cliente"
                     itensFrete={produto.calculaFrete && frete !== RETIRAR ? [{ slug: produto.slug, quantidade: escolhas.length || quantidade }] : []}
+                    servicoEscolhido={transportadora ? (envio.servico?.id ?? null) : null}
+                    aoEscolherServico={transportadora ? envio.setServico : null}
                   />
-                  <button type="button" className="produto__btn produto__btn--whats" onClick={comprarDireto} disabled={!completo || enviando}>
+                  {transportadora && (
+                    <EntregaTransportadora
+                      entrega={envio.entrega}
+                      setEntrega={envio.setEntrega}
+                      erros={envio.erros}
+                      logradouroCep={cliente.logradouro}
+                      idBase="produto-entrega"
+                    />
+                  )}
+                  {transportadora && envio.servico && (
+                    <p className="produto__aviso">
+                      Frete {[envio.servico.empresa, envio.servico.nome].filter(Boolean).join(' ')}: {formatarPreco(envio.servico.preco)}
+                    </p>
+                  )}
+                  <button
+                    type="button"
+                    className="produto__btn produto__btn--whats"
+                    onClick={comprarDireto}
+                    disabled={!completo || enviando || (transportadora && !(envio.servico && envio.completa))}
+                  >
                     <IconeWhatsApp className="produto__whats-icone" />
                     {enviando ? 'Conferindo pedido…' : 'Enviar pedido pelo WhatsApp'}
                   </button>
                   {!completo && <p className="produto__aviso">Preencha os dados para entrega para enviar pelo WhatsApp.</p>}
+                  {completo && transportadora && !envio.servico && <p className="produto__aviso">Clique em &quot;Calcular frete&quot; e escolha a entrega.</p>}
+                  {completo && transportadora && envio.servico && !envio.completa && (
+                    <p className="produto__aviso">Complete o endereço para a etiqueta (rua, número, CPF e celular).</p>
+                  )}
                 </div>
               )}
               {completo_ && <p className="produto__aviso">Adicione ao carrinho para comprar outros produtos, ou compre só estas peças direto pelo WhatsApp.</p>}

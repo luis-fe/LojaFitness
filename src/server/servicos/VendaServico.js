@@ -12,8 +12,9 @@ import { cpfCnpjValido } from '@/server/utils/validacao'
 const MAX_QUANT = 9999
 
 export class VendaServico {
-  constructor({ vendaRepositorio }) {
+  constructor({ vendaRepositorio, etiquetaServico = null }) {
     this.repo = vendaRepositorio
+    this.etiquetas = etiquetaServico
   }
 
   static #id(valor) {
@@ -29,7 +30,8 @@ export class VendaServico {
   async extrato(idPedido) {
     const extrato = await this.repo.buscarExtrato(VendaServico.#id(idPedido))
     if (!extrato) throw new ErroNaoEncontrado('Pedido não encontrado.')
-    return extrato
+    const envio = this.etiquetas ? await this.etiquetas.buscar(extrato.id_pedido) : null
+    return { ...extrato, envio, modoEtiqueta: envio ? this.etiquetas.modo : null }
   }
 
   // entrada: { linhas: [{ id, quant, preco }] } — SKUs que ficam no pedido
@@ -62,6 +64,11 @@ export class VendaServico {
     if (!r.ok && r.motivo === 'nao_encontrado') throw new ErroNaoEncontrado('Pedido não encontrado.')
     if (!r.ok && r.motivo === 'ja_aprovado') throw new ErroConflito('Este pedido já foi aprovado.')
     if (!r.ok) throw new ErroValidacao(undefined, 'Um dos SKUs não pertence a este pedido. Recarregue o extrato.')
+    // Etiqueta gerada na aprovação (produção): só para pedido com envio pela transportadora ainda sem etiqueta
+    if (this.etiquetas?.modo === 'aprovacao') {
+      const envio = await this.etiquetas.buscar(id)
+      if (envio && ['pendente', 'erro'].includes(envio.situacao)) this.etiquetas.gerarEmSegundoPlano(id)
+    }
     return r.pedido
   }
 
@@ -128,5 +135,16 @@ export class VendaServico {
     const total = Math.round(vendas.reduce((s, v) => s + Number(v.total), 0) * 100) / 100
     const pecas = vendas.reduce((s, v) => s + v.pecas, 0)
     return { vendas, resumo: { quantidade: vendas.length, total, pecas } }
+  }
+
+  // Gera (ou tenta de novo) a etiqueta do Melhor Envio do pedido — espera terminar para mostrar o resultado
+  async gerarEtiqueta(idPedido) {
+    if (!this.etiquetas) throw new ErroNaoEncontrado('Etiquetas indisponíveis.')
+    return this.etiquetas.gerar(VendaServico.#id(idPedido))
+  }
+
+  dace(idPedido) {
+    if (!this.etiquetas) throw new ErroNaoEncontrado('Etiquetas indisponíveis.')
+    return this.etiquetas.dace(VendaServico.#id(idPedido))
   }
 }

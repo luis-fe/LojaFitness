@@ -25,8 +25,10 @@ const LINHA = '_____________________________'
 //   Forma de envio: Combinar Frete
 //
 //   Pedido: JLK-000001
-export function mensagemPedido(itens, cliente, codigoPedido, frete = null) {
-  const total = itens.reduce((s, i) => s + i.preco * i.quantidade, 0)
+//   servico (Receber em casa): { nome, empresa, preco, prazo } → linha do frete e total com frete
+export function mensagemPedido(itens, cliente, codigoPedido, frete = null, servico = null) {
+  const produtosTotal = itens.reduce((s, i) => s + i.preco * i.quantidade, 0)
+  const total = produtosTotal + (servico ? Number(servico.preco) : 0)
   const produtos = itens.flatMap((i) => [`*${i.nome}*`, `Tam: ${i.tamanho} / Cor: ${i.cor} / Qt. ${i.quantidade} / Preço ${formatarPreco(i.preco)}`])
   return [
     'Olá!',
@@ -34,6 +36,7 @@ export function mensagemPedido(itens, cliente, codigoPedido, frete = null) {
     LINHA,
     ...produtos,
     LINHA,
+    ...(servico ? [`Produtos: ${formatarPreco(produtosTotal)}`, `Frete ${[servico.empresa, servico.nome].filter(Boolean).join(' ')}: ${formatarPreco(servico.preco)}${servico.prazo ? ` (até ${servico.prazo} dias úteis)` : ''}`] : []),
     `*Valor Total: ${formatarPreco(total)}*`,
     ...(cliente
       ? ['', '*Dados para Entrega*', `Nome: ${cliente.nome}`, `CEP: ${formatarCep(cliente.cep)}`, `Bairro: ${cliente.bairro}`, `Cidade: ${cliente.cidade} - ${cliente.estado}`]

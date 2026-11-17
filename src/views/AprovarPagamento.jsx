@@ -13,6 +13,7 @@ import { AmostraCor } from '@/views/Cores'
 import { formatarDataHora } from '@/lib/formatos'
 import { formatarPreco } from '@/lib/produtos'
 import { formatarCep } from '@/lib/cliente'
+import EnvioEtiqueta from '@/components/EnvioEtiqueta'
 
 const TRILHA = [{ href: '/area-do-vendedor/registro-de-vendas', rotulo: 'Registro de Vendas' }]
 const precoParaCampo = (v) => Number(v).toFixed(2).replace('.', ',')
@@ -73,13 +74,17 @@ function Extrato({ idPedido, aoAprovar, aoCancelar }) {
         <div>
           <dt>Entrega</dt>
           <dd>
+            {pedido.logradouro && `${pedido.logradouro}, ${pedido.numero}${pedido.complemento ? ` - ${pedido.complemento}` : ''} · `}
             {pedido.bairro}, {pedido.cidade} - {pedido.estado} · CEP {formatarCep(pedido.cliente_cep)}
           </dd>
         </div>
         {pedido.frete && (
           <div>
             <dt>Forma de envio</dt>
-            <dd>{pedido.frete}</dd>
+            <dd>
+              {pedido.frete}
+              {Number(pedido.valor_frete) > 0 && ` · frete ${formatarPreco(pedido.valor_frete)}`}
+            </dd>
           </div>
         )}
         <div>
@@ -87,6 +92,8 @@ function Extrato({ idPedido, aoAprovar, aoCancelar }) {
           <dd>{formatarDataHora(pedido.data_emissao)}</dd>
         </div>
       </dl>
+
+      {pedido.envio && <EnvioEtiqueta idPedido={idPedido} envioInicial={pedido.envio} modo={pedido.modoEtiqueta} />}
 
       <table className="extrato__tabela">
         <caption className="sr-only">Itens do pedido por SKU</caption>

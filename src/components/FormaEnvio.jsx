@@ -65,11 +65,12 @@ function LocaisRetirada() {
 
 // Escolha da forma de envio antes de mandar o pedido pelo WhatsApp (padrão: Combinar Frete).
 // Ao escolher "Retirar c/ vendedor", aparece a localização do vendedor no Google Maps.
-export default function FormaEnvio({ valor, aoMudar, idBase = 'envio' }) {
+//   comTransportadora: mostra "Receber em casa" (pedido com produtos que calculam frete pelo Melhor Envio)
+export default function FormaEnvio({ valor, aoMudar, idBase = 'envio', comTransportadora = false }) {
   return (
     <fieldset className="forma-envio">
       <legend>Forma de envio</legend>
-      {FRETES.map((f) => (
+      {FRETES.filter((f) => !f.calculado || comTransportadora).map((f) => (
         <label key={f.id} className={`forma-envio__opcao ${valor === f.id ? 'is-ativa' : ''}`} htmlFor={`${idBase}-${f.id}`}>
           <input type="radio" id={`${idBase}-${f.id}`} name={`${idBase}-frete`} value={f.id} checked={valor === f.id} onChange={() => aoMudar(f.id)} />
           <span>

@@ -43,6 +43,9 @@ import { EstoqueServico } from '@/server/servicos/EstoqueServico'
 import { PainelServico } from '@/server/servicos/PainelServico'
 import { VisitaServico } from '@/server/servicos/VisitaServico'
 import { FreteServico } from '@/server/servicos/FreteServico'
+import { EtiquetaServico } from '@/server/servicos/EtiquetaServico'
+import { EnvioRepositorio } from '@/server/repositorios/EnvioRepositorio'
+import { MelhorEnvio } from '@/server/integracoes/MelhorEnvio'
 import { EmpresaServico } from '@/server/servicos/EmpresaServico'
 
 import { AuthController } from '@/server/controllers/AuthController'
@@ -74,6 +77,7 @@ const pedidoRepositorio = new PedidoRepositorio(banco, { clienteRepositorio })
 const vendaRepositorio = new VendaRepositorio(banco, { clienteRepositorio })
 const estoqueRepositorio = new EstoqueRepositorio(banco)
 const empresaRepositorio = new EmpresaRepositorio(banco)
+const envioRepositorio = new EnvioRepositorio(banco)
 
 // ---------- Serviços (regras de negócio) ----------
 export const authServico = new AuthServico({ vendedorRepositorio, limiteTentativas: new LimiteTentativas({ nome: 'login' }) })
@@ -84,8 +88,6 @@ export const layoutServico = new LayoutServico({ layoutRepositorio, catalogoServ
 export const tamanhoServico = new TamanhoServico({ tamanhoRepositorio })
 export const corServico = new CorServico({ corRepositorio })
 export const produtoServico = new ProdutoServico({ produtoRepositorio, layoutRepositorio })
-export const pedidoServico = new PedidoServico({ catalogoServico, pedidoRepositorio })
-export const vendaServico = new VendaServico({ vendaRepositorio })
 export const estoqueServico = new EstoqueServico({ estoqueRepositorio })
 export const painelServico = new PainelServico({ banco, painelRepositorio, campanhaRepositorio })
 export const visitaServico = new VisitaServico({ visitaRepositorio })
@@ -93,8 +95,13 @@ export const empresaServico = new EmpresaServico({ empresaRepositorio })
 export const freteServico = new FreteServico({
   produtoRepositorio,
   vendedorServico,
+  empresaServico,
   limiteTentativas: new LimiteTentativas({ nome: 'frete', maximo: 30, janelaMs: 10 * 60 * 1000 }),
 })
+// Etiqueta e DC-e pelo Melhor Envio (forma de envio 3)
+export const etiquetaServico = new EtiquetaServico({ envioRepositorio, empresaServico, freteServico, melhorEnvio: new MelhorEnvio() })
+export const pedidoServico = new PedidoServico({ catalogoServico, pedidoRepositorio, freteServico, etiquetaServico })
+export const vendaServico = new VendaServico({ vendaRepositorio, etiquetaServico })
 
 // ---------- HTTP ----------
 const autenticador = new Autenticador({ authServico, vendedorRepositorio })

@@ -6,6 +6,8 @@
 //   GET  /api/vendas/produtos             produtos e variações para o lançamento manual
 //   POST /api/vendas/manual               { cliente, itens } → venda gravada como Paga (origem manual)
 //   GET  /api/vendas/historico            ?de=AAAA-MM-DD&ate=AAAA-MM-DD&cliente=texto
+//   POST /api/vendas/:id/etiqueta         gera (ou tenta de novo) a etiqueta do Melhor Envio
+//   GET  /api/vendas/:id/dace             links do PDF da DACE (impressão da DC-e)
 import 'server-only'
 import { Resposta } from '@/server/http/Rota'
 
@@ -34,6 +36,8 @@ export class VendaController {
       },
       { ...logado, rotulo: 'DELETE /api/vendas/:id' }
     )
+    this.etiqueta = rota(async ({ params }) => ({ envio: await s.gerarEtiqueta(params.id) }), { ...logado, rotulo: 'POST /api/vendas/:id/etiqueta' })
+    this.dace = rota(async ({ params }) => s.dace(params.id), { ...logado, rotulo: 'GET /api/vendas/:id/dace' })
     this.aprovar = rota(async ({ params, corpo, vendedor }) => ({ pedido: await s.aprovar(params.id, corpo, vendedor) }), {
       ...logado,
       corpo: 'json',

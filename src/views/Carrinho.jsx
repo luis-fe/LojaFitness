@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import './Carrinho.css'
 import { useCarrinho } from '@/context/Carrinho'
@@ -10,9 +10,8 @@ import IconeWhatsApp from '@/components/IconeWhatsApp'
 import { useErro } from '@/context/Erro'
 import DadosCliente, { useDadosCliente } from '@/components/DadosCliente'
 import FormaEnvio from '@/components/FormaEnvio'
-import { FRETE_PADRAO, descricaoFrete } from '@/lib/frete'
-
-const RETIRAR = 1 // "Retirar c/ vendedor": sem frete para calcular
+import EntregaTransportadora, { useEntregaTransportadora } from '@/components/EntregaTransportadora'
+import { FRETE_PADRAO, FRETE_RETIRAR as RETIRAR, FRETE_TRANSPORTADORA, descricaoFrete } from '@/lib/frete'
 
 export default function Carrinho() {
   const { carregado, itens, total, quantidadeTotal, alterarQuantidade, remover, estoqueDe, removidos, dispensarRemovidos } = useCarrinho()
@@ -20,6 +19,16 @@ export default function Carrinho() {
   const { mostrarErro } = useErro()
   const { cliente, setCliente, dados: dadosCliente, completo, lembrar } = useDadosCliente()
   const [frete, setFrete] = useState(FRETE_PADRAO)
+  const envio = useEntregaTransportadora()
+  const itensFrete = itens.filter((i) => i.calculaFrete).map(({ slug, quantidade }) => ({ slug, quantidade }))
+  const transportadora = frete === FRETE_TRANSPORTADORA
+  const valorFrete = transportadora && envio.servico ? Number(envio.servico.preco) : 0
+  const prontoParaEnviar = completo && (!transportadora || (envio.servico && envio.completa))
+
+  // Sem produtos que calculam frete, "Receber em casa" deixa de existir
+  useEffect(() => {
+    if (transportadora && !itensFrete.length) setFrete(FRETE_PADRAO)
+  }, [transportadora, itensFrete.length])
 
   // Envia o pedido ao backend, que confere estoque, recalcula o total
   // e devolve o link do WhatsApp com a mensagem pronta.
@@ -35,6 +44,7 @@ export default function Carrinho() {
           itens: itens.map(({ slug, cor, tamanho, quantidade }) => ({ slug, cor, tamanho, quantidade })),
           cliente: dadosCliente,
           frete,
+          envio: transportadora ? { servico: envio.servico?.id, entrega: envio.dados } : undefined,
         }),
       })
       const dados = await resposta.json()
@@ -44,6 +54,7 @@ export default function Carrinho() {
         return
       }
       lembrar(dadosCliente)
+      if (transportadora) envio.lembrar()
       if (aba) aba.location.href = dados.whatsappUrl
       else window.location.href = dados.whatsappUrl
     } catch {
@@ -152,33 +163,58 @@ export default function Carrinho() {
             </div>
             <div>
               <dt>Frete</dt>
-              <dd>{frete === FRETE_PADRAO ? 'Combinar no WhatsApp' : descricaoFrete(frete)}</dd>
+              <dd>
+                {transportadora
+                  ? envio.servico
+                    ? `${[envio.servico.empresa, envio.servico.nome].filter(Boolean).join(' ')} · ${formatarPreco(valorFrete)}`
+                    : 'Calcule pelo CEP'
+                  : frete === FRETE_PADRAO
+                    ? 'Combinar no WhatsApp'
+                    : descricaoFrete(frete)}
+              </dd>
             </div>
             <div className="resumo__total">
               <dt>Total</dt>
-              <dd>{formatarPreco(total)}</dd>
+              <dd>{formatarPreco(total + valorFrete)}</dd>
             </div>
           </dl>
 
-          <FormaEnvio valor={frete} aoMudar={setFrete} idBase="carrinho-envio" />
+          <FormaEnvio valor={frete} aoMudar={setFrete} idBase="carrinho-envio" comTransportadora={itensFrete.length > 0} />
           <DadosCliente
             cliente={cliente}
             setCliente={setCliente}
             idBase="carrinho-cliente"
-            itensFrete={frete === RETIRAR ? [] : itens.filter((i) => i.calculaFrete).map(({ slug, quantidade }) => ({ slug, quantidade }))}
+            itensFrete={frete === RETIRAR ? [] : itensFrete}
+            servicoEscolhido={transportadora ? (envio.servico?.id ?? null) : null}
+            aoEscolherServico={transportadora ? envio.setServico : null}
           />
+          {transportadora && (
+            <EntregaTransportadora
+              entrega={envio.entrega}
+              setEntrega={envio.setEntrega}
+              erros={envio.erros}
+              logradouroCep={cliente.logradouro}
+              idBase="carrinho-entrega"
+            />
+          )}
 
           <button
             type="button"
             className="carrinho__btn carrinho__btn--whats"
             onClick={finalizar}
-            disabled={enviando || !completo}
+            disabled={enviando || !prontoParaEnviar}
           >
             <IconeWhatsApp className="carrinho__whats-icone" />
             {enviando ? 'Conferindo pedido…' : 'Finalizar pelo WhatsApp'}
           </button>
           <p className="resumo__aviso">
-            {completo ? 'O pedido completo e seus dados vão prontos na mensagem.' : 'Preencha os dados para entrega para enviar pelo WhatsApp.'}
+            {prontoParaEnviar
+              ? 'O pedido completo e seus dados vão prontos na mensagem.'
+              : transportadora && completo && !envio.servico
+                ? 'Clique em "Calcular frete" e escolha a entrega.'
+                : transportadora && completo
+                  ? 'Complete o endereço para a etiqueta (rua, número, CPF e celular).'
+                  : 'Preencha os dados para entrega para enviar pelo WhatsApp.'}
           </p>
           <Link href="/#novidades" className="resumo__continuar">Continuar comprando</Link>
         </aside>

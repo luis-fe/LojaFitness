@@ -61,7 +61,8 @@ export class VendaRepositorio {
   // Pedido + cliente + linhas por SKU (com nome do produto e da cor do cadastro, quando ainda existirem)
   async buscarExtrato(idPedido) {
     const { rows } = await this.banco.consultar(
-      `SELECT p.id_pedido, p.codigo, p.data_emissao, p.situacao, p.total, p.aprovado_em, p.origem,
+      `SELECT p.id_pedido, p.codigo, p.data_emissao, p.situacao, p.total, p.valor_frete, p.aprovado_em, p.origem,
+              c.logradouro, c.numero, c.complemento, c.telefone, c.email,
               p.cliente_nome, p.cliente_cep, c.bairro, c.cidade, c.estado, c.cpf_cnpj, va.nome AS aprovado_por,
               fr.descricao AS frete
        FROM pedidos p
