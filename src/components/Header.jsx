@@ -92,6 +92,19 @@ export default function Header() {
       ativo = false
     }
   }, [pathname, menuAberto])
+  // WhatsApp do atendimento: Contato de Minha Empresa (busca ao abrir o menu)
+  const [whatsapp, setWhatsapp] = useState(WHATSAPP_NUMERO)
+  useEffect(() => {
+    if (!menuAberto) return
+    let ativo = true
+    fetch('/api/contato', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d?.whatsapp && ativo && setWhatsapp(d.whatsapp))
+      .catch(() => {})
+    return () => {
+      ativo = false
+    }
+  }, [menuAberto])
   const { quantidadeTotal } = useCarrinho()
   const botaoRef = useRef(null)
   const drawerRef = useRef(null)
@@ -214,8 +227,8 @@ export default function Header() {
                 </span>
               )}
             </Link>
-            {WHATSAPP_NUMERO && (
-              <a href={`https://wa.me/${WHATSAPP_NUMERO}`} target="_blank" rel="noopener noreferrer" className="header__drawer-link header__drawer-link--whats" onClick={() => setMenuAberto(false)}>
+            {whatsapp && (
+              <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noopener noreferrer" className="header__drawer-link header__drawer-link--whats" onClick={() => setMenuAberto(false)}>
                 <IconeWhatsApp className="header__drawer-whats" />
                 <span className="header__drawer-nome">Falar no WhatsApp</span>
               </a>

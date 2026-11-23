@@ -3,8 +3,17 @@ import { formatarPreco } from '@/lib/produtos'
 import { formatarCep } from '@/lib/cliente'
 import { descricaoFrete } from '@/lib/frete'
 
-export function linkWhatsApp(mensagem) {
-  return `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(mensagem)}`
+// Telefone (só dígitos, com DDD) → número do wa.me com o código do Brasil: "62987654321" → "5562987654321"
+export function numeroWhatsApp(telefone) {
+  const d = String(telefone ?? '').replace(/\D/g, '')
+  if (d.length === 10 || d.length === 11) return `55${d}`
+  if ((d.length === 12 || d.length === 13) && d.startsWith('55')) return d
+  return ''
+}
+
+// numero: contato da loja (Minha Empresa → Contato); sem ele, NEXT_PUBLIC_WHATSAPP_NUMERO
+export function linkWhatsApp(mensagem, numero = '') {
+  return `https://wa.me/${numero || WHATSAPP_NUMERO}?text=${encodeURIComponent(mensagem)}`
 }
 
 const LINHA = '_____________________________'

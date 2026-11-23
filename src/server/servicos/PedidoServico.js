@@ -14,7 +14,8 @@ export class PedidoServico {
   static MAX_ITENS = 50
   static LIMPEZA_A_CADA_MS = 60 * 60 * 1000 // limpeza de rascunhos antigos no máximo 1 vez por hora
 
-  constructor({ catalogoServico, pedidoRepositorio, freteServico = null, etiquetaServico = null }) {
+  constructor({ catalogoServico, pedidoRepositorio, freteServico = null, etiquetaServico = null, empresaServico = null }) {
+    this.empresa = empresaServico
     this.catalogo = catalogoServico
     this.pedidos = pedidoRepositorio
     this.frete = freteServico
@@ -106,7 +107,17 @@ export class PedidoServico {
       itens: publicos,
       total,
       mensagem,
-      whatsappUrl: linkWhatsApp(mensagem),
+      whatsappUrl: linkWhatsApp(mensagem, await this.#whatsappDaLoja()),
+    }
+  }
+
+  // Número que recebe o pedido: Contato de Minha Empresa (se falhar a leitura, usa NEXT_PUBLIC_WHATSAPP_NUMERO)
+  async #whatsappDaLoja() {
+    try {
+      return (await this.empresa?.whatsapp()) || ''
+    } catch (erro) {
+      console.error('[pedidos] não foi possível ler o contato da empresa:', erro.message)
+      return ''
     }
   }
 

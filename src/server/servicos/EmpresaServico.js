@@ -7,6 +7,7 @@ import 'server-only'
 import { validarOuFalhar } from '@/server/erros'
 import { soDigitos, cnpjValido, telefoneValido } from '@/server/utils/validacao'
 import { lerCoordenadas, UFS } from '@/lib/retirada'
+import { numeroWhatsApp } from '@/lib/whatsapp'
 
 const texto = (v) => (v === null || v === undefined ? '' : String(v).trim())
 
@@ -75,6 +76,11 @@ export class EmpresaServico {
 
   buscar() {
     return this.repo.buscar()
+  }
+
+  // WhatsApp da loja: Minha Empresa → Contato (com o 55 do Brasil). null se não houver contato.
+  async whatsapp() {
+    return numeroWhatsApp((await this.repo.buscar())?.contato) || null
   }
 
   // Local de retirada mostrado na loja ("Retirar c/ vendedor"): só o que é público.
