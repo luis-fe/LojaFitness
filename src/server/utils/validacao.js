@@ -140,6 +140,11 @@ export function validarVendedor(entrada = {}, { parcial = false } = {}) {
     else dados.papel = entrada.papel
   }
 
+  if (enviado('acessa_area')) {
+    if (typeof entrada.acessa_area !== 'boolean') erros.acessa_area = 'Acessa a Área do Vendedor deve ser sim ou não.'
+    else dados.acessa_area = entrada.acessa_area
+  }
+
   if (enviado('ativo')) {
     if (typeof entrada.ativo !== 'boolean') erros.ativo = 'Ativo deve ser true ou false.'
     else dados.ativo = entrada.ativo

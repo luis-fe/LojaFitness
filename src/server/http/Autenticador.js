@@ -29,6 +29,9 @@ export class Autenticador {
     if (!atual || !atual.ativo) {
       throw new ErroNaoAutenticado('Acesso desativado. Fale com o administrador da loja.', 'conta_inativa')
     }
+    if (atual.acessa_area === false) {
+      throw new ErroNaoAutenticado('Seu cadastro não tem acesso à Área do Vendedor. Fale com o administrador da loja.', 'sem_acesso_area')
+    }
     if (Math.floor(new Date(atual.senha_alterada_em).getTime() / 1000) > payload.iat) {
       throw new ErroNaoAutenticado('A senha foi alterada. Faça login novamente.', 'token_revogado')
     }

@@ -32,6 +32,7 @@ function FormVendedor({ vendedor, ehVoceMesmo, aoSalvar, aoCancelar }) {
     uf: vendedor?.uf ?? '',
     localizacao: vendedor?.localizacao ?? '',
     papel: vendedor?.papel ?? 'vendedor',
+    acessa_area: vendedor ? vendedor.acessa_area !== false : true,
     senha: '',
     confirmar: '',
   }
@@ -47,7 +48,7 @@ function FormVendedor({ vendedor, ehVoceMesmo, aoSalvar, aoCancelar }) {
 
   const salvar = async (e) => {
     e.preventDefault()
-    const campos = ['login', 'nome', 'telefone', 'cpf_cnpj', 'nome_fantasia', 'cep', 'endereco', 'cidade', 'uf', 'localizacao', 'papel']
+    const campos = ['login', 'nome', 'telefone', 'cpf_cnpj', 'nome_fantasia', 'cep', 'endereco', 'cidade', 'uf', 'localizacao', 'papel', 'acessa_area']
     let corpo
     if (editando) {
       // Envia só o que mudou
@@ -166,6 +167,25 @@ function FormVendedor({ vendedor, ehVoceMesmo, aoSalvar, aoCancelar }) {
           </select>
           <span id="papel-dica" className="campo__dica">
             {ehVoceMesmo ? 'Você não pode alterar o seu próprio perfil de acesso.' : erros.papel}
+          </span>
+        </div>
+        <div className="campo largo">
+          <label htmlFor="acessa_area">Acessa Área do Vendedor</label>
+          <select
+            id="acessa_area"
+            value={form.acessa_area ? 'sim' : 'nao'}
+            onChange={(e) => alterar('acessa_area')(e.target.value === 'sim')}
+            disabled={ehVoceMesmo}
+            aria-describedby="acessa-area-dica"
+            aria-invalid={erros.acessa_area ? true : undefined}
+          >
+            <option value="sim">Sim</option>
+            <option value="nao">Não</option>
+          </select>
+          <span id="acessa-area-dica" className="campo__dica">
+            {ehVoceMesmo
+              ? 'Você não pode tirar o seu próprio acesso.'
+              : erros.acessa_area || (form.acessa_area ? 'Pode entrar na Área do Vendedor com login e senha.' : 'Continua cadastrado e ativo, mas não consegue entrar na Área do Vendedor.')}
           </span>
         </div>
 
@@ -329,6 +349,7 @@ function LinhaVendedor({ v, ehVoceMesmo, abrir }) {
           {ehVoceMesmo && <span className="selo selo--voce">Você</span>}
           {v.papel === 'admin' && <span className="selo">Admin</span>}
           {!v.ativo && <span className="selo selo--inativo">Inativo</span>}
+          {v.ativo && v.acessa_area === false && <span className="selo selo--inativo">Sem acesso à área</span>}
         </div>
         {v.nome_fantasia && <span className="linha-vendedor__fantasia">{v.nome_fantasia}</span>}
       </div>

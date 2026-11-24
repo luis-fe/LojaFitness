@@ -5,7 +5,7 @@ import { ErroConflito } from '@/server/erros'
 // Colunas públicas (nunca inclui senha_hash)
 const CAMPOS = `id, login, nome, telefone, cpf_cnpj, tipo_documento, nome_fantasia,
                 cep, endereco, uf, cidade, localizacao,
-                papel, ativo, ultimo_login_em, criado_em, atualizado_em`
+                papel, ativo, acessa_area, ultimo_login_em, criado_em, atualizado_em`
 
 export class VendedorRepositorio {
   constructor(banco) {
@@ -70,7 +70,7 @@ export class VendedorRepositorio {
 
   async buscarParaLogin(login) {
     const { rows } = await this.banco.consultar(
-      'SELECT id, login, nome, nome_fantasia, papel, ativo, senha_hash FROM vendedores WHERE login = $1',
+      'SELECT id, login, nome, nome_fantasia, papel, ativo, acessa_area, senha_hash FROM vendedores WHERE login = $1',
       [login]
     )
     return rows[0] ?? null
@@ -78,7 +78,7 @@ export class VendedorRepositorio {
 
   async buscarEstadoSessao(id) {
     const { rows } = await this.banco.consultar(
-      'SELECT id, login, nome, nome_fantasia, papel, ativo, senha_alterada_em FROM vendedores WHERE id = $1',
+      'SELECT id, login, nome, nome_fantasia, papel, ativo, acessa_area, senha_alterada_em FROM vendedores WHERE id = $1',
       [id]
     )
     return rows[0] ?? null
@@ -96,8 +96,8 @@ export class VendedorRepositorio {
   async inserir(dados, senhaHash) {
     try {
       const { rows } = await this.banco.consultar(
-        `INSERT INTO vendedores (login, nome, senha_hash, telefone, cpf_cnpj, nome_fantasia, papel, cep, endereco, uf, cidade, localizacao)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        `INSERT INTO vendedores (login, nome, senha_hash, telefone, cpf_cnpj, nome_fantasia, papel, cep, endereco, uf, cidade, localizacao, acessa_area)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
          RETURNING ${CAMPOS}`,
         [
           dados.login,
@@ -112,6 +112,7 @@ export class VendedorRepositorio {
           dados.uf ?? null,
           dados.cidade ?? null,
           dados.localizacao ?? null,
+          dados.acessa_area ?? true,
         ]
       )
       return rows[0]
@@ -122,13 +123,13 @@ export class VendedorRepositorio {
 
   // ---- usados dentro de transação (db = cliente da transação) ----
   async travar(db, id) {
-    const { rows } = await db.query('SELECT papel, ativo FROM vendedores WHERE id = $1 FOR UPDATE', [id])
+    const { rows } = await db.query('SELECT papel, ativo, acessa_area FROM vendedores WHERE id = $1 FOR UPDATE', [id])
     return rows[0] ?? null
   }
 
   async contarAdminsAtivos(db, excetoId) {
     const { rows } = await db.query(
-      `SELECT count(*)::int AS total FROM vendedores WHERE papel = 'admin' AND ativo AND id <> $1`,
+      `SELECT count(*)::int AS total FROM vendedores WHERE papel = 'admin' AND ativo AND acessa_area AND id <> $1`,
       [excetoId ?? 0]
     )
     return rows[0].total

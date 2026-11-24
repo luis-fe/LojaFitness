@@ -4,7 +4,8 @@
 //   • Admin gerencia todos; vendedor só o próprio cadastro (nome, telefone, CPF/CNPJ, nome fantasia, endereço).
 //   • O endereço/localização do vendedor ativo é público: é o local de retirada do pedido.
 //   • Vendedor não é apagado: é desativado (preserva o histórico).
-//   • Sempre existe pelo menos 1 administrador ativo; ninguém remove o próprio acesso de admin.
+//   • Sempre existe pelo menos 1 administrador ativo e com acesso à Área do Vendedor; ninguém remove o próprio acesso.
+//   • acessa_area = false: o cadastro continua ativo (contato, local de retirada), mas o login é recusado.
 //   • Trocar a senha ou desativar derruba as sessões (tokens) existentes.
 import 'server-only'
 import { ErroConflito, ErroNaoEncontrado, ErroPermissao, ErroRequisicao, ErroValidacao, validarOuFalhar } from '@/server/erros'
@@ -13,7 +14,7 @@ import { validarVendedor, validarSenha } from '@/server/utils/validacao'
 
 const CAMPOS_PROPRIO = ['nome', 'telefone', 'cpf_cnpj', 'nome_fantasia', 'cep', 'endereco', 'uf', 'cidade', 'localizacao']
 const MAX_LOCAIS_RETIRADA = 5
-const CAMPOS_ADMIN = [...CAMPOS_PROPRIO, 'login', 'papel', 'ativo']
+const CAMPOS_ADMIN = [...CAMPOS_PROPRIO, 'login', 'papel', 'ativo', 'acessa_area']
 
 export class VendedorServico {
   constructor({ banco, vendedorRepositorio }) {
@@ -71,13 +72,16 @@ export class VendedorServico {
       if (!atual) throw new ErroNaoEncontrado('Vendedor não encontrado.')
 
       // A loja nunca fica sem administrador
-      const deixaDeSerAdminAtivo = atual.papel === 'admin' && atual.ativo && (dados.papel === 'vendedor' || dados.ativo === false)
+      if (ehProprio && dados.acessa_area === false) throw new ErroConflito('Você não pode tirar o seu próprio acesso à Área do Vendedor.')
+      const deixaDeSerAdminAtivo =
+        atual.papel === 'admin' && atual.ativo && atual.acessa_area && (dados.papel === 'vendedor' || dados.ativo === false || dados.acessa_area === false)
       if (deixaDeSerAdminAtivo) {
         if (ehProprio) throw new ErroConflito('Você não pode remover o seu próprio acesso de administrador.')
         if ((await this.repo.contarAdminsAtivos(db, id)) === 0) throw new ErroConflito('A loja precisa de pelo menos um administrador ativo.')
       }
       // Desativar também invalida os tokens já emitidos
-      return this.repo.atualizar(db, id, dados, { derrubarSessoes: dados.ativo === false })
+      // Desativar ou tirar o acesso também invalida os tokens já emitidos (sai na hora)
+      return this.repo.atualizar(db, id, dados, { derrubarSessoes: dados.ativo === false || dados.acessa_area === false })
     })
   }
 

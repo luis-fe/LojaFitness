@@ -931,4 +931,9 @@ CREATE TRIGGER envios_atualizado_em
   FOR EACH ROW EXECUTE FUNCTION definir_atualizado_em();
 
 
+
+-- Acessa a Área do Vendedor (login): false = continua ativo (contato, local de retirada), mas não entra
+ALTER TABLE vendedores ADD COLUMN IF NOT EXISTS acessa_area boolean NOT NULL DEFAULT true;
+COMMENT ON COLUMN vendedores.acessa_area IS 'true = pode entrar na Área do Vendedor; false = cadastro ativo sem login';
+
 COMMIT;

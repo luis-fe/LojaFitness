@@ -73,11 +73,14 @@ export class AuthServico {
       throw new ErroNaoAutenticado(CREDENCIAIS_INVALIDAS, 'credenciais_invalidas')
     }
     if (!vendedor.ativo) throw new ErroPermissao('Acesso desativado. Fale com o administrador da loja.', 'conta_inativa')
+    if (vendedor.acessa_area === false) {
+      throw new ErroPermissao('Seu cadastro não tem acesso à Área do Vendedor. Fale com o administrador da loja.', 'sem_acesso_area')
+    }
 
     this.limite.limpar(chave)
     await this.vendedores.registrarLogin(vendedor.id)
     const sessao = await this.criarToken(vendedor)
-    const { senha_hash, ativo, ...publico } = vendedor
+    const { senha_hash, ativo, acessa_area, ...publico } = vendedor
     return { ...sessao, tipo: 'Bearer', vendedor: publico }
   }
 }
