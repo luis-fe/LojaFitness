@@ -14,8 +14,9 @@ export class PedidoServico {
   static MAX_ITENS = 50
   static LIMPEZA_A_CADA_MS = 60 * 60 * 1000 // limpeza de rascunhos antigos no máximo 1 vez por hora
 
-  constructor({ catalogoServico, pedidoRepositorio, freteServico = null, etiquetaServico = null, empresaServico = null }) {
+  constructor({ catalogoServico, pedidoRepositorio, freteServico = null, etiquetaServico = null, empresaServico = null, vendedorServico = null }) {
     this.empresa = empresaServico
+    this.vendedores = vendedorServico
     this.catalogo = catalogoServico
     this.pedidos = pedidoRepositorio
     this.frete = freteServico
@@ -111,10 +112,11 @@ export class PedidoServico {
     }
   }
 
-  // Número que recebe o pedido: Contato de Minha Empresa (se falhar a leitura, usa NEXT_PUBLIC_WHATSAPP_NUMERO)
+  // Número que recebe o pedido: vendedor marcado em "Recebe pedidos do WhatsApp" (sem nenhum, o administrador);
+  // sem vendedor com telefone, o Contato de Minha Empresa; por último, NEXT_PUBLIC_WHATSAPP_NUMERO
   async #whatsappDaLoja() {
     try {
-      return (await this.empresa?.whatsapp()) || ''
+      return (await this.vendedores?.whatsappPedidos()) || (await this.empresa?.whatsapp()) || ''
     } catch (erro) {
       console.error('[pedidos] não foi possível ler o contato da empresa:', erro.message)
       return ''

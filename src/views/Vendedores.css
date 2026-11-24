@@ -266,3 +266,8 @@
   font-size: 13px;
   color: var(--cinza-texto);
 }
+
+.selo.selo--whatsapp {
+  background: #e6f4ea;
+  color: #116632;
+}

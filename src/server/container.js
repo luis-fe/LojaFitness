@@ -100,7 +100,7 @@ export const freteServico = new FreteServico({
 })
 // Etiqueta e DC-e pelo Melhor Envio (forma de envio 3)
 export const etiquetaServico = new EtiquetaServico({ envioRepositorio, empresaServico, freteServico, melhorEnvio: new MelhorEnvio() })
-export const pedidoServico = new PedidoServico({ catalogoServico, pedidoRepositorio, freteServico, etiquetaServico, empresaServico })
+export const pedidoServico = new PedidoServico({ catalogoServico, pedidoRepositorio, freteServico, etiquetaServico, empresaServico, vendedorServico })
 export const vendaServico = new VendaServico({ vendaRepositorio, etiquetaServico })
 
 // ---------- HTTP ----------

@@ -140,6 +140,11 @@ export function validarVendedor(entrada = {}, { parcial = false } = {}) {
     else dados.papel = entrada.papel
   }
 
+  if (enviado('recebe_whatsapp')) {
+    if (typeof entrada.recebe_whatsapp !== 'boolean') erros.recebe_whatsapp = 'Recebe pedidos do WhatsApp deve ser sim ou não.'
+    else dados.recebe_whatsapp = entrada.recebe_whatsapp
+  }
+
   if (enviado('acessa_area')) {
     if (typeof entrada.acessa_area !== 'boolean') erros.acessa_area = 'Acessa a Área do Vendedor deve ser sim ou não.'
     else dados.acessa_area = entrada.acessa_area

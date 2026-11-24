@@ -5,16 +5,18 @@
 //   • O endereço/localização do vendedor ativo é público: é o local de retirada do pedido.
 //   • Vendedor não é apagado: é desativado (preserva o histórico).
 //   • Sempre existe pelo menos 1 administrador ativo e com acesso à Área do Vendedor; ninguém remove o próprio acesso.
+//   • recebe_whatsapp: só 1 vendedor recebe os pedidos do site (marcar um desmarca os outros).
 //   • acessa_area = false: o cadastro continua ativo (contato, local de retirada), mas o login é recusado.
 //   • Trocar a senha ou desativar derruba as sessões (tokens) existentes.
 import 'server-only'
+import { numeroWhatsApp } from '@/lib/whatsapp'
 import { ErroConflito, ErroNaoEncontrado, ErroPermissao, ErroRequisicao, ErroValidacao, validarOuFalhar } from '@/server/erros'
 import { gerarHashSenha, conferirSenha } from '@/server/utils/senha'
 import { validarVendedor, validarSenha } from '@/server/utils/validacao'
 
 const CAMPOS_PROPRIO = ['nome', 'telefone', 'cpf_cnpj', 'nome_fantasia', 'cep', 'endereco', 'uf', 'cidade', 'localizacao']
 const MAX_LOCAIS_RETIRADA = 5
-const CAMPOS_ADMIN = [...CAMPOS_PROPRIO, 'login', 'papel', 'ativo', 'acessa_area']
+const CAMPOS_ADMIN = [...CAMPOS_PROPRIO, 'login', 'papel', 'ativo', 'acessa_area', 'recebe_whatsapp']
 
 export class VendedorServico {
   constructor({ banco, vendedorRepositorio }) {
@@ -49,7 +51,17 @@ export class VendedorServico {
   async criar(entrada) {
     const { dados, erros } = validarVendedor(entrada)
     validarOuFalhar(erros, 'Dados inválidos.')
-    return this.repo.inserir(dados, await gerarHashSenha(dados.senha))
+    const hash = await gerarHashSenha(dados.senha)
+    if (!dados.recebe_whatsapp) return this.repo.inserir(dados, hash)
+    return this.banco.transacao(async (db) => {
+      await this.repo.desmarcarWhatsapp(db)
+      return this.repo.inserir(dados, hash, db)
+    })
+  }
+
+  // Número do WhatsApp que recebe os pedidos do site (com o 55). null = nenhum vendedor ativo com telefone
+  async whatsappPedidos() {
+    return numeroWhatsApp(await this.repo.telefoneWhatsApp()) || null
   }
 
   async atualizar(id, entrada, autor) {
@@ -80,6 +92,7 @@ export class VendedorServico {
         if ((await this.repo.contarAdminsAtivos(db, id)) === 0) throw new ErroConflito('A loja precisa de pelo menos um administrador ativo.')
       }
       // Desativar também invalida os tokens já emitidos
+      if (dados.recebe_whatsapp === true) await this.repo.desmarcarWhatsapp(db, id)
       // Desativar ou tirar o acesso também invalida os tokens já emitidos (sai na hora)
       return this.repo.atualizar(db, id, dados, { derrubarSessoes: dados.ativo === false || dados.acessa_area === false })
     })

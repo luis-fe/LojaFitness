@@ -936,4 +936,10 @@ CREATE TRIGGER envios_atualizado_em
 ALTER TABLE vendedores ADD COLUMN IF NOT EXISTS acessa_area boolean NOT NULL DEFAULT true;
 COMMENT ON COLUMN vendedores.acessa_area IS 'true = pode entrar na Área do Vendedor; false = cadastro ativo sem login';
 
+
+-- Vendedor que recebe os pedidos do WhatsApp (só 1 marcado; sem nenhum, vai para o administrador)
+ALTER TABLE vendedores ADD COLUMN IF NOT EXISTS recebe_whatsapp boolean NOT NULL DEFAULT false;
+CREATE UNIQUE INDEX IF NOT EXISTS vendedores_um_recebe_whatsapp ON vendedores ((true)) WHERE recebe_whatsapp;
+COMMENT ON COLUMN vendedores.recebe_whatsapp IS 'true = os pedidos do site abrem o WhatsApp no telefone deste vendedor (apenas 1)';
+
 COMMIT;

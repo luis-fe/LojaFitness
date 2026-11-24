@@ -5,7 +5,7 @@ import { ErroConflito } from '@/server/erros'
 // Colunas públicas (nunca inclui senha_hash)
 const CAMPOS = `id, login, nome, telefone, cpf_cnpj, tipo_documento, nome_fantasia,
                 cep, endereco, uf, cidade, localizacao,
-                papel, ativo, acessa_area, ultimo_login_em, criado_em, atualizado_em`
+                papel, ativo, acessa_area, recebe_whatsapp, ultimo_login_em, criado_em, atualizado_em`
 
 export class VendedorRepositorio {
   constructor(banco) {
@@ -68,6 +68,22 @@ export class VendedorRepositorio {
     return rows
   }
 
+  // Telefone que recebe os pedidos do WhatsApp: o vendedor ativo marcado; sem nenhum, o administrador ativo mais antigo
+  async telefoneWhatsApp() {
+    const { rows } = await this.banco.consultar(
+      `SELECT telefone FROM vendedores
+       WHERE ativo AND (recebe_whatsapp OR papel = 'admin')
+       ORDER BY recebe_whatsapp DESC, id
+       LIMIT 1`
+    )
+    return rows[0]?.telefone ?? null
+  }
+
+  // Só 1 vendedor recebe os pedidos: desmarca os outros (dentro da transação)
+  async desmarcarWhatsapp(db, excetoId = 0) {
+    await db.query('UPDATE vendedores SET recebe_whatsapp = false WHERE recebe_whatsapp AND id <> $1', [excetoId])
+  }
+
   async buscarParaLogin(login) {
     const { rows } = await this.banco.consultar(
       'SELECT id, login, nome, nome_fantasia, papel, ativo, acessa_area, senha_hash FROM vendedores WHERE login = $1',
@@ -93,11 +109,12 @@ export class VendedorRepositorio {
     await this.banco.consultar('UPDATE vendedores SET ultimo_login_em = now() WHERE id = $1', [id])
   }
 
-  async inserir(dados, senhaHash) {
+  async inserir(dados, senhaHash, db = null) {
+    const executar = db ? (sql, p) => db.query(sql, p) : (sql, p) => this.banco.consultar(sql, p)
     try {
-      const { rows } = await this.banco.consultar(
-        `INSERT INTO vendedores (login, nome, senha_hash, telefone, cpf_cnpj, nome_fantasia, papel, cep, endereco, uf, cidade, localizacao, acessa_area)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+      const { rows } = await executar(
+        `INSERT INTO vendedores (login, nome, senha_hash, telefone, cpf_cnpj, nome_fantasia, papel, cep, endereco, uf, cidade, localizacao, acessa_area, recebe_whatsapp)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
          RETURNING ${CAMPOS}`,
         [
           dados.login,
@@ -113,6 +130,7 @@ export class VendedorRepositorio {
           dados.cidade ?? null,
           dados.localizacao ?? null,
           dados.acessa_area ?? true,
+          dados.recebe_whatsapp ?? false,
         ]
       )
       return rows[0]

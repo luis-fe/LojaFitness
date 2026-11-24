@@ -4,7 +4,7 @@
 //   GET  /api/selos                  Selos-Campanha (itens do menu lateral)
 //   GET  /api/retirada               local de retirada: localização da empresa (Minha Empresa);
 //                                    sem ela, o endereço dos vendedores ativos
-//   GET  /api/contato                WhatsApp da loja (Minha Empresa → Contato)
+//   GET  /api/contato                WhatsApp dos pedidos (vendedor marcado → admin → Minha Empresa)
 //   POST /api/pedidos                confere o pedido e devolve o link do WhatsApp
 //   GET  /api/saude                  status do servidor e do banco
 //   GET  /api/vendedor/resumo        números da loja (login)
@@ -19,7 +19,7 @@ export class LojaController {
 
     this.selos = rota(async () => ({ selos: await catalogoServico.listarSelos() }), { rotulo: 'GET /api/selos' })
 
-    this.contato = rota(async () => ({ whatsapp: (await empresaServico.whatsapp()) || WHATSAPP_NUMERO || null }), { rotulo: 'GET /api/contato' })
+    this.contato = rota(async () => ({ whatsapp: (await vendedorServico.whatsappPedidos()) || (await empresaServico.whatsapp()) || WHATSAPP_NUMERO || null }), { rotulo: 'GET /api/contato' })
 
     this.retirada = rota(
       async () => {

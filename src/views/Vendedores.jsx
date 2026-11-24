@@ -33,6 +33,7 @@ function FormVendedor({ vendedor, ehVoceMesmo, aoSalvar, aoCancelar }) {
     localizacao: vendedor?.localizacao ?? '',
     papel: vendedor?.papel ?? 'vendedor',
     acessa_area: vendedor ? vendedor.acessa_area !== false : true,
+    recebe_whatsapp: Boolean(vendedor?.recebe_whatsapp),
     senha: '',
     confirmar: '',
   }
@@ -48,7 +49,7 @@ function FormVendedor({ vendedor, ehVoceMesmo, aoSalvar, aoCancelar }) {
 
   const salvar = async (e) => {
     e.preventDefault()
-    const campos = ['login', 'nome', 'telefone', 'cpf_cnpj', 'nome_fantasia', 'cep', 'endereco', 'cidade', 'uf', 'localizacao', 'papel', 'acessa_area']
+    const campos = ['login', 'nome', 'telefone', 'cpf_cnpj', 'nome_fantasia', 'cep', 'endereco', 'cidade', 'uf', 'localizacao', 'papel', 'acessa_area', 'recebe_whatsapp']
     let corpo
     if (editando) {
       // Envia só o que mudou
@@ -167,6 +168,25 @@ function FormVendedor({ vendedor, ehVoceMesmo, aoSalvar, aoCancelar }) {
           </select>
           <span id="papel-dica" className="campo__dica">
             {ehVoceMesmo ? 'Você não pode alterar o seu próprio perfil de acesso.' : erros.papel}
+          </span>
+        </div>
+        <div className="campo largo">
+          <label htmlFor="recebe_whatsapp">Recebe pedidos do WhatsApp</label>
+          <select
+            id="recebe_whatsapp"
+            value={form.recebe_whatsapp ? 'sim' : 'nao'}
+            onChange={(e) => alterar('recebe_whatsapp')(e.target.value === 'sim')}
+            aria-describedby="recebe-whatsapp-dica"
+            aria-invalid={erros.recebe_whatsapp ? true : undefined}
+          >
+            <option value="nao">Não</option>
+            <option value="sim">Sim</option>
+          </select>
+          <span id="recebe-whatsapp-dica" className="campo__dica">
+            {erros.recebe_whatsapp ||
+              (form.recebe_whatsapp
+                ? 'Os pedidos do site abrem o WhatsApp no telefone deste vendedor. Só um vendedor recebe: os outros são desmarcados.'
+                : 'Sem nenhum vendedor marcado, os pedidos vão para o administrador.')}
           </span>
         </div>
         <div className="campo largo">
@@ -350,6 +370,7 @@ function LinhaVendedor({ v, ehVoceMesmo, abrir }) {
           {v.papel === 'admin' && <span className="selo">Admin</span>}
           {!v.ativo && <span className="selo selo--inativo">Inativo</span>}
           {v.ativo && v.acessa_area === false && <span className="selo selo--inativo">Sem acesso à área</span>}
+          {v.ativo && v.recebe_whatsapp && <span className="selo selo--whatsapp">Recebe pedidos do WhatsApp</span>}
         </div>
         {v.nome_fantasia && <span className="linha-vendedor__fantasia">{v.nome_fantasia}</span>}
       </div>
