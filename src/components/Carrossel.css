@@ -102,6 +102,9 @@
 }
 
 .carrossel__slide {
+  /* âncora dos elementos posicionados do card (ex.: textos só para leitor de tela do preço "de/por"):
+     sem isso eles escapam da rolagem da prateleira e alargam a página no celular */
+  position: relative;
   scroll-snap-align: start;
   min-width: 0;
 }

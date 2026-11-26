@@ -35,6 +35,14 @@ html {
   }
 }
 
+/* A página nunca fica mais larga que a tela: um elemento que vaze para a direita fazia o Chrome do
+   celular aumentar a área da tela, e o menu lateral (fixo) esticava, criando espaço branco abaixo do rodapé.
+   "clip" (e não "hidden") não cria rolagem própria, então o header continua fixo no topo. */
+html,
+body {
+  overflow-x: clip;
+}
+
 body {
   background: var(--branco);
   color: var(--preto);
