@@ -46,7 +46,7 @@ export default function Login() {
   }
 
   return (
-    <section className="login" aria-labelledby="login-titulo">
+    <section className="login pagina-cheia" aria-labelledby="login-titulo">
       <div className="login__caixa">
         <span className="login__selo">Área do Vendedor</span>
         <h1 id="login-titulo" className="login__titulo">Entrar</h1>
